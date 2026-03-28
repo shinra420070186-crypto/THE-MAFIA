@@ -18,7 +18,7 @@ const glowColors = {
   'Civilian': '#8e44ad'    
 };
 
-// --- PRELOADER COMPONENT (Fixes the lag) ---
+// --- PRELOADER COMPONENT (Keeps the instant load so no lag) ---
 const ImagePreloader = () => (
   <div className="hidden">
     {Object.values(roleImages).map((src, index) => (
@@ -27,31 +27,31 @@ const ImagePreloader = () => (
   </div>
 );
 
-// --- THE IMAGE-BASED ROLE CARD ---
+// --- THE ADAPTIVE IMAGE ROLE CARD ---
 const RoleCard = ({ isFlipped, role }) => {
   return (
-    <div className="my-6 relative w-[220px] h-[330px] [perspective:1000px] select-none touch-none">
+    // Adjusted width and height to better match the natural aspect ratio of the raw photos
+    <div className="my-6 relative w-[240px] h-[360px] [perspective:1000px] select-none touch-none">
       <div className={`relative w-full h-full transition-transform duration-[600ms] [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}>
         
         {/* Front of Card (Unflipped) */}
-        <div className="absolute inset-0 [backface-visibility:hidden] rounded-2xl bg-[#1a1a1a] border-2 border-slate-800 flex flex-col items-center justify-center p-4 shadow-xl">
+        <div className="absolute inset-0 [backface-visibility:hidden] rounded-[2rem] bg-[#0a0a0a] border-2 border-slate-800 flex flex-col items-center justify-center p-4 shadow-xl">
            <p className="text-slate-500 font-black tracking-widest uppercase text-center text-xl">Secret Role</p>
            <p className="text-[10px] text-slate-600 mt-4 tracking-widest uppercase font-bold animate-pulse">Tap & Hold to Reveal</p>
         </div>
         
-        {/* Back of Card (Perfect Fit - NO CSS ZOOM HACKS) */}
+        {/* Back of Card (Your Custom Images As The Actual Card) */}
         <div 
-          className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-2xl border-2 bg-black flex items-center justify-center" 
+          className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[2rem] overflow-hidden" 
           style={{ 
-            borderColor: `${glowColors[role] || glowColors.Civilian}40`, 
-            boxShadow: isFlipped ? `0px 0px 40px 5px ${glowColors[role] || glowColors.Civilian}66` : 'none' 
+            boxShadow: isFlipped ? `0px 0px 50px 10px ${glowColors[role] || glowColors.Civilian}40` : 'none' 
           }}
         >
           <img 
             src={roleImages[role] || roleImages.Civilian} 
             alt={role} 
-            // Standard object-cover will perfectly fit your newly cropped images
-            className="w-full h-full object-cover rounded-xl pointer-events-none"
+            // object-cover ensures the photo fills the container naturally without weird stretching or zoom hacks
+            className="w-full h-full object-cover pointer-events-none"
             draggable="false"
           />
         </div>
@@ -98,7 +98,7 @@ export default function GameBoard() {
   if (state.phase === 'lobby') {
     return (
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center p-6">
-        <ImagePreloader /> {/* Silently downloads images in the background so there is zero lag later! */}
+        <ImagePreloader />
         
         <h1 className="text-4xl font-black uppercase mb-8 tracking-[0.2em] text-red-600 mt-10 drop-shadow-[0_0_10px_rgba(220,38,38,0.5)]">THE MAFIA</h1>
         
