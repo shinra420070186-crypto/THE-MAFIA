@@ -10,14 +10,6 @@ const roleImages = {
   'Civilian': '/civilian-card.jpg'
 };
 
-const glowColors = { 
-  'Mafia': '#ff003c',      
-  'Doctor': '#00ff75',     
-  'Detective': '#00d2ff',  
-  'Sheriff': '#f2994a',    
-  'Civilian': '#8e44ad'    
-};
-
 // --- PRELOADER COMPONENT (Keeps the instant load so no lag) ---
 const ImagePreloader = () => (
   <div className="hidden">
@@ -27,10 +19,9 @@ const ImagePreloader = () => (
   </div>
 );
 
-// --- THE ADAPTIVE IMAGE ROLE CARD ---
+// --- THE PERFECT FIT IMAGE CARD ---
 const RoleCard = ({ isFlipped, role }) => {
   return (
-    // Adjusted width and height to better match the natural aspect ratio of the raw photos
     <div className="my-6 relative w-[240px] h-[360px] [perspective:1000px] select-none touch-none">
       <div className={`relative w-full h-full transition-transform duration-[600ms] [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}>
         
@@ -40,18 +31,14 @@ const RoleCard = ({ isFlipped, role }) => {
            <p className="text-[10px] text-slate-600 mt-4 tracking-widest uppercase font-bold animate-pulse">Tap & Hold to Reveal</p>
         </div>
         
-        {/* Back of Card (Your Custom Images As The Actual Card) */}
-        <div 
-          className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[2rem] overflow-hidden" 
-          style={{ 
-            boxShadow: isFlipped ? `0px 0px 50px 10px ${glowColors[role] || glowColors.Civilian}40` : 'none' 
-          }}
-        >
+        {/* Back of Card (Your Raw Images) */}
+        {/* Notice how there are no CSS borders or shadows here anymore! */}
+        <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[2rem] overflow-hidden bg-black">
           <img 
             src={roleImages[role] || roleImages.Civilian} 
             alt={role} 
-            // object-cover ensures the photo fills the container naturally without weird stretching or zoom hacks
-            className="w-full h-full object-cover pointer-events-none"
+            // scale-[1.15] perfectly zooms past the black margin so the AI's border becomes the edge of the card
+            className="w-full h-full object-cover object-center scale-[1.15] pointer-events-none"
             draggable="false"
           />
         </div>
