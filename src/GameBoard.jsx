@@ -1,26 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGameStore } from './store';
 
-// --- THE NEW IMAGE-BASED ROLE CARD ---
+// --- IMAGE MAPPING ---
+const roleImages = {
+  'Mafia': '/mafia-card.jpg',
+  'Doctor': '/doctor-card.jpg',
+  'Detective': '/detective-card.jpg',
+  'Sheriff': '/sheriff-card.jpg',
+  'Civilian': '/civilian-card.jpg'
+};
+
+const glowColors = { 
+  'Mafia': '#ff003c',      
+  'Doctor': '#00ff75',     
+  'Detective': '#00d2ff',  
+  'Sheriff': '#f2994a',    
+  'Civilian': '#8e44ad'    
+};
+
+// --- PRELOADER COMPONENT (Fixes the lag) ---
+const ImagePreloader = () => (
+  <div className="hidden">
+    {Object.values(roleImages).map((src, index) => (
+      <img key={index} src={src} alt="preload" fetchpriority="high" />
+    ))}
+  </div>
+);
+
+// --- THE IMAGE-BASED ROLE CARD ---
 const RoleCard = ({ isFlipped, role }) => {
-  // Map roles to your exact uploaded filenames
-  const roleImages = {
-    'Mafia': '/mafia-card.jpg',
-    'Doctor': '/doctor-card.jpg',
-    'Detective': '/detective-card.jpg',
-    'Sheriff': '/sheriff-card.jpg',
-    'Civilian': '/civilian-card.jpg'
-  };
-
-  // Match the exact neon colors from your generated images for the 3D glow effect!
-  const glowColors = { 
-    'Mafia': '#ff003c',      // Neon Red
-    'Doctor': '#00ff75',     // Neon Green
-    'Detective': '#00d2ff',  // Neon Blue
-    'Sheriff': '#f2994a',    // Neon Orange
-    'Civilian': '#8e44ad'    // Neon Purple
-  };
-
   return (
     <div className="my-6 relative w-[220px] h-[330px] [perspective:1000px] select-none touch-none">
       <div className={`relative w-full h-full transition-transform duration-[600ms] [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}>
@@ -31,20 +39,19 @@ const RoleCard = ({ isFlipped, role }) => {
            <p className="text-[10px] text-slate-600 mt-4 tracking-widest uppercase font-bold animate-pulse">Tap & Hold to Reveal</p>
         </div>
         
-        {/* Back of Card (Your Custom Images!) */}
+        {/* Back of Card (Perfect Fit - NO CSS ZOOM HACKS) */}
         <div 
-          className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-2xl border-2 bg-black overflow-hidden flex items-center justify-center" 
+          className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-2xl border-2 bg-black flex items-center justify-center" 
           style={{ 
-            borderColor: `${glowColors[role] || glowColors.Civilian}40`, // Slight tinted border
-            boxShadow: isFlipped ? `0px 0px 40px 5px ${glowColors[role] || glowColors.Civilian}66` : 'none' // Massive neon drop shadow matching the image
+            borderColor: `${glowColors[role] || glowColors.Civilian}40`, 
+            boxShadow: isFlipped ? `0px 0px 40px 5px ${glowColors[role] || glowColors.Civilian}66` : 'none' 
           }}
         >
           <img 
             src={roleImages[role] || roleImages.Civilian} 
             alt={role} 
-            // SCALE-[1.85] aggressively zooms in to push the AI's black borders out of the frame
-            // object-center ensures it zooms exactly into the middle of the drawing
-            className="w-full h-full object-cover object-center scale-[1.85] pointer-events-none"
+            // Standard object-cover will perfectly fit your newly cropped images
+            className="w-full h-full object-cover rounded-xl pointer-events-none"
             draggable="false"
           />
         </div>
@@ -61,7 +68,6 @@ export default function GameBoard() {
 
   const alivePlayers = state.players.filter(p => p.isAlive);
 
-  // Added disableCondition so we can dynamically gray out invalid targets
   const renderPlayerList = (onSelect, includeSkip = false, disableCondition = () => false) => (
     <div className="w-full max-w-sm space-y-2 mt-6 max-h-[50vh] overflow-y-auto pr-2">
       {alivePlayers.map(p => {
@@ -92,6 +98,8 @@ export default function GameBoard() {
   if (state.phase === 'lobby') {
     return (
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center p-6">
+        <ImagePreloader /> {/* Silently downloads images in the background so there is zero lag later! */}
+        
         <h1 className="text-4xl font-black uppercase mb-8 tracking-[0.2em] text-red-600 mt-10 drop-shadow-[0_0_10px_rgba(220,38,38,0.5)]">THE MAFIA</h1>
         
         <div className="w-full max-w-sm bg-slate-900/80 border border-slate-800 p-4 rounded-2xl mb-6">
@@ -170,9 +178,7 @@ export default function GameBoard() {
 
   // --- NIGHT: MAFIA ---
   if (state.phase === 'night_mafia') {
-    // Condition: Mafia cannot kill other Mafia
     const disableCondition = (p) => p.role === 'Mafia';
-    
     return (
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center p-6 text-center">
         <h2 className="text-red-600 font-black text-2xl uppercase mt-10">Night Phase</h2>
@@ -185,11 +191,7 @@ export default function GameBoard() {
 
   // --- NIGHT: DOCTOR ---
   if (state.phase === 'night_doctor') {
-    // Condition: Cannot save last saved person. Cannot self-save more than once.
-    const disableCondition = (p) => 
-      p.id === state.doctorLastSaved || 
-      (p.role === 'Doctor' && state.doctorHasSelfSaved);
-
+    const disableCondition = (p) => p.id === state.doctorLastSaved || (p.role === 'Doctor' && state.doctorHasSelfSaved);
     return (
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center p-6 text-center">
         <h2 className="text-blue-500 font-black text-2xl uppercase mt-10">Night Phase</h2>
@@ -205,7 +207,6 @@ export default function GameBoard() {
     if (state.investigationResult) {
       const isDeadRole = state.investigationResult === 'DEAD_ROLE';
       const isMafia = state.investigationResult === 'MAFIA';
-      
       return (
         <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center p-6 text-center justify-center">
           <p className="text-slate-400 uppercase font-bold tracking-widest text-[10px] mb-4">
