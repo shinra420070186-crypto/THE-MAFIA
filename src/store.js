@@ -5,6 +5,8 @@ export const useGameStore = create((set, get) => ({
   players: [],
   settings: { revealRoles: true },
   
+  revealIndex: 0, // Tracks whose turn it is to see their card
+  
   nightActions: { mafia: null, doctor: null, sheriff: null },
   investigationResult: null, 
   dayRecap: [], 
@@ -46,11 +48,23 @@ export const useGameStore = create((set, get) => ({
 
     set({
       players: assignedPlayers,
-      phase: 'night_mafia',
+      phase: 'role_reveal', // Go to Reveal Phase first!
+      revealIndex: 0,
       nightActions: { mafia: null, doctor: null, sheriff: null },
       dayRecap: [],
       winner: null
     });
+  },
+
+  nextRoleReveal: () => {
+    const { revealIndex, players } = get();
+    if (revealIndex + 1 < players.length) {
+      // Next player's turn to look
+      set({ revealIndex: revealIndex + 1 });
+    } else {
+      // Everyone has looked. Hand phone to Moderator.
+      set({ phase: 'night_mafia' });
+    }
   },
 
   submitNightAction: (role, targetId) => {
