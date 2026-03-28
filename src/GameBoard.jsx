@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useGameStore } from './store';
 
-// --- THE GLOWING ROLE CARD ---
 const RoleCard = ({ isFlipped, role }) => {
   const roleColors = {
     'Mafia': 'linear-gradient(163deg, #ff003c 0%, #c70039 100%)',
@@ -10,62 +9,55 @@ const RoleCard = ({ isFlipped, role }) => {
     'Civilian': 'linear-gradient(163deg, #00ff75 0%, #3700ff 100%)',
     'Sheriff': 'linear-gradient(163deg, #8e44ad 0%, #c0392b 100%)'
   };
-
-  const textColors = {
-    'Mafia': '#ff003c', 'Doctor': '#00d2ff', 'Detective': '#f2c94c', 'Civilian': '#00ff75', 'Sheriff': '#8e44ad'
-  };
+  const textColors = { 'Mafia': '#ff003c', 'Doctor': '#00d2ff', 'Detective': '#f2c94c', 'Civilian': '#00ff75', 'Sheriff': '#8e44ad' };
 
   return (
     <div className="my-6 relative w-[220px] h-[300px] [perspective:1000px] select-none touch-none">
       <div className={`relative w-full h-full transition-transform duration-[600ms] [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}>
-        
-        {/* Front of Card */}
         <div className="absolute inset-0 [backface-visibility:hidden] rounded-2xl bg-[#1a1a1a] border-2 border-slate-800 flex flex-col items-center justify-center p-4 shadow-xl">
            <p className="text-slate-500 font-black tracking-widest uppercase text-center text-xl">Secret Role</p>
            <p className="text-[10px] text-slate-600 mt-4 tracking-widest uppercase font-bold animate-pulse">Tap & Hold to Reveal</p>
         </div>
-        
-        {/* Back of Card (Glowing) */}
         <div 
           className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-2xl p-1" 
-          style={{ 
-            background: roleColors[role] || roleColors.Civilian,
-            boxShadow: isFlipped ? `0px 0px 30px 1px ${textColors[role]}66` : 'none'
-          }}
+          style={{ background: roleColors[role] || roleColors.Civilian, boxShadow: isFlipped ? `0px 0px 30px 1px ${textColors[role]}66` : 'none' }}
         >
           <div className="w-full h-full bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center">
             <h3 className="text-3xl font-black uppercase mb-2 drop-shadow-lg" style={{ color: textColors[role] }}>{role}</h3>
           </div>
         </div>
-
       </div>
     </div>
   );
 };
 
-
 export default function GameBoard() {
   const state = useGameStore();
   const [newPlayerName, setNewPlayerName] = useState('');
-  const [isFlipped, setIsFlipped] = useState(false); // For the flip card
+  const [isFlipped, setIsFlipped] = useState(false);
 
   const alivePlayers = state.players.filter(p => p.isAlive);
 
-  const renderPlayerList = (onSelect, includeSkip = false) => (
-    <div className="w-full max-w-sm space-y-2 mt-6">
-      {alivePlayers.map(p => (
-        <button 
-          key={p.id} 
-          onClick={() => onSelect(p.id)}
-          className="w-full p-4 bg-slate-800 text-white rounded-xl font-bold uppercase active:scale-95 transition-transform"
-        >
-          {p.name}
-        </button>
-      ))}
+  // Added disableCondition so we can dynamically gray out invalid targets
+  const renderPlayerList = (onSelect, includeSkip = false, disableCondition = () => false) => (
+    <div className="w-full max-w-sm space-y-2 mt-6 max-h-[50vh] overflow-y-auto pr-2">
+      {alivePlayers.map(p => {
+        const isDisabled = disableCondition(p);
+        return (
+          <button 
+            key={p.id} 
+            onClick={() => onSelect(p.id)}
+            disabled={isDisabled}
+            className={`w-full p-4 rounded-xl font-bold uppercase transition-all ${isDisabled ? 'bg-slate-900 text-slate-700 border border-slate-800' : 'bg-slate-800 text-white active:scale-95'}`}
+          >
+            {p.name} {isDisabled && <span className="text-[10px] ml-2 tracking-widest text-slate-600">(LOCKED)</span>}
+          </button>
+        );
+      })}
       {includeSkip && (
         <button 
           onClick={() => onSelect(null)}
-          className="w-full p-4 bg-slate-600 text-white rounded-xl font-bold uppercase mt-4 active:scale-95 transition-transform"
+          className="w-full p-4 bg-transparent border border-slate-700 text-slate-400 rounded-xl font-bold uppercase mt-4 active:scale-95"
         >
           Skip / Nobody
         </button>
@@ -73,7 +65,6 @@ export default function GameBoard() {
     </div>
   );
 
-  // --- LOBBY ---
   if (state.phase === 'lobby') {
     return (
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center p-6">
@@ -121,7 +112,6 @@ export default function GameBoard() {
     );
   }
 
-  // --- NEW: ROLE REVEAL PHASE ---
   if (state.phase === 'role_reveal') {
     const currentPlayer = state.players[state.revealIndex];
     const isLastPlayer = state.revealIndex === state.players.length - 1;
@@ -143,11 +133,8 @@ export default function GameBoard() {
         </div>
 
         <button 
-          onClick={() => {
-            setIsFlipped(false);
-            state.nextRoleReveal();
-          }}
-          disabled={isFlipped} // Button vanishes while holding the card so they don't accidentally skip
+          onClick={() => { setIsFlipped(false); state.nextRoleReveal(); }}
+          disabled={isFlipped} 
           className={`mt-12 p-5 w-full max-w-sm rounded-xl font-black uppercase tracking-widest transition-all duration-300 ${isFlipped ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0 bg-slate-800 text-white border border-slate-700 active:scale-95'}`}
         >
           {isLastPlayer ? 'Give to Moderator' : 'Next Player'}
@@ -158,24 +145,32 @@ export default function GameBoard() {
 
   // --- NIGHT: MAFIA ---
   if (state.phase === 'night_mafia') {
+    // Condition: Mafia cannot kill other Mafia
+    const disableCondition = (p) => p.role === 'Mafia';
+    
     return (
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center p-6 text-center">
         <h2 className="text-red-600 font-black text-2xl uppercase mt-10">Night Phase</h2>
         <p className="text-slate-400 mt-2 text-sm">Moderator: Ask the Mafia to wake up and point.</p>
         <h3 className="text-3xl font-black mt-8">Who does the Mafia kill?</h3>
-        {renderPlayerList((id) => state.submitNightAction('Mafia', id), true)}
+        {renderPlayerList((id) => state.submitNightAction('Mafia', id), true, disableCondition)}
       </div>
     );
   }
 
   // --- NIGHT: DOCTOR ---
   if (state.phase === 'night_doctor') {
+    // Condition: Cannot save last saved person. Cannot self-save more than once.
+    const disableCondition = (p) => 
+      p.id === state.doctorLastSaved || 
+      (p.role === 'Doctor' && state.doctorHasSelfSaved);
+
     return (
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center p-6 text-center">
         <h2 className="text-blue-500 font-black text-2xl uppercase mt-10">Night Phase</h2>
         <p className="text-slate-400 mt-2 text-sm">Moderator: Ask the Doctor to wake up and point.</p>
         <h3 className="text-3xl font-black mt-8">Who does the Doctor save?</h3>
-        {renderPlayerList((id) => state.submitNightAction('Doctor', id), true)}
+        {renderPlayerList((id) => state.submitNightAction('Doctor', id), true, disableCondition)}
       </div>
     );
   }
@@ -183,12 +178,16 @@ export default function GameBoard() {
   // --- NIGHT: DETECTIVE ---
   if (state.phase === 'night_detective') {
     if (state.investigationResult) {
+      const isDeadRole = state.investigationResult === 'DEAD_ROLE';
       const isMafia = state.investigationResult === 'MAFIA';
+      
       return (
         <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center p-6 text-center justify-center">
-          <p className="text-slate-400 uppercase font-bold tracking-widest text-sm mb-4">Moderator: Nod or shake your head.</p>
-          <h1 className={`text-6xl font-black uppercase ${isMafia ? 'text-red-600 drop-shadow-[0_0_20px_rgba(220,38,38,0.5)]' : 'text-green-500 drop-shadow-[0_0_20px_rgba(34,197,94,0.5)]'}`}>
-            {state.investigationResult}
+          <p className="text-slate-400 uppercase font-bold tracking-widest text-[10px] mb-4">
+            {isDeadRole ? "Moderator: Pretend to give an answer!" : "Moderator: Nod or shake your head."}
+          </p>
+          <h1 className={`text-6xl font-black uppercase ${isDeadRole ? 'text-slate-700' : isMafia ? 'text-red-600 drop-shadow-[0_0_20px_rgba(220,38,38,0.5)]' : 'text-green-500 drop-shadow-[0_0_20px_rgba(34,197,94,0.5)]'}`}>
+            {isDeadRole ? 'ROLE DEAD' : state.investigationResult}
           </h1>
           <button 
             onClick={state.advanceFromDetective}
