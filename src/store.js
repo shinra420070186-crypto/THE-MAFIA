@@ -5,12 +5,16 @@ export const useGameStore = create((set, get) => ({
   players: [],
   settings: { revealRoles: true },
   
-  revealIndex: 0, // Tracks whose turn it is to see their card
+  revealIndex: 0, 
   
   nightActions: { mafia: null, doctor: null, sheriff: null },
   investigationResult: null, 
   dayRecap: [], 
   
+  // Doctor Advanced Rules
+  doctorLastSaved: null,
+  doctorHasSelfSaved: false,
+
   votingState: { currentVoterIndex: 0, votes: {} }, 
   winner: null, 
 
@@ -48,40 +52,61 @@ export const useGameStore = create((set, get) => ({
 
     set({
       players: assignedPlayers,
-      phase: 'role_reveal', // Go to Reveal Phase first!
+      phase: 'role_reveal',
       revealIndex: 0,
       nightActions: { mafia: null, doctor: null, sheriff: null },
       dayRecap: [],
-      winner: null
+      winner: null,
+      doctorLastSaved: null,
+      doctorHasSelfSaved: false,
     });
   },
 
   nextRoleReveal: () => {
     const { revealIndex, players } = get();
     if (revealIndex + 1 < players.length) {
-      // Next player's turn to look
       set({ revealIndex: revealIndex + 1 });
     } else {
-      // Everyone has looked. Hand phone to Moderator.
       set({ phase: 'night_mafia' });
     }
   },
 
   submitNightAction: (role, targetId) => {
     const state = get();
-    const alivePlayers = state.players.filter(p => p.isAlive);
-    const hasSheriff = alivePlayers.some(p => p.role === 'Sheriff');
 
     if (role === 'Mafia') {
       set({ nightActions: { ...state.nightActions, mafia: targetId }, phase: 'night_doctor' });
     } 
     else if (role === 'Doctor') {
-      set({ nightActions: { ...state.nightActions, doctor: targetId }, phase: 'night_detective' });
+      let selfSaved = state.doctorHasSelfSaved;
+      const doctorPlayer = state.players.find(p => p.role === 'Doctor');
+      
+      // Only record the self-save if the target is actually the Doctor
+      if (doctorPlayer && targetId === doctorPlayer.id) {
+         selfSaved = true;
+      }
+
+      set({ 
+        nightActions: { ...state.nightActions, doctor: targetId }, 
+        doctorLastSaved: targetId,
+        doctorHasSelfSaved: selfSaved,
+        phase: 'night_detective' 
+      });
     } 
     else if (role === 'Detective') {
-      const target = state.players.find(p => p.id === targetId);
-      const isMafia = target.role === 'Mafia';
-      set({ investigationResult: isMafia ? 'MAFIA' : 'CIVILIAN' });
+      const detectivePlayer = state.players.find(p => p.role === 'Detective');
+      
+      // If detective is alive, give real result. If dead, give fake result!
+      if (detectivePlayer && detectivePlayer.isAlive) {
+        if (targetId) {
+          const target = state.players.find(p => p.id === targetId);
+          set({ investigationResult: target.role === 'Mafia' ? 'MAFIA' : 'CIVILIAN' });
+        } else {
+          set({ investigationResult: 'SKIPPED' });
+        }
+      } else {
+        set({ investigationResult: 'DEAD_ROLE' });
+      }
     }
     else if (role === 'Sheriff') {
       set({ nightActions: { ...state.nightActions, sheriff: targetId } });
@@ -91,11 +116,11 @@ export const useGameStore = create((set, get) => ({
 
   advanceFromDetective: () => {
     const state = get();
-    const alivePlayers = state.players.filter(p => p.isAlive);
-    const hasSheriff = alivePlayers.some(p => p.role === 'Sheriff');
+    // Check if Sheriff exists in the GAME at all, even if dead, to keep the ghost phase illusion
+    const gameHasSheriff = state.players.some(p => p.role === 'Sheriff');
     
     set({ investigationResult: null });
-    if (hasSheriff) {
+    if (gameHasSheriff) {
       set({ phase: 'night_sheriff' });
     } else {
       get().processNight();
@@ -103,20 +128,31 @@ export const useGameStore = create((set, get) => ({
   },
 
   processNight: () => {
-    const { players, nightActions } = get();
-    let nextPlayers = [...players];
+    const state = get();
+    let nextPlayers = [...state.players];
     let recap = [];
 
-    if (nightActions.mafia && nightActions.mafia !== nightActions.doctor) {
-      const victim = nextPlayers.find(p => p.id === nightActions.mafia);
+    // Check who is actually alive to see if their actions count
+    const isMafiaAlive = nextPlayers.some(p => p.role === 'Mafia' && p.isAlive);
+    const isDoctorAlive = nextPlayers.some(p => p.role === 'Doctor' && p.isAlive);
+    const isSheriffAlive = nextPlayers.some(p => p.role === 'Sheriff' && p.isAlive);
+
+    const finalMafiaTarget = isMafiaAlive ? state.nightActions.mafia : null;
+    const finalDoctorTarget = isDoctorAlive ? state.nightActions.doctor : null;
+    const finalSheriffTarget = isSheriffAlive ? state.nightActions.sheriff : null;
+
+    // Process Mafia Kill (If doctor didn't save them)
+    if (finalMafiaTarget && finalMafiaTarget !== finalDoctorTarget) {
+      const victim = nextPlayers.find(p => p.id === finalMafiaTarget);
       if (victim) {
         victim.isAlive = false;
         recap.push(`${victim.name} was killed in the night.`);
       }
     }
 
-    if (nightActions.sheriff) {
-      const target = nextPlayers.find(p => p.id === nightActions.sheriff);
+    // Process Sheriff Kill (Sheriff dies if they hit an innocent)
+    if (finalSheriffTarget) {
+      const target = nextPlayers.find(p => p.id === finalSheriffTarget);
       const sheriff = nextPlayers.find(p => p.role === 'Sheriff');
       if (target && sheriff) {
         target.isAlive = false;
