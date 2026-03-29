@@ -264,7 +264,7 @@ export const useGameStore = create((set, get) => ({
   resetToLobby: () => set((state) => {
     const resetPlayers = state.players.map(p => ({ ...p, role: 'Civilian', isAlive: true }));
     return { 
-      phase: 'lobby', // Returns to Lobby, not Splash, to save time
+      phase: 'lobby',
       players: resetPlayers, 
       winner: null,
       nightActions: { mafia: null, doctor: null, sheriff: null },
