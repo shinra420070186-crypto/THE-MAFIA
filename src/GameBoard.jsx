@@ -146,14 +146,22 @@ export default function GameBoard() {
           </button>
         </div>
 
-        {/* RESTORED SAFE BUTTON */}
+        {/* --- THE COSMIC BUTTON --- */}
         <button 
           disabled={state.players.length < 4}
           onClick={state.startGame}
-          className="w-full max-w-sm p-5 bg-white text-black rounded-xl font-black tracking-widest uppercase shadow-[0_0_20px_rgba(255,255,255,0.2)] disabled:opacity-20 active:scale-95 transition-all mb-6"
+          className="space-btn mb-6"
         >
-          Begin Game ({state.players.length})
+          <strong>BEGIN GAME ({state.players.length})</strong>
+          <div className="space-btn-stars">
+            <div className="stars-inner"></div>
+          </div>
+          <div className="space-btn-glow">
+            <div className="space-btn-circle"></div>
+            <div className="space-btn-circle"></div>
+          </div>
         </button>
+
       </div>
     );
   }
@@ -345,9 +353,11 @@ export default function GameBoard() {
 
         <button 
           onClick={state.playAgain}
-          className="mt-12 w-full max-w-sm p-5 bg-white text-black rounded-xl font-black tracking-widest uppercase shadow-[0_0_20px_rgba(255,255,255,0.2)] disabled:opacity-20 active:scale-95 transition-all mb-6"
+          className="mt-12 space-btn mb-6"
         >
-          Play Again
+          <strong>PLAY AGAIN</strong>
+          <div className="space-btn-stars"><div className="stars-inner"></div></div>
+          <div className="space-btn-glow"><div className="space-btn-circle"></div><div className="space-btn-circle"></div></div>
         </button>
       </div>
     );
