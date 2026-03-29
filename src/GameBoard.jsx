@@ -161,7 +161,7 @@ export default function GameBoard() {
 
   // Background Engine
   const renderBackground = () => {
-    if (state.phase === 'splash') return null; // Splash handles its own light grey bg
+    if (state.phase === 'splash' || state.phase === 'lobby') return null; // Splash and Lobby handle their own light grey bg
     if (state.phase === 'role_reveal') return <TwilightSky />;
     if (state.phase === 'day_transition' || state.phase.startsWith('day_')) return <MorningSky />;
     return <MidnightSky />; 
@@ -219,7 +219,7 @@ export default function GameBoard() {
             onClick={() => {
               setTimeout(() => {
                 state.enterLobby();
-              }, 1500); // 1.5s delay to let the Batman button animation play out
+              }, 1500); 
             }}
             className="batman-btn"
           >
@@ -230,11 +230,10 @@ export default function GameBoard() {
     );
   }
 
-  // --- LOBBY (Poda Input + Stealth Button) ---
+  // --- LOBBY (Same light grey background as splash, no MidnightSky) ---
   if (state.phase === 'lobby') {
     return (
-      <div className="relative min-h-screen text-white flex flex-col items-center p-6 overflow-hidden">
-        {renderBackground()}
+      <div className="relative min-h-screen text-white flex flex-col items-center p-6 overflow-hidden" style={{ backgroundColor: '#e5e5e5' }}>
         
         <h1 className="text-4xl font-black uppercase mb-10 tracking-[0.2em] text-red-600 mt-14 drop-shadow-[0_0_10px_rgba(220,38,38,0.5)] relative z-10">THE MAFIA</h1>
         
@@ -568,7 +567,7 @@ export default function GameBoard() {
         <div className="w-full flex justify-center mt-12 mb-6 relative z-10">
           <button 
             onClick={() => {
-              setTimeout(() => { state.playAgain(); }, 1500); // 1.5s delay
+              setTimeout(() => { state.playAgain(); }, 1500); 
             }}
             className="batman-btn"
           >
