@@ -26,12 +26,13 @@ const ImagePreloader = () => (
   </div>
 );
 
+// --- THE PERFECT AI PHOTO CARD ---
 const RoleCard = ({ isFlipped, role }) => {
   return (
     <div className="my-6 relative w-[240px] h-[360px] [perspective:1000px] select-none touch-none">
       <div className={`relative w-full h-full transition-transform duration-[600ms] [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}>
         
-        {/* Front of Card */}
+        {/* Front of Card (Unflipped) */}
         <div className="absolute inset-0 [backface-visibility:hidden] rounded-[2rem] bg-[#0a0a0a] border-2 border-slate-800 flex flex-col items-center justify-center p-4 shadow-xl">
            <p className="text-slate-500 font-black tracking-widest uppercase text-center text-xl">Secret Role</p>
            <p className="text-[10px] text-slate-600 mt-4 tracking-widest uppercase font-bold animate-pulse">Tap & Hold to Reveal</p>
@@ -145,20 +146,13 @@ export default function GameBoard() {
           </button>
         </div>
 
-        {/* --- THE NEW COSMIC BUTTON --- */}
+        {/* RESTORED SAFE BUTTON */}
         <button 
           disabled={state.players.length < 4}
           onClick={state.startGame}
-          className="space-btn mb-6"
+          className="w-full max-w-sm p-5 bg-white text-black rounded-xl font-black tracking-widest uppercase shadow-[0_0_20px_rgba(255,255,255,0.2)] disabled:opacity-20 active:scale-95 transition-all mb-6"
         >
-          <strong>BEGIN GAME ({state.players.length})</strong>
-          <div className="space-btn-stars">
-            <div className="stars-inner"></div>
-          </div>
-          <div className="space-btn-glow">
-            <div className="space-btn-circle"></div>
-            <div className="space-btn-circle"></div>
-          </div>
+          Begin Game ({state.players.length})
         </button>
       </div>
     );
@@ -351,11 +345,9 @@ export default function GameBoard() {
 
         <button 
           onClick={state.playAgain}
-          className="mt-12 space-btn"
+          className="mt-12 w-full max-w-sm p-5 bg-white text-black rounded-xl font-black tracking-widest uppercase shadow-[0_0_20px_rgba(255,255,255,0.2)] disabled:opacity-20 active:scale-95 transition-all mb-6"
         >
-           <strong>PLAY AGAIN</strong>
-           <div className="space-btn-stars"><div className="stars-inner"></div></div>
-           <div className="space-btn-glow"><div className="space-btn-circle"></div><div className="space-btn-circle"></div></div>
+          Play Again
         </button>
       </div>
     );
