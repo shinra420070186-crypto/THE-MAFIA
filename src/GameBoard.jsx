@@ -8,28 +8,15 @@ const MidnightSky = () => (
   <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ backgroundColor: '#050505' }}>
     <style>{`
       .stars { position: absolute; inset: 0; background-repeat: repeat; pointer-events: none; will-change: opacity; transform: translateZ(0); }
-      .stars-1 {
-        background-image: radial-gradient(1px 1px at 10% 10%, #fff, transparent), radial-gradient(1px 1px at 30% 20%, #fff, transparent), radial-gradient(1px 1px at 50% 50%, #fff, transparent), radial-gradient(1px 1px at 70% 30%, #fff, transparent), radial-gradient(1px 1px at 90% 10%, #fff, transparent);
-        background-size: 100px 100px;
-        animation: twinkle 3s ease-in-out infinite;
-      }
-      .stars-2 {
-        background-image: radial-gradient(1.5px 1.5px at 20% 40%, #fff, transparent), radial-gradient(1.5px 1.5px at 60% 85%, #fff, transparent), radial-gradient(1.5px 1.5px at 85% 65%, #fff, transparent);
-        background-size: 150px 150px;
-        animation: twinkle 5s ease-in-out infinite 1s;
-      }
-      .stars-3 {
-        background-image: radial-gradient(2px 2px at 40% 70%, #fff, transparent), radial-gradient(2px 2px at 10% 80%, #fff, transparent), radial-gradient(2px 2px at 80% 40%, #fff, transparent);
-        background-size: 200px 200px;
-        animation: twinkle 7s ease-in-out infinite 2s;
-      }
+      .stars-1 { background-image: radial-gradient(1px 1px at 10% 10%, #fff, transparent), radial-gradient(1px 1px at 30% 20%, #fff, transparent), radial-gradient(1px 1px at 50% 50%, #fff, transparent), radial-gradient(1px 1px at 70% 30%, #fff, transparent), radial-gradient(1px 1px at 90% 10%, #fff, transparent); background-size: 100px 100px; animation: twinkle 3s ease-in-out infinite; }
+      .stars-2 { background-image: radial-gradient(1.5px 1.5px at 20% 40%, #fff, transparent), radial-gradient(1.5px 1.5px at 60% 85%, #fff, transparent), radial-gradient(1.5px 1.5px at 85% 65%, #fff, transparent); background-size: 150px 150px; animation: twinkle 5s ease-in-out infinite 1s; }
+      .stars-3 { background-image: radial-gradient(2px 2px at 40% 70%, #fff, transparent), radial-gradient(2px 2px at 10% 80%, #fff, transparent), radial-gradient(2px 2px at 80% 40%, #fff, transparent); background-size: 200px 200px; animation: twinkle 7s ease-in-out infinite 2s; }
       .meteor { position: absolute; width: 1.5px; height: 1.5px; background: #fff; border-radius: 50%; box-shadow: 0 0 5px 1px rgba(255, 255, 255, 0.5); opacity: 0; pointer-events: none; will-change: transform, opacity; transform: translateZ(0); }
       .meteor::after { content: ""; position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 1px; background: linear-gradient(90deg, #fff, transparent); }
       .m1 { top: 10%; left: 110%; animation: shoot 8s linear infinite; }
       .m2 { top: 30%; left: 110%; animation: shoot 12s linear infinite 4s; }
       .m3 { top: 50%; left: 110%; animation: shoot 10s linear infinite 2s; }
       .moon { position: absolute; top: 15%; right: 15%; width: 40px; height: 40px; border-radius: 50%; background: transparent; box-shadow: 7px 7px 0 0 #fdfbd3; filter: drop-shadow(0 0 7px rgba(253, 251, 211, 0.4)); z-index: 10; transform: translateZ(0); }
-      
       @keyframes twinkle { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
       @keyframes shoot { 0% { transform: translateX(0) translateY(0) rotate(-35deg); opacity: 0; } 5% { opacity: 1; } 15% { transform: translateX(-1500px) translateY(1000px) rotate(-35deg); opacity: 0; } 100% { transform: translateX(-1500px) translateY(1000px) rotate(-35deg); opacity: 0; } }
     `}</style>
@@ -50,22 +37,13 @@ const MorningSky = () => (
   <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, #4A90E2 0%, #FFB75E 100%)' }}>
     <style>{`
       .motes { position: absolute; inset: 0; background-repeat: repeat; pointer-events: none; will-change: opacity; transform: translateZ(0); }
-      .motes-1 {
-        background-image: radial-gradient(1.5px 1.5px at 15% 15%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 35% 25%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 55% 55%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 75% 35%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 95% 15%, rgba(255,255,255,0.7), transparent);
-        background-size: 100px 100px;
-        animation: twinkle 4s ease-in-out infinite;
-      }
-      .motes-2 {
-        background-image: radial-gradient(2px 2px at 25% 45%, rgba(255,255,255,0.5), transparent), radial-gradient(2px 2px at 65% 85%, rgba(255,255,255,0.5), transparent), radial-gradient(2px 2px at 85% 70%, rgba(255,255,255,0.5), transparent);
-        background-size: 150px 150px;
-        animation: twinkle 6s ease-in-out infinite 2s;
-      }
+      .motes-1 { background-image: radial-gradient(1.5px 1.5px at 15% 15%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 35% 25%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 55% 55%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 75% 35%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 95% 15%, rgba(255,255,255,0.7), transparent); background-size: 100px 100px; animation: twinkle 4s ease-in-out infinite; }
+      .motes-2 { background-image: radial-gradient(2px 2px at 25% 45%, rgba(255,255,255,0.5), transparent), radial-gradient(2px 2px at 65% 85%, rgba(255,255,255,0.5), transparent), radial-gradient(2px 2px at 85% 70%, rgba(255,255,255,0.5), transparent); background-size: 150px 150px; animation: twinkle 6s ease-in-out infinite 2s; }
       .wind { position: absolute; width: 60px; height: 2px; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent); border-radius: 50%; opacity: 0; pointer-events: none; will-change: transform, opacity; transform: translateZ(0); }
       .w1 { top: 15%; left: 110%; animation: breeze 6s linear infinite; }
       .w2 { top: 40%; left: 110%; animation: breeze 10s linear infinite 3s; }
       .w3 { top: 60%; left: 110%; animation: breeze 8s linear infinite 1s; }
       .sun { position: absolute; top: 15%; right: 15%; width: 50px; height: 50px; border-radius: 50%; background: #FFD700; box-shadow: 0 0 40px 15px rgba(255, 215, 0, 0.5); z-index: 10; transform: translateZ(0); }
-      
       @keyframes breeze { 0% { transform: translateX(0); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateX(-1500px); opacity: 0; } }
     `}</style>
     <div className="motes motes-1"></div>
@@ -84,21 +62,9 @@ const TwilightSky = () => (
   <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, #2B1055 0%, #7597DE 100%)' }}>
     <style>{`
       .twinkle-stars { position: absolute; inset: 0; background-repeat: repeat; pointer-events: none; will-change: opacity; transform: translateZ(0); }
-      .tw-1 {
-        background-image: radial-gradient(1px 1px at 15% 15%, #fff, transparent), radial-gradient(1px 1px at 35% 25%, #fff, transparent), radial-gradient(1px 1px at 55% 55%, #fff, transparent), radial-gradient(1px 1px at 75% 35%, #fff, transparent), radial-gradient(1px 1px at 95% 15%, #fff, transparent);
-        background-size: 100px 100px;
-        animation: twilight-twinkle 4s ease-in-out infinite;
-      }
-      .tw-2 {
-        background-image: radial-gradient(1.5px 1.5px at 25% 45%, #fff, transparent), radial-gradient(1.5px 1.5px at 65% 85%, #fff, transparent), radial-gradient(1.5px 1.5px at 85% 70%, #fff, transparent);
-        background-size: 150px 150px;
-        animation: twilight-twinkle 6s ease-in-out infinite 2s;
-      }
-      .tw-3 {
-        background-image: radial-gradient(2px 2px at 40% 70%, #fff, transparent), radial-gradient(2px 2px at 10% 80%, #fff, transparent), radial-gradient(2px 2px at 80% 40%, #fff, transparent);
-        background-size: 200px 200px;
-        animation: twilight-twinkle 7s ease-in-out infinite 3s;
-      }
+      .tw-1 { background-image: radial-gradient(1px 1px at 15% 15%, #fff, transparent), radial-gradient(1px 1px at 35% 25%, #fff, transparent), radial-gradient(1px 1px at 55% 55%, #fff, transparent), radial-gradient(1px 1px at 75% 35%, #fff, transparent), radial-gradient(1px 1px at 95% 15%, #fff, transparent); background-size: 100px 100px; animation: twilight-twinkle 4s ease-in-out infinite; }
+      .tw-2 { background-image: radial-gradient(1.5px 1.5px at 25% 45%, #fff, transparent), radial-gradient(1.5px 1.5px at 65% 85%, #fff, transparent), radial-gradient(1.5px 1.5px at 85% 70%, #fff, transparent); background-size: 150px 150px; animation: twilight-twinkle 6s ease-in-out infinite 2s; }
+      .tw-3 { background-image: radial-gradient(2px 2px at 40% 70%, #fff, transparent), radial-gradient(2px 2px at 10% 80%, #fff, transparent), radial-gradient(2px 2px at 80% 40%, #fff, transparent); background-size: 200px 200px; animation: twilight-twinkle 7s ease-in-out infinite 3s; }
       .tw-meteor { position: absolute; width: 1.5px; height: 1.5px; background: #fff; border-radius: 50%; box-shadow: 0 0 5px 1px rgba(255, 255, 255, 0.5); opacity: 0; pointer-events: none; will-change: transform, opacity; transform: translateZ(0); }
       .tw-meteor::after { content: ""; position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 1px; background: linear-gradient(90deg, #fff, transparent); }
       .tw-m1 { top: 15%; left: 110%; animation: twilight-shoot 6s linear infinite; }
@@ -118,7 +84,6 @@ const TwilightSky = () => (
     <div className="tw-body"></div>
   </div>
 );
-
 
 // --- IMAGE PRELOADER ---
 const roleImages = {
@@ -250,11 +215,11 @@ export default function GameBoard() {
         {renderBackground()}
         <ImagePreloader />
         
-        <h1 className="text-4xl font-black uppercase mb-8 tracking-[0.2em] text-red-600 mt-14 drop-shadow-[0_0_10px_rgba(220,38,38,0.5)] relative z-10">THE MAFIA</h1>
+        <h1 className="text-4xl font-black uppercase mb-10 tracking-[0.2em] text-red-600 mt-14 drop-shadow-[0_0_10px_rgba(220,38,38,0.5)] relative z-10">THE MAFIA</h1>
         
-        {/* EXACT PODA INPUT FROM BRIEFCASE BLUFF */}
-        <div className="w-full mb-6 flex justify-center relative z-10">
-          <div className="poda">
+        {/* EXACT LAKSHAY-ART PODA INPUT */}
+        <div className="w-full mb-8 flex justify-center relative z-10">
+          <div className="poda-wrapper">
             <div className="poda-glow"></div>
             <div className="poda-darkBorderBg"></div>
             <div className="poda-darkBorderBg"></div>
@@ -267,24 +232,36 @@ export default function GameBoard() {
                 type="text" 
                 value={newPlayerName}
                 onChange={(e) => setNewPlayerName(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && newPlayerName) { state.addPlayer(newPlayerName); setNewPlayerName(''); } }}
+                onKeyDown={(e) => { 
+                  if (e.key === 'Enter' && newPlayerName.trim()) { 
+                    state.addPlayer(newPlayerName.trim()); 
+                    setNewPlayerName(''); 
+                  } 
+                }}
                 className="poda-input" 
               />
               <div className="poda-input-mask"></div>
               <div className="poda-pink-mask"></div>
               <div className="poda-filterBorder"></div>
               
-              <div className="poda-add-btn" onClick={() => { if(newPlayerName) { state.addPlayer(newPlayerName); setNewPlayerName(''); } }}>
-                <svg preserveAspectRatio="none" height="20" width="20" viewBox="0 0 24 24" fill="none" stroke="#d6d6e6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
+              <div 
+                className="poda-filter-icon" 
+                onClick={() => { 
+                  if(newPlayerName.trim()) { 
+                    state.addPlayer(newPlayerName.trim()); 
+                    setNewPlayerName(''); 
+                  } 
+                }}
+              >
+                <svg preserveAspectRatio="none" height="27" width="27" viewBox="4.8 4.56 14.832 15.408" fill="none">
+                  <path d="M8.16 6.65002H15.83C16.47 6.65002 16.99 7.17002 16.99 7.81002V9.09002C16.99 9.56002 16.7 10.14 16.41 10.43L13.91 12.64C13.56 12.93 13.33 13.51 13.33 13.98V16.48C13.33 16.83 13.1 17.29 12.81 17.47L12 17.98C11.24 18.45 10.2 17.92 10.2 16.99V13.91C10.2 13.5 9.97 12.98 9.73 12.69L7.52 10.36C7.23 10.08 7 9.55002 7 9.20002V7.87002C7 7.17002 7.52 6.65002 8.16 6.65002Z" stroke="#d6d6e6" strokeWidth="1" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"></path>
                 </svg>
               </div>
               
               <div className="poda-search-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" viewBox="0 0 24 24" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" height="24" fill="none">
-                  <path stroke="url(#search)" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle stroke="url(#searchl)" cx="12" cy="7" r="4"></circle>
+                  <circle stroke="url(#search)" r="8" cy="11" cx="11"></circle>
+                  <line stroke="url(#searchl)" y2="16.65" y1="22" x2="16.65" x1="22"></line>
                   <defs>
                     <linearGradient gradientTransform="rotate(50)" id="search">
                       <stop stopColor="#f8e7f8" offset="0%"></stop>
@@ -320,6 +297,7 @@ export default function GameBoard() {
           </button>
         </div>
 
+        {/* EXACT STEALTHWORM START MATCH BUTTON */}
         <div className="w-full flex justify-center relative z-10 mb-6">
           <button 
             disabled={state.players.length < 4}
