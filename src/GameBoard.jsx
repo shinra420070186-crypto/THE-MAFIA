@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useGameStore } from './store';
 
 // --- IMAGE MAPPING ---
-// Make sure your uploaded files in the public/ folder exactly match these names!
 const roleImages = {
   'Mafia': '/mafia-card.jpg',
   'Doctor': '/doctor-card.jpg',
@@ -11,7 +10,6 @@ const roleImages = {
   'Civilian': '/civilian-card.jpg'
 };
 
-// We will use these just to cast a matching neon shadow BEHIND the card when flipped
 const glowColors = { 
   'Mafia': '#ff003c',      
   'Doctor': '#00ff75',     
@@ -20,7 +18,7 @@ const glowColors = {
   'Civilian': '#8e44ad'    
 };
 
-// --- PRELOADER COMPONENT (Keeps the instant load so no lag) ---
+// --- PRELOADER COMPONENT ---
 const ImagePreloader = () => (
   <div className="hidden">
     {Object.values(roleImages).map((src, index) => (
@@ -32,30 +30,27 @@ const ImagePreloader = () => (
 // --- THE PERFECT AI PHOTO CARD ---
 const RoleCard = ({ isFlipped, role }) => {
   return (
-    // Card size perfectly tailored for portrait AI-generated playing cards
     <div className="my-6 relative w-[240px] h-[375px] [perspective:1000px] select-none touch-none">
       <div className={`relative w-full h-full transition-transform duration-[600ms] [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}>
         
-        {/* Front of Card (Unflipped - Stealthy Dark UI) */}
+        {/* Front of Card (Unflipped) */}
         <div className="absolute inset-0 [backface-visibility:hidden] rounded-[1.5rem] bg-[#0a0a0a] border border-slate-800 flex flex-col items-center justify-center p-4 shadow-xl">
            <p className="text-slate-500 font-black tracking-widest uppercase text-center text-xl">Secret Role</p>
            <p className="text-[10px] text-slate-600 mt-4 tracking-widest uppercase font-bold animate-pulse">Tap & Hold to Reveal</p>
         </div>
         
-        {/* Back of Card (Directly loading your perfect images) */}
+        {/* Back of Card (Zoomed in even more!) */}
         <div 
-          className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[1.5rem] overflow-hidden bg-[#050505]" 
+          className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[1.5rem] bg-black" 
           style={{ 
+            backgroundImage: `url(${roleImages[role] || roleImages.Civilian})`,
+            backgroundPosition: 'center',
+            // INCREASED ZOOM: Now set to 200% to punch in closer to the characters
+            backgroundSize: '200%',
+            backgroundRepeat: 'no-repeat',
             boxShadow: isFlipped ? `0px 0px 50px 10px ${glowColors[role] || glowColors.Civilian}40` : 'none' 
           }}
         >
-          <img 
-            src={roleImages[role] || roleImages.Civilian} 
-            alt={role} 
-            // object-cover perfectly fits the image to the card frame without stretching
-            className="w-full h-full object-cover pointer-events-none"
-            draggable="false"
-          />
         </div>
 
       </div>
