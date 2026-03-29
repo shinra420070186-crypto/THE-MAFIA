@@ -5,7 +5,7 @@ import { useGameStore } from './store';
 // 1. EXACT NIGHT SKY BACKGROUND
 // ==============================================
 const MidnightSky = () => (
-  <div className="absolute inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ backgroundColor: '#050505' }}>
+  <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ backgroundColor: '#050505' }}>
     <style>{`
       .stars { position: absolute; inset: 0; background-repeat: repeat; pointer-events: none; will-change: opacity; transform: translateZ(0); }
       .stars-1 { background-image: radial-gradient(1px 1px at 10% 10%, #fff, transparent), radial-gradient(1px 1px at 30% 20%, #fff, transparent), radial-gradient(1px 1px at 50% 50%, #fff, transparent), radial-gradient(1px 1px at 70% 30%, #fff, transparent), radial-gradient(1px 1px at 90% 10%, #fff, transparent); background-size: 100px 100px; animation: twinkle 3s ease-in-out infinite; }
@@ -162,7 +162,7 @@ export default function GameBoard() {
 
   // Background Engine
   const renderBackground = () => {
-    if (state.phase === 'splash') return null; // Splash handles its own grey bg
+    if (state.phase === 'splash') return null; 
     if (state.phase === 'role_reveal') return <TwilightSky />;
     if (state.phase === 'day_transition' || state.phase.startsWith('day_')) return <MorningSky />;
     return <MidnightSky />; 
@@ -237,10 +237,13 @@ export default function GameBoard() {
       <div className="relative min-h-screen text-white flex flex-col items-center p-6 overflow-hidden">
         {renderBackground()}
         
-        <h1 className="text-4xl font-black uppercase mb-10 tracking-[0.2em] text-red-600 mt-14 drop-shadow-[0_0_10px_rgba(220,38,38,0.5)] relative z-10">THE MAFIA</h1>
+        {/* ADDED EXACT SHINE ANIMATION TO TITLE */}
+        <h1 className="text-4xl font-black uppercase mb-10 tracking-[0.2em] mt-14 relative z-10 mafia-title-shine text-center">
+          THE MAFIA
+        </h1>
         
         {/* EXACT LAKSHAY-ART PODA INPUT */}
-        <div className="w-full mb-8 flex justify-center relative z-10">
+        <div className="w-full mb-10 flex justify-center relative z-10">
           <div className="poda-wrapper">
             <div className="poda-glow"></div>
             <div className="poda-darkBorderBg"></div>
@@ -585,7 +588,6 @@ export default function GameBoard() {
           ))}
         </div>
 
-        {/* EXACT BARISDOGANSUTCU BATMAN BUTTON (PLAY AGAIN) */}
         <div className="w-full flex justify-center mt-12 mb-6 relative z-10">
           <button 
             onClick={() => {
