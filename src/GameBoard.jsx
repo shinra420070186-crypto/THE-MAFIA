@@ -2,21 +2,34 @@ import React, { useState, useEffect } from 'react';
 import { useGameStore } from './store';
 
 // ==============================================
-// 1. NIGHT SKY BACKGROUND (Lobby & Night)
+// 1. EXACT NIGHT SKY BACKGROUND (from briefcase-bluff)
 // ==============================================
 const MidnightSky = () => (
-  <div className="absolute inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ backgroundColor: '#050505' }}>
+  <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ backgroundColor: '#050505' }}>
     <style>{`
       .stars { position: absolute; inset: 0; background-repeat: repeat; pointer-events: none; will-change: opacity; transform: translateZ(0); }
-      .stars-1 { background-image: radial-gradient(1px 1px at 10% 10%, #fff, transparent), radial-gradient(1px 1px at 30% 20%, #fff, transparent), radial-gradient(1px 1px at 50% 50%, #fff, transparent), radial-gradient(1px 1px at 70% 30%, #fff, transparent), radial-gradient(1px 1px at 90% 10%, #fff, transparent); background-size: 100px 100px; animation: twinkle 3s ease-in-out infinite; }
-      .stars-2 { background-image: radial-gradient(1.5px 1.5px at 20% 40%, #fff, transparent), radial-gradient(1.5px 1.5px at 60% 85%, #fff, transparent), radial-gradient(1.5px 1.5px at 85% 65%, #fff, transparent); background-size: 150px 150px; animation: twinkle 5s ease-in-out infinite 1s; }
-      .stars-3 { background-image: radial-gradient(2px 2px at 40% 70%, #fff, transparent), radial-gradient(2px 2px at 10% 80%, #fff, transparent), radial-gradient(2px 2px at 80% 40%, #fff, transparent); background-size: 200px 200px; animation: twinkle 7s ease-in-out infinite 2s; }
+      .stars-1 {
+        background-image: radial-gradient(1px 1px at 10% 10%, #fff, transparent), radial-gradient(1px 1px at 30% 20%, #fff, transparent), radial-gradient(1px 1px at 50% 50%, #fff, transparent), radial-gradient(1px 1px at 70% 30%, #fff, transparent), radial-gradient(1px 1px at 90% 10%, #fff, transparent);
+        background-size: 100px 100px;
+        animation: twinkle 3s ease-in-out infinite;
+      }
+      .stars-2 {
+        background-image: radial-gradient(1.5px 1.5px at 20% 40%, #fff, transparent), radial-gradient(1.5px 1.5px at 60% 85%, #fff, transparent), radial-gradient(1.5px 1.5px at 85% 65%, #fff, transparent);
+        background-size: 150px 150px;
+        animation: twinkle 5s ease-in-out infinite 1s;
+      }
+      .stars-3 {
+        background-image: radial-gradient(2px 2px at 40% 70%, #fff, transparent), radial-gradient(2px 2px at 10% 80%, #fff, transparent), radial-gradient(2px 2px at 80% 40%, #fff, transparent);
+        background-size: 200px 200px;
+        animation: twinkle 7s ease-in-out infinite 2s;
+      }
       .meteor { position: absolute; width: 1.5px; height: 1.5px; background: #fff; border-radius: 50%; box-shadow: 0 0 5px 1px rgba(255, 255, 255, 0.5); opacity: 0; pointer-events: none; will-change: transform, opacity; transform: translateZ(0); }
       .meteor::after { content: ""; position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 1px; background: linear-gradient(90deg, #fff, transparent); }
       .m1 { top: 10%; left: 110%; animation: shoot 8s linear infinite; }
       .m2 { top: 30%; left: 110%; animation: shoot 12s linear infinite 4s; }
       .m3 { top: 50%; left: 110%; animation: shoot 10s linear infinite 2s; }
       .moon { position: absolute; top: 15%; right: 15%; width: 40px; height: 40px; border-radius: 50%; background: transparent; box-shadow: 7px 7px 0 0 #fdfbd3; filter: drop-shadow(0 0 7px rgba(253, 251, 211, 0.4)); z-index: 10; transform: translateZ(0); }
+      
       @keyframes twinkle { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
       @keyframes shoot { 0% { transform: translateX(0) translateY(0) rotate(-35deg); opacity: 0; } 5% { opacity: 1; } 15% { transform: translateX(-1500px) translateY(1000px) rotate(-35deg); opacity: 0; } 100% { transform: translateX(-1500px) translateY(1000px) rotate(-35deg); opacity: 0; } }
     `}</style>
@@ -31,19 +44,28 @@ const MidnightSky = () => (
 );
 
 // ==============================================
-// 2. MORNING SKY BACKGROUND (Day Phases)
+// 2. EXACT MORNING SKY BACKGROUND (from briefcase-bluff)
 // ==============================================
 const MorningSky = () => (
-  <div className="absolute inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, #4A90E2 0%, #FFB75E 100%)' }}>
+  <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, #4A90E2 0%, #FFB75E 100%)' }}>
     <style>{`
       .motes { position: absolute; inset: 0; background-repeat: repeat; pointer-events: none; will-change: opacity; transform: translateZ(0); }
-      .motes-1 { background-image: radial-gradient(1.5px 1.5px at 15% 15%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 35% 25%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 55% 55%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 75% 35%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 95% 15%, rgba(255,255,255,0.7), transparent); background-size: 100px 100px; animation: twinkle 4s ease-in-out infinite; }
-      .motes-2 { background-image: radial-gradient(2px 2px at 25% 45%, rgba(255,255,255,0.5), transparent), radial-gradient(2px 2px at 65% 85%, rgba(255,255,255,0.5), transparent), radial-gradient(2px 2px at 85% 70%, rgba(255,255,255,0.5), transparent); background-size: 150px 150px; animation: twinkle 6s ease-in-out infinite 2s; }
+      .motes-1 {
+        background-image: radial-gradient(1.5px 1.5px at 15% 15%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 35% 25%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 55% 55%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 75% 35%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 95% 15%, rgba(255,255,255,0.7), transparent);
+        background-size: 100px 100px;
+        animation: twinkle 4s ease-in-out infinite;
+      }
+      .motes-2 {
+        background-image: radial-gradient(2px 2px at 25% 45%, rgba(255,255,255,0.5), transparent), radial-gradient(2px 2px at 65% 85%, rgba(255,255,255,0.5), transparent), radial-gradient(2px 2px at 85% 70%, rgba(255,255,255,0.5), transparent);
+        background-size: 150px 150px;
+        animation: twinkle 6s ease-in-out infinite 2s;
+      }
       .wind { position: absolute; width: 60px; height: 2px; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent); border-radius: 50%; opacity: 0; pointer-events: none; will-change: transform, opacity; transform: translateZ(0); }
       .w1 { top: 15%; left: 110%; animation: breeze 6s linear infinite; }
       .w2 { top: 40%; left: 110%; animation: breeze 10s linear infinite 3s; }
       .w3 { top: 60%; left: 110%; animation: breeze 8s linear infinite 1s; }
       .sun { position: absolute; top: 15%; right: 15%; width: 50px; height: 50px; border-radius: 50%; background: #FFD700; box-shadow: 0 0 40px 15px rgba(255, 215, 0, 0.5); z-index: 10; transform: translateZ(0); }
+      
       @keyframes breeze { 0% { transform: translateX(0); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateX(-1500px); opacity: 0; } }
     `}</style>
     <div className="motes motes-1"></div>
@@ -56,15 +78,27 @@ const MorningSky = () => (
 );
 
 // ==============================================
-// 3. TWILIGHT SKY (Dark Cosmic for Role Reveal)
+// 3. EXACT ACTIVE GAME SKY (TWILIGHT) (from briefcase-bluff)
 // ==============================================
 const TwilightSky = () => (
-  <div className="absolute inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, #2B1055 0%, #7597DE 100%)' }}>
+  <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, #2B1055 0%, #7597DE 100%)' }}>
     <style>{`
       .twinkle-stars { position: absolute; inset: 0; background-repeat: repeat; pointer-events: none; will-change: opacity; transform: translateZ(0); }
-      .tw-1 { background-image: radial-gradient(1px 1px at 15% 15%, #fff, transparent), radial-gradient(1px 1px at 35% 25%, #fff, transparent), radial-gradient(1px 1px at 55% 55%, #fff, transparent), radial-gradient(1px 1px at 75% 35%, #fff, transparent), radial-gradient(1px 1px at 95% 15%, #fff, transparent); background-size: 100px 100px; animation: twilight-twinkle 4s ease-in-out infinite; }
-      .tw-2 { background-image: radial-gradient(1.5px 1.5px at 25% 45%, #fff, transparent), radial-gradient(1.5px 1.5px at 65% 85%, #fff, transparent), radial-gradient(1.5px 1.5px at 85% 70%, #fff, transparent); background-size: 150px 150px; animation: twilight-twinkle 6s ease-in-out infinite 2s; }
-      .tw-3 { background-image: radial-gradient(2px 2px at 40% 70%, #fff, transparent), radial-gradient(2px 2px at 10% 80%, #fff, transparent), radial-gradient(2px 2px at 80% 40%, #fff, transparent); background-size: 200px 200px; animation: twilight-twinkle 7s ease-in-out infinite 3s; }
+      .tw-1 {
+        background-image: radial-gradient(1px 1px at 15% 15%, #fff, transparent), radial-gradient(1px 1px at 35% 25%, #fff, transparent), radial-gradient(1px 1px at 55% 55%, #fff, transparent), radial-gradient(1px 1px at 75% 35%, #fff, transparent), radial-gradient(1px 1px at 95% 15%, #fff, transparent);
+        background-size: 100px 100px;
+        animation: twilight-twinkle 4s ease-in-out infinite;
+      }
+      .tw-2 {
+        background-image: radial-gradient(1.5px 1.5px at 25% 45%, #fff, transparent), radial-gradient(1.5px 1.5px at 65% 85%, #fff, transparent), radial-gradient(1.5px 1.5px at 85% 70%, #fff, transparent);
+        background-size: 150px 150px;
+        animation: twilight-twinkle 6s ease-in-out infinite 2s;
+      }
+      .tw-3 {
+        background-image: radial-gradient(2px 2px at 40% 70%, #fff, transparent), radial-gradient(2px 2px at 10% 80%, #fff, transparent), radial-gradient(2px 2px at 80% 40%, #fff, transparent);
+        background-size: 200px 200px;
+        animation: twilight-twinkle 7s ease-in-out infinite 3s;
+      }
       .tw-meteor { position: absolute; width: 1.5px; height: 1.5px; background: #fff; border-radius: 50%; box-shadow: 0 0 5px 1px rgba(255, 255, 255, 0.5); opacity: 0; pointer-events: none; will-change: transform, opacity; transform: translateZ(0); }
       .tw-meteor::after { content: ""; position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 1px; background: linear-gradient(90deg, #fff, transparent); }
       .tw-m1 { top: 15%; left: 110%; animation: twilight-shoot 6s linear infinite; }
@@ -84,7 +118,6 @@ const TwilightSky = () => (
     <div className="tw-body"></div>
   </div>
 );
-
 
 // --- IMAGE PRELOADER ---
 const roleImages = {
@@ -151,20 +184,20 @@ export default function GameBoard() {
     if (state.phase === 'night_transition') {
       timer = setTimeout(() => {
         state.startNightRoles();
-      }, 4000); // Wait 4 seconds, then auto-load the night actions
+      }, 4000);
     } else if (state.phase === 'day_transition') {
       timer = setTimeout(() => {
         state.startDayRecap();
-      }, 4000); // Wait 4 seconds, then auto-load the morning recap
+      }, 4000);
     }
     return () => clearTimeout(timer);
   }, [state.phase]);
 
-  // Background Engine: Decides which sky to render based on phase
+  // Background Engine
   const renderBackground = () => {
     if (state.phase === 'role_reveal') return <TwilightSky />;
     if (state.phase === 'day_transition' || state.phase.startsWith('day_')) return <MorningSky />;
-    return <MidnightSky />; // Lobby, Night phases, and Game Over use MidnightSky
+    return <MidnightSky />; 
   };
 
   const renderBackButton = () => {
@@ -209,7 +242,7 @@ export default function GameBoard() {
     </div>
   );
 
-  // --- LOBBY (Clean Original Design) ---
+  // --- LOBBY ---
   if (state.phase === 'lobby') {
     return (
       <div className="relative min-h-screen text-white flex flex-col items-center p-6 overflow-hidden">
@@ -250,7 +283,6 @@ export default function GameBoard() {
           </button>
         </div>
 
-        {/* EXACT STEALTHWORM START MATCH BUTTON */}
         <div className="w-full flex justify-center relative z-10 mb-6">
           <button 
             disabled={state.players.length < 4}
@@ -273,7 +305,7 @@ export default function GameBoard() {
     );
   }
 
-  // --- ROLE REVEAL PHASE (TwilightSky) ---
+  // --- ROLE REVEAL PHASE (Exact TwilightSky) ---
   if (state.phase === 'role_reveal') {
     const currentPlayer = state.players[state.revealIndex];
     const isLastPlayer = state.revealIndex === state.players.length - 1;
@@ -307,7 +339,7 @@ export default function GameBoard() {
     );
   }
 
-  // --- CINEMATIC: NIGHT TRANSITION (Auto-Advances after 4s) ---
+  // --- CINEMATIC: NIGHT TRANSITION ---
   if (state.phase === 'night_transition') {
     return (
       <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden">
@@ -402,7 +434,7 @@ export default function GameBoard() {
     );
   }
 
-  // --- CINEMATIC: DAY TRANSITION (Auto-Advances after 4s) ---
+  // --- CINEMATIC: DAY TRANSITION ---
   if (state.phase === 'day_transition') {
     return (
       <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden">
@@ -497,7 +529,6 @@ export default function GameBoard() {
           ))}
         </div>
 
-        {/* EXACT STEALTHWORM START MATCH BUTTON FOR PLAY AGAIN */}
         <div className="w-full flex justify-center mt-12 mb-6 relative z-10">
           <button 
             onClick={() => {
