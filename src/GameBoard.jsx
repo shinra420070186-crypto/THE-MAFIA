@@ -161,6 +161,7 @@ export default function GameBoard() {
 
   // Background Engine
   const renderBackground = () => {
+    if (state.phase === 'splash') return null; // Splash screen handles its own background
     if (state.phase === 'role_reveal') return <TwilightSky />;
     if (state.phase === 'day_transition' || state.phase.startsWith('day_')) return <MorningSky />;
     return <MidnightSky />; 
@@ -208,13 +209,11 @@ export default function GameBoard() {
     </div>
   );
 
-  // --- NEW SPLASH SCREEN (Batman Button) ---
+  // --- NEW SPLASH SCREEN ---
   if (state.phase === 'splash') {
     return (
-      <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 overflow-hidden">
-        {renderBackground()}
+      <div className="relative min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden" style={{ backgroundColor: '#e5e5e5' }}>
         <ImagePreloader />
-        <h1 className="text-6xl md:text-7xl font-black uppercase mb-16 tracking-[0.2em] text-red-600 drop-shadow-[0_0_20px_rgba(220,38,38,0.8)] relative z-10 text-center">THE MAFIA</h1>
         <div className="relative z-10">
           <button 
             onClick={() => state.enterLobby()}
@@ -562,22 +561,15 @@ export default function GameBoard() {
           ))}
         </div>
 
-        {/* EXACT STEALTHWORM PLAY AGAIN BUTTON */}
+        {/* EXACT BARISDOGANSUTCU BATMAN BUTTON (PLAY AGAIN) */}
         <div className="w-full flex justify-center mt-12 mb-6 relative z-10">
           <button 
             onClick={() => {
               setTimeout(() => { state.playAgain(); }, 250);
             }}
-            className="stealth-btn"
+            className="batman-btn"
           >
-            <strong className="stealth-strong">PLAY AGAIN</strong>
-            <div className="stealth-container-stars">
-              <div className="stealth-stars"></div>
-            </div>
-            <div className="stealth-glow">
-              <div className="stealth-circle"></div>
-              <div className="stealth-circle"></div>
-            </div>
+            <span>PLAY AGAIN</span>
           </button>
         </div>
       </div>
