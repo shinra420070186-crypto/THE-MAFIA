@@ -143,6 +143,7 @@ export default function GameBoard() {
   const [isFlipped, setIsFlipped] = useState(false);
 
   const alivePlayers = state.players.filter(p => p.isAlive);
+  const availableRecentNames = state.recentNames.filter(n => !state.players.some(p => p.name === n));
 
   // --- AUTOMATIC CINEMATIC TIMERS ---
   useEffect(() => {
@@ -161,10 +162,10 @@ export default function GameBoard() {
 
   // Background Engine
   const renderBackground = () => {
-    if (state.phase === 'splash' || state.phase === 'lobby') return null; // Splash and Lobby handle their own light grey bg
+    if (state.phase === 'splash') return null; 
     if (state.phase === 'role_reveal') return <TwilightSky />;
     if (state.phase === 'day_transition' || state.phase.startsWith('day_')) return <MorningSky />;
-    return <MidnightSky />; 
+    return <MidnightSky />; // Lobby uses MidnightSky again
   };
 
   const renderBackButton = () => {
@@ -230,15 +231,16 @@ export default function GameBoard() {
     );
   }
 
-  // --- LOBBY (Same light grey background as splash, no MidnightSky) ---
+  // --- LOBBY (MidnightSky + Poda Input + Stealth Button + Briefcase Lists) ---
   if (state.phase === 'lobby') {
     return (
-      <div className="relative min-h-screen text-white flex flex-col items-center p-6 overflow-hidden" style={{ backgroundColor: '#e5e5e5' }}>
+      <div className="relative min-h-screen text-white flex flex-col items-center p-6 overflow-hidden">
+        {renderBackground()}
         
         <h1 className="text-4xl font-black uppercase mb-10 tracking-[0.2em] text-red-600 mt-14 drop-shadow-[0_0_10px_rgba(220,38,38,0.5)] relative z-10">THE MAFIA</h1>
         
         {/* EXACT LAKSHAY-ART PODA INPUT */}
-        <div className="w-full mb-8 flex justify-center relative z-10">
+        <div className="w-full mb-10 flex justify-center relative z-10">
           <div className="poda-wrapper">
             <div className="poda-glow"></div>
             <div className="poda-darkBorderBg"></div>
@@ -298,20 +300,39 @@ export default function GameBoard() {
           </div>
         </div>
 
-        <div className="w-full max-w-sm space-y-2 mb-8 max-h-48 overflow-y-auto pr-2 relative z-10">
-          {state.players.map(p => (
-            <div key={p.id} className="flex justify-between items-center bg-[#0a0a0a]/80 backdrop-blur-md p-3 rounded-lg border border-slate-800">
-              <span className="font-bold tracking-wider text-slate-200">{p.name}</span>
-              <button onClick={() => state.removePlayer(p.id)} className="text-slate-500 text-lg active:scale-90">✕</button>
+        {/* EXACT BRIEFCASE BLUFF "RECENT PLAYERS" LIST */}
+        {availableRecentNames.length > 0 && (
+          <div className="w-full mb-6 relative z-10">
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-3 pl-2 text-center drop-shadow-md">Recent Players</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {availableRecentNames.slice(0, 6).map(name => (
+                <button 
+                  key={name} 
+                  onClick={() => state.addPlayer(name)} 
+                  className="px-4 py-2 bg-[#222] text-[#e81cff] border border-[#e81cff]/30 rounded-full text-xs font-bold tracking-wider active:scale-95 transition-all shadow-md"
+                >
+                  + {name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* EXACT BRIEFCASE BLUFF "ADDED PLAYERS" LIST */}
+        <div className="w-full space-y-2 mb-10 max-h-[300px] overflow-y-auto px-2 relative z-10">
+          {state.players.map((p) => (
+            <div key={p.id} className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all">
+              <span className="font-bold tracking-widest text-white">{p.name}</span>
+              <button onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6">✕</button>
             </div>
           ))}
         </div>
 
-        <div className="w-full max-w-sm flex items-center justify-between bg-[#0a0a0a]/80 backdrop-blur-md border border-slate-800 p-4 rounded-xl mb-10 relative z-10">
+        <div className="w-full max-w-sm flex items-center justify-between bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 p-4 rounded-xl mb-10 relative z-10">
           <span className="font-bold text-[10px] tracking-widest uppercase text-slate-400">Reveal Roles on Death?</span>
           <button 
             onClick={state.toggleRevealRoles} 
-            className={`px-4 py-2 rounded text-[10px] uppercase font-black tracking-widest transition-colors ${state.settings.revealRoles ? 'bg-green-500/20 text-green-500 border border-green-500/50' : 'bg-slate-800 text-slate-500'}`}
+            className={`px-4 py-2 rounded text-[10px] uppercase font-black tracking-widest transition-colors ${state.settings.revealRoles ? 'bg-green-500/20 text-green-500 border border-green-500/50' : 'bg-[#222] text-slate-500 border border-slate-700'}`}
           >
             {state.settings.revealRoles ? 'ON' : 'OFF'}
           </button>
