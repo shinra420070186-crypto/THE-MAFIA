@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useGameStore } from './store';
 
 // ==============================================
-// 1. EXACT NIGHT SKY BACKGROUND
+// 1. NIGHT SKY BACKGROUND
 // ==============================================
 const MidnightSky = () => (
   <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ backgroundColor: '#050505' }}>
@@ -31,7 +31,7 @@ const MidnightSky = () => (
 );
 
 // ==============================================
-// 2. EXACT MORNING SKY BACKGROUND
+// 2. MORNING SKY BACKGROUND
 // ==============================================
 const MorningSky = () => (
   <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, #4A90E2 0%, #FFB75E 100%)' }}>
@@ -56,7 +56,7 @@ const MorningSky = () => (
 );
 
 // ==============================================
-// 3. EXACT ACTIVE GAME SKY (TWILIGHT)
+// 3. ACTIVE GAME SKY (TWILIGHT)
 // ==============================================
 const TwilightSky = () => (
   <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, #2B1055 0%, #7597DE 100%)' }}>
@@ -237,12 +237,12 @@ export default function GameBoard() {
       <div className="relative min-h-screen text-white flex flex-col items-center p-6 overflow-hidden">
         {renderBackground()}
         
-        {/* ADDED EXACT SHINE ANIMATION TO TITLE */}
+        {/* FIXED, SMOOTH SHINE ANIMATION TO TITLE */}
         <h1 className="text-4xl font-black uppercase mb-10 tracking-[0.2em] mt-14 relative z-10 mafia-title-shine text-center">
           THE MAFIA
         </h1>
         
-        {/* EXACT LAKSHAY-ART PODA INPUT */}
+        {/* PODA INPUT */}
         <div className="w-full mb-10 flex justify-center relative z-10">
           <div className="poda-wrapper">
             <div className="poda-glow"></div>
@@ -303,7 +303,7 @@ export default function GameBoard() {
           </div>
         </div>
 
-        {/* EXACT BRIEFCASE BLUFF "RECENT PLAYERS" LIST */}
+        {/* RECENT PLAYERS LIST */}
         {availableRecentNames.length > 0 && (
           <div className="w-full mb-6 relative z-10">
             <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-3 pl-2 text-center drop-shadow-md">Recent Players</p>
@@ -321,7 +321,7 @@ export default function GameBoard() {
           </div>
         )}
 
-        {/* EXACT BRIEFCASE BLUFF "ADDED PLAYERS" LIST */}
+        {/* ADDED PLAYERS LIST */}
         <div className="w-full space-y-2 mb-10 max-h-[300px] overflow-y-auto px-2 relative z-10">
           {state.players.map((p) => (
             <div key={p.id} className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all">
@@ -341,7 +341,7 @@ export default function GameBoard() {
           </button>
         </div>
 
-        {/* EXACT STEALTHWORM START MATCH BUTTON */}
+        {/* STEALTHWORM START MATCH BUTTON */}
         <div className="w-full flex justify-center relative z-10 mb-6">
           <button 
             disabled={state.players.length < 4}
@@ -364,7 +364,7 @@ export default function GameBoard() {
     );
   }
 
-  // --- ROLE REVEAL PHASE (Exact TwilightSky) ---
+  // --- ROLE REVEAL PHASE ---
   if (state.phase === 'role_reveal') {
     const currentPlayer = state.players[state.revealIndex];
     const isLastPlayer = state.revealIndex === state.players.length - 1;
