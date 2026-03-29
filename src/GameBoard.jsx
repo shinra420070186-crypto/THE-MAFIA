@@ -1,46 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGameStore } from './store';
 
-// --- PURE CODE NEON SVG ENGINE ---
+// --- IMAGE MAPPING ---
+const roleImages = {
+  'Mafia': '/mafia-card.jpg',
+  'Doctor': '/doctor-card.jpg',
+  'Detective': '/detective-card.jpg',
+  'Sheriff': '/sheriff-card.jpg',
+  'Civilian': '/civilian-card.jpg'
+};
+
 const glowColors = { 
-  'Mafia': '#ff003c',      // Neon Red
-  'Doctor': '#00ff75',     // Neon Green
-  'Detective': '#00d2ff',  // Neon Blue
-  'Sheriff': '#f2994a',    // Neon Orange
-  'Civilian': '#8e44ad'    // Neon Purple
+  'Mafia': '#ff003c',      
+  'Doctor': '#00ff75',     
+  'Detective': '#00d2ff',  
+  'Sheriff': '#f2994a',    
+  'Civilian': '#8e44ad'    
 };
 
-// Generates the crisp, glowing vector icons for the center and top-left of the cards
-const RoleIcon = ({ role, className, style }) => {
-  let path = "";
-  if (role === 'Mafia') {
-    // Spade / Mob Hat silhouette
-    path = "M12 2C8.13 2 5 5.13 5 9v2H3v2h18v-2h-2V9c0-3.87-3.13-7-7-7zM7 11V9c0-2.76 2.24-5 5-5s5 2.24 5 5v2H7z";
-  } else if (role === 'Doctor') {
-    // Medical Cross
-    path = "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z";
-  } else if (role === 'Detective') {
-    // Magnifying Glass
-    path = "M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z";
-  } else if (role === 'Sheriff') {
-    // Sheriff Star Badge
-    path = "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z";
-  } else {
-    // Civilian Silhouette
-    path = "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z";
-  }
+// --- PRELOADER COMPONENT (Keeps the instant load so no lag) ---
+const ImagePreloader = () => (
+  <div className="hidden">
+    {Object.values(roleImages).map((src, index) => (
+      <img key={index} src={src} alt="preload" fetchpriority="high" />
+    ))}
+  </div>
+);
 
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className} style={style}>
-      <path d={path} />
-    </svg>
-  );
-};
-
-// --- THE 100% CODE-BASED ROLE CARD ---
+// --- THE PERFECT AI PHOTO CARD ---
 const RoleCard = ({ isFlipped, role }) => {
-  const color = glowColors[role] || glowColors.Civilian;
-
   return (
     <div className="my-6 relative w-[240px] h-[360px] [perspective:1000px] select-none touch-none">
       <div className={`relative w-full h-full transition-transform duration-[600ms] [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}>
@@ -51,51 +39,19 @@ const RoleCard = ({ isFlipped, role }) => {
            <p className="text-[10px] text-slate-600 mt-4 tracking-widest uppercase font-bold animate-pulse">Tap & Hold to Reveal</p>
         </div>
         
-        {/* Back of Card (Pure CSS/SVG Neon Aesthetic) */}
+        {/* Back of Card (Uses Background-Zoom to crop perfectly!) */}
         <div 
-          className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[2rem] overflow-hidden flex flex-col items-center justify-between p-6 border-2" 
+          className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[2rem] bg-black" 
           style={{ 
-            backgroundColor: '#050505',
-            borderColor: `${color}80`, // Glowing tinted border
-            boxShadow: isFlipped ? `0px 0px 50px 5px ${color}40, inset 0px 0px 30px 2px ${color}20` : 'none',
-            // Creates the "light bleeding from the center" effect seen in the photos
-            backgroundImage: `radial-gradient(circle at center, ${color}20 0%, transparent 65%)`
+            backgroundImage: `url(${roleImages[role] || roleImages.Civilian})`,
+            backgroundPosition: 'center',
+            // THE MAGIC NUMBER: 175% zooms exactly into the center drawing and cuts out the black borders.
+            // (If the portrait looks slightly too small, change this to '185%'. If it's too big, change to '160%')
+            backgroundSize: '175%',
+            backgroundRepeat: 'no-repeat',
+            boxShadow: isFlipped ? `0px 0px 50px 10px ${glowColors[role] || glowColors.Civilian}40` : 'none' 
           }}
         >
-          {/* Top Left Mini Icon */}
-          <div className="w-full flex justify-start">
-            <RoleIcon 
-              role={role} 
-              className="w-8 h-8 opacity-90" 
-              style={{ color: color, filter: `drop-shadow(0px 0px 8px ${color})` }} 
-            />
-          </div>
-
-          {/* Center Massive Hero Silhouette */}
-          <div className="flex-1 flex items-center justify-center w-full">
-             <RoleIcon 
-              role={role} 
-              className="w-32 h-32 opacity-100" 
-              // This drop shadow is what gives the SVG that intense neon photo-look
-              style={{ color: color, filter: `drop-shadow(0px 0px 25px ${color})` }} 
-            />
-          </div>
-
-          {/* Bottom Glowing Text */}
-          <div className="w-full pb-2">
-            <h3 
-              className="text-3xl font-black uppercase tracking-widest text-center" 
-              style={{ 
-                color: '#fff', 
-                textShadow: `0px 0px 15px ${color}, 0px 0px 30px ${color}` 
-              }}
-            >
-              {role}
-            </h3>
-          </div>
-
-          {/* CSS "Star Dust" overlay to mimic the photo particles */}
-          <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(1px 1px at 20px 30px, #ffffff, rgba(0,0,0,0)), radial-gradient(1px 1px at 40px 70px, #ffffff, rgba(0,0,0,0)), radial-gradient(1px 1px at 50px 160px, #ffffff, rgba(0,0,0,0)), radial-gradient(1px 1px at 90px 40px, #ffffff, rgba(0,0,0,0)), radial-gradient(1px 1px at 130px 80px, #ffffff, rgba(0,0,0,0))', backgroundSize: '150px 150px' }}></div>
         </div>
 
       </div>
@@ -140,6 +96,8 @@ export default function GameBoard() {
   if (state.phase === 'lobby') {
     return (
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center p-6">
+        <ImagePreloader />
+        
         <h1 className="text-4xl font-black uppercase mb-8 tracking-[0.2em] text-red-600 mt-10 drop-shadow-[0_0_10px_rgba(220,38,38,0.5)]">THE MAFIA</h1>
         
         <div className="w-full max-w-sm bg-slate-900/80 border border-slate-800 p-4 rounded-2xl mb-6">
