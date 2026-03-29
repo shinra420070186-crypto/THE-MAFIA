@@ -15,9 +15,22 @@ const savePlayers = (players) => {
   localStorage.setItem('mafia_roster', JSON.stringify(cleanPlayers));
 };
 
+const loadRecentNames = () => {
+  try {
+    const saved = localStorage.getItem('mafia_recent_names');
+    if (saved) return JSON.parse(saved);
+  } catch (e) {}
+  return [];
+};
+
+const saveRecentNames = (names) => {
+  localStorage.setItem('mafia_recent_names', JSON.stringify(names));
+};
+
 export const useGameStore = create((set, get) => ({
   phase: 'splash', // Starts on the Batman Splash Screen
   players: loadPlayers(), 
+  recentNames: loadRecentNames(),
   settings: { revealRoles: true },
   revealIndex: 0, 
   nightActions: { mafia: null, doctor: null, sheriff: null },
@@ -33,7 +46,11 @@ export const useGameStore = create((set, get) => ({
   addPlayer: (name) => set((state) => {
     const newPlayers = [...state.players, { id: Math.random().toString(36).substr(2, 9), name, role: 'Civilian', isAlive: true }];
     savePlayers(newPlayers);
-    return { players: newPlayers };
+    
+    const newRecent = [name, ...state.recentNames.filter(n => n !== name)].slice(0, 15);
+    saveRecentNames(newRecent);
+
+    return { players: newPlayers, recentNames: newRecent };
   }),
 
   removePlayer: (id) => set((state) => {
