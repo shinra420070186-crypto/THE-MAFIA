@@ -18,7 +18,6 @@ const glowColors = {
   'Civilian': '#8e44ad'    
 };
 
-// --- PRELOADER COMPONENT (Keeps the instant load so no lag) ---
 const ImagePreloader = () => (
   <div className="hidden">
     {Object.values(roleImages).map((src, index) => (
@@ -39,13 +38,12 @@ const RoleCard = ({ isFlipped, role }) => {
            <p className="text-[10px] text-slate-600 mt-4 tracking-widest uppercase font-bold animate-pulse">Tap & Hold to Reveal</p>
         </div>
         
-        {/* Back of Card (Micro-zoomed to 105% just to trim the outer edge) */}
+        {/* Back of Card */}
         <div 
           className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[2rem] bg-black" 
           style={{ 
             backgroundImage: `url(${roleImages[role] || roleImages.Civilian})`,
             backgroundPosition: 'center',
-            // THE MAGIC NUMBER: 105% is a very tiny zoom just to make the borders uniform
             backgroundSize: '105%',
             backgroundRepeat: 'no-repeat',
             boxShadow: isFlipped ? `0px 0px 50px 10px ${glowColors[role] || glowColors.Civilian}40` : 'none' 
@@ -64,6 +62,23 @@ export default function GameBoard() {
   const [isFlipped, setIsFlipped] = useState(false);
 
   const alivePlayers = state.players.filter(p => p.isAlive);
+
+  // --- NEW: UNIVERSAL BACK BUTTON ---
+  const renderBackButton = () => {
+    if (state.phase === 'lobby') return null;
+    return (
+      <button 
+        onClick={() => {
+          if (window.confirm("Abort current game and go back to Lobby?")) {
+            state.resetToLobby();
+          }
+        }}
+        className="absolute top-4 left-4 text-slate-400 font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 active:scale-90 z-50 p-3 bg-[#0a0a0a] rounded-lg border border-slate-800 shadow-xl"
+      >
+        <span>◀</span> LOBBY
+      </button>
+    );
+  };
 
   const renderPlayerList = (onSelect, includeSkip = false, disableCondition = () => false) => (
     <div className="w-full max-w-sm space-y-2 mt-6 max-h-[50vh] overflow-y-auto pr-2">
@@ -94,7 +109,7 @@ export default function GameBoard() {
   // --- LOBBY ---
   if (state.phase === 'lobby') {
     return (
-      <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center p-6">
+      <div className="relative min-h-screen bg-[#050505] text-white flex flex-col items-center p-6">
         <ImagePreloader />
         
         <h1 className="text-4xl font-black uppercase mb-8 tracking-[0.2em] text-red-600 mt-10 drop-shadow-[0_0_10px_rgba(220,38,38,0.5)]">THE MAFIA</h1>
@@ -102,6 +117,7 @@ export default function GameBoard() {
         <div className="w-full max-w-sm bg-slate-900/80 border border-slate-800 p-4 rounded-2xl mb-6">
           <input 
             value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && newPlayerName) { state.addPlayer(newPlayerName); setNewPlayerName(''); }}}
             placeholder="Add player..."
             className="w-full p-3 bg-black rounded-lg outline-none text-white font-bold mb-2"
           />
@@ -147,7 +163,8 @@ export default function GameBoard() {
     const isLastPlayer = state.revealIndex === state.players.length - 1;
 
     return (
-      <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 text-center">
+      <div className="relative min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 text-center">
+        {renderBackButton()}
         <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mb-2">Pass phone to</p>
         <h2 className="text-4xl font-black text-white uppercase mb-8 drop-shadow-md">{currentPlayer.name}</h2>
         
@@ -177,8 +194,9 @@ export default function GameBoard() {
   if (state.phase === 'night_mafia') {
     const disableCondition = (p) => p.role === 'Mafia';
     return (
-      <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center p-6 text-center">
-        <h2 className="text-red-600 font-black text-2xl uppercase mt-10">Night Phase</h2>
+      <div className="relative min-h-screen bg-[#050505] text-white flex flex-col items-center p-6 text-center">
+        {renderBackButton()}
+        <h2 className="text-red-600 font-black text-2xl uppercase mt-14">Night Phase</h2>
         <p className="text-slate-400 mt-2 text-sm">Moderator: Ask the Mafia to wake up and point.</p>
         <h3 className="text-3xl font-black mt-8">Who does the Mafia kill?</h3>
         {renderPlayerList((id) => state.submitNightAction('Mafia', id), true, disableCondition)}
@@ -190,8 +208,9 @@ export default function GameBoard() {
   if (state.phase === 'night_doctor') {
     const disableCondition = (p) => p.id === state.doctorLastSaved || (p.role === 'Doctor' && state.doctorHasSelfSaved);
     return (
-      <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center p-6 text-center">
-        <h2 className="text-blue-500 font-black text-2xl uppercase mt-10">Night Phase</h2>
+      <div className="relative min-h-screen bg-[#050505] text-white flex flex-col items-center p-6 text-center">
+        {renderBackButton()}
+        <h2 className="text-blue-500 font-black text-2xl uppercase mt-14">Night Phase</h2>
         <p className="text-slate-400 mt-2 text-sm">Moderator: Ask the Doctor to wake up and point.</p>
         <h3 className="text-3xl font-black mt-8">Who does the Doctor save?</h3>
         {renderPlayerList((id) => state.submitNightAction('Doctor', id), true, disableCondition)}
@@ -205,7 +224,8 @@ export default function GameBoard() {
       const isDeadRole = state.investigationResult === 'DEAD_ROLE';
       const isMafia = state.investigationResult === 'MAFIA';
       return (
-        <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center p-6 text-center justify-center">
+        <div className="relative min-h-screen bg-[#050505] text-white flex flex-col items-center p-6 text-center justify-center">
+          {renderBackButton()}
           <p className="text-slate-400 uppercase font-bold tracking-widest text-[10px] mb-4">
             {isDeadRole ? "Moderator: Pretend to give an answer!" : "Moderator: Nod or shake your head."}
           </p>
@@ -222,8 +242,9 @@ export default function GameBoard() {
       );
     }
     return (
-      <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center p-6 text-center">
-        <h2 className="text-yellow-500 font-black text-2xl uppercase mt-10">Night Phase</h2>
+      <div className="relative min-h-screen bg-[#050505] text-white flex flex-col items-center p-6 text-center">
+        {renderBackButton()}
+        <h2 className="text-yellow-500 font-black text-2xl uppercase mt-14">Night Phase</h2>
         <p className="text-slate-400 mt-2 text-sm">Moderator: Ask the Detective to wake up and point.</p>
         <h3 className="text-3xl font-black mt-8">Who is investigated?</h3>
         {renderPlayerList((id) => state.submitNightAction('Detective', id), false)}
@@ -234,8 +255,9 @@ export default function GameBoard() {
   // --- NIGHT: SHERIFF ---
   if (state.phase === 'night_sheriff') {
     return (
-      <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center p-6 text-center">
-        <h2 className="text-purple-500 font-black text-2xl uppercase mt-10">Night Phase</h2>
+      <div className="relative min-h-screen bg-[#050505] text-white flex flex-col items-center p-6 text-center">
+        {renderBackButton()}
+        <h2 className="text-purple-500 font-black text-2xl uppercase mt-14">Night Phase</h2>
         <p className="text-slate-400 mt-2 text-sm">Moderator: Ask the Sheriff to wake up and point.</p>
         <h3 className="text-3xl font-black mt-8">Who does the Sheriff execute?</h3>
         {renderPlayerList((id) => state.submitNightAction('Sheriff', id), true)}
@@ -246,8 +268,9 @@ export default function GameBoard() {
   // --- DAY: RECAP ---
   if (state.phase === 'day_recap' || state.phase === 'day_recap_post_vote') {
     return (
-      <div className="min-h-screen bg-[#111] text-white flex flex-col items-center p-6 text-center justify-center">
-        <h2 className="text-3xl font-black uppercase mb-8 text-yellow-500 tracking-widest drop-shadow-md">The Town Awakens</h2>
+      <div className="relative min-h-screen bg-[#111] text-white flex flex-col items-center p-6 text-center justify-center">
+        {renderBackButton()}
+        <h2 className="text-3xl font-black uppercase mb-8 text-yellow-500 tracking-widest drop-shadow-md mt-14">The Town Awakens</h2>
         <div className="w-full max-w-sm space-y-4">
           {state.dayRecap.map((msg, i) => (
             <div key={i} className="p-6 bg-[#1a1a1a] rounded-xl text-lg font-bold border border-[#222] shadow-xl">
@@ -269,8 +292,9 @@ export default function GameBoard() {
   if (state.phase === 'day_voting') {
     const currentVoter = alivePlayers[state.votingState.currentVoterIndex];
     return (
-      <div className="min-h-screen bg-[#111] text-white flex flex-col items-center p-6 text-center">
-        <h2 className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-10 mb-2">Town Voting</h2>
+      <div className="relative min-h-screen bg-[#111] text-white flex flex-col items-center p-6 text-center">
+        {renderBackButton()}
+        <h2 className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-14 mb-2">Town Voting</h2>
         <h3 className="text-4xl font-black text-white my-2 uppercase">{currentVoter.name}</h3>
         <p className="text-sm font-bold text-red-500 tracking-widest uppercase">Who do you exile?</p>
         
@@ -302,8 +326,9 @@ export default function GameBoard() {
   if (state.phase === 'gameover') {
     const isMafiaWin = state.winner === 'Mafia';
     return (
-      <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 text-center">
-        <h1 className={`text-6xl font-black uppercase mb-4 ${isMafiaWin ? 'text-red-600 drop-shadow-[0_0_30px_rgba(220,38,38,0.5)]' : 'text-blue-500 drop-shadow-[0_0_30px_rgba(59,130,246,0.5)]'}`}>
+      <div className="relative min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 text-center">
+        {renderBackButton()}
+        <h1 className={`text-6xl font-black uppercase mb-4 mt-14 ${isMafiaWin ? 'text-red-600 drop-shadow-[0_0_30px_rgba(220,38,38,0.5)]' : 'text-blue-500 drop-shadow-[0_0_30px_rgba(59,130,246,0.5)]'}`}>
           {state.winner} WIN!
         </h1>
         
