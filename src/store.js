@@ -28,7 +28,7 @@ const saveRecentNames = (names) => {
 };
 
 export const useGameStore = create((set, get) => ({
-  phase: 'splash', // Starts on the Batman Splash Screen
+  phase: 'splash',
   players: loadPlayers(), 
   recentNames: loadRecentNames(),
   settings: { revealRoles: true },
