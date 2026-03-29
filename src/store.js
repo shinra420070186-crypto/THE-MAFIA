@@ -81,12 +81,10 @@ export const useGameStore = create((set, get) => ({
     if (revealIndex + 1 < players.length) {
       set({ revealIndex: revealIndex + 1 });
     } else {
-      // NEW: Cinematic pause before Night starts
       set({ phase: 'night_transition' }); 
     }
   },
 
-  // NEW: Triggered by the Moderator after "Close Your Eyes"
   startNightRoles: () => set({ phase: 'night_mafia' }),
 
   submitNightAction: (role, targetId) => {
@@ -174,12 +172,10 @@ export const useGameStore = create((set, get) => ({
 
     if (recap.length === 0) recap.push("The night was quiet. Nobody died.");
 
-    // NEW: Cinematic pause before showing the recap
     set({ players: nextPlayers, dayRecap: recap, phase: 'day_transition', nightActions: { mafia: null, doctor: null, sheriff: null } });
     get().checkWinCondition();
   },
 
-  // NEW: Triggered by the Moderator after "Open Your Eyes"
   startDayRecap: () => set({ phase: 'day_recap' }),
 
   startVoting: () => set({ phase: 'day_voting', votingState: { currentVoterIndex: 0, votes: {} } }),
@@ -240,7 +236,7 @@ export const useGameStore = create((set, get) => ({
     }
   },
 
-  advanceToNight: () => set({ phase: 'night_transition' }), // Changed from night_mafia so you get the "Close Eyes" screen every night
+  advanceToNight: () => set({ phase: 'night_transition' }),
 
   checkWinCondition: () => {
     const { players } = get();
