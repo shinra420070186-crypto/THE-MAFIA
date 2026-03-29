@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useGameStore } from './store';
 
 // ==============================================
-// 1. NIGHT SKY BACKGROUND
+// 1. NIGHT SKY BACKGROUND (Lobby, Transitions, Game Over)
 // ==============================================
 const MidnightSky = () => (
   <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ backgroundColor: '#050505' }}>
@@ -31,7 +31,7 @@ const MidnightSky = () => (
 );
 
 // ==============================================
-// 2. MORNING SKY BACKGROUND
+// 2. MORNING SKY BACKGROUND (Day Phases)
 // ==============================================
 const MorningSky = () => (
   <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, #4A90E2 0%, #FFB75E 100%)' }}>
@@ -56,42 +56,30 @@ const MorningSky = () => (
 );
 
 // ==============================================
-// 3. THE NEW BLACK HOLE BACKGROUND (For Role Reveal)
+// 3. DARK COSMIC BACKGROUND (For Role Reveal)
 // ==============================================
-const BlackHoleSky = () => (
-  <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ backgroundColor: '#020106' }}>
+const DarkCosmicSky = () => (
+  <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%)' }}>
     <style>{`
-      .bh-center {
-        position: absolute; top: 50%; left: 50%; width: 200px; height: 200px;
-        transform: translate(-50%, -50%); border-radius: 50%;
-        background: #000;
-        box-shadow: 0 0 60px 15px rgba(138, 43, 226, 0.6), 0 0 120px 40px rgba(75, 0, 130, 0.4), inset 0 0 30px #000;
-        z-index: 2;
-      }
-      .bh-accretion {
-        position: absolute; top: 50%; left: 50%; width: 500px; height: 500px;
-        transform: translate(-50%, -50%) rotateX(75deg);
-        border-radius: 50%;
-        background: conic-gradient(from 0deg, rgba(255,100,50,0) 0%, rgba(255,50,100,0.8) 20%, rgba(150,50,255,0.9) 40%, rgba(50,100,255,0.8) 60%, rgba(255,100,50,0) 80%);
-        filter: blur(12px);
-        animation: spin 3s linear infinite;
-        z-index: 1;
-      }
-      .bh-particles {
-        position: absolute; inset: 0;
-        background-image: radial-gradient(2px 2px at 40% 50%, #fff, transparent),
-                          radial-gradient(1.5px 1.5px at 60% 30%, #aaffff, transparent),
-                          radial-gradient(2px 2px at 30% 70%, #ffccff, transparent);
-        background-size: 200px 200px;
-        animation: suckIn 2.5s ease-in infinite;
-        opacity: 0.5;
-      }
-      @keyframes spin { 100% { transform: translate(-50%, -50%) rotateX(75deg) rotateZ(360deg); } }
-      @keyframes suckIn { 0% { transform: scale(1.5); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(0.3); opacity: 0; } }
+      .cosmic-stars { position: absolute; inset: 0; background-repeat: repeat; pointer-events: none; will-change: opacity; transform: translateZ(0); }
+      .c-stars-1 { background-image: radial-gradient(1px 1px at 10% 10%, #fff, transparent), radial-gradient(1px 1px at 30% 20%, #fff, transparent), radial-gradient(1px 1px at 50% 50%, #fff, transparent), radial-gradient(1px 1px at 70% 30%, #fff, transparent), radial-gradient(1px 1px at 90% 10%, #fff, transparent); background-size: 100px 100px; animation: twinkle 3s ease-in-out infinite; }
+      .c-stars-2 { background-image: radial-gradient(1.5px 1.5px at 20% 40%, rgba(255,255,255,0.8), transparent), radial-gradient(1.5px 1.5px at 60% 85%, rgba(255,255,255,0.8), transparent), radial-gradient(1.5px 1.5px at 85% 65%, rgba(255,255,255,0.8), transparent); background-size: 150px 150px; animation: twinkle 5s ease-in-out infinite 1s; }
+      .c-stars-3 { background-image: radial-gradient(2px 2px at 40% 70%, rgba(255,255,255,0.6), transparent), radial-gradient(2px 2px at 10% 80%, rgba(255,255,255,0.6), transparent), radial-gradient(2px 2px at 80% 40%, rgba(255,255,255,0.6), transparent); background-size: 200px 200px; animation: twinkle 7s ease-in-out infinite 2s; }
+      .c-meteor { position: absolute; width: 1.5px; height: 1.5px; background: #fff; border-radius: 50%; box-shadow: 0 0 5px 1px rgba(255, 255, 255, 0.5); opacity: 0; pointer-events: none; will-change: transform, opacity; transform: translateZ(0); }
+      .c-meteor::after { content: ""; position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 1px; background: linear-gradient(90deg, #fff, transparent); }
+      .c-m1 { top: 15%; left: 110%; animation: shoot 6s linear infinite; }
+      .c-m2 { top: 45%; left: 110%; animation: shoot 10s linear infinite 3s; }
+      .c-m3 { top: 65%; left: 110%; animation: shoot 8s linear infinite 1s; }
+      .cosmic-glow { position: absolute; top: 50%; left: 50%; width: 600px; height: 600px; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, rgba(138,43,226,0.1) 0%, transparent 70%); animation: pulseGlow 8s infinite alternate; }
+      @keyframes pulseGlow { 0% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.8); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); } }
     `}</style>
-    <div className="bh-particles"></div>
-    <div className="bh-accretion"></div>
-    <div className="bh-center"></div>
+    <div className="cosmic-stars c-stars-1"></div>
+    <div className="cosmic-stars c-stars-2"></div>
+    <div className="cosmic-stars c-stars-3"></div>
+    <div className="c-meteor c-m1"></div>
+    <div className="c-meteor c-m2"></div>
+    <div className="c-meteor c-m3"></div>
+    <div className="cosmic-glow"></div>
   </div>
 );
 
@@ -159,7 +147,7 @@ export default function GameBoard() {
 
   // Background Engine: Decides which sky to render based on phase
   const renderBackground = () => {
-    if (state.phase === 'role_reveal') return <BlackHoleSky />;
+    if (state.phase === 'role_reveal') return <DarkCosmicSky />;
     if (state.phase.startsWith('day_')) return <MorningSky />;
     return <MidnightSky />; // Lobby, Night phases, and Game Over use MidnightSky
   };
