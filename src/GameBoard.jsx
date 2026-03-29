@@ -161,7 +161,7 @@ export default function GameBoard() {
 
   // Background Engine
   const renderBackground = () => {
-    if (state.phase === 'splash') return null; // Splash screen handles its own background
+    if (state.phase === 'splash') return null; // Splash handles its own light grey bg
     if (state.phase === 'role_reveal') return <TwilightSky />;
     if (state.phase === 'day_transition' || state.phase.startsWith('day_')) return <MorningSky />;
     return <MidnightSky />; 
@@ -209,7 +209,7 @@ export default function GameBoard() {
     </div>
   );
 
-  // --- NEW SPLASH SCREEN (Added 1.5s delay to let Batman button animate) ---
+  // --- NEW SPLASH SCREEN ---
   if (state.phase === 'splash') {
     return (
       <div className="relative min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden" style={{ backgroundColor: '#e5e5e5' }}>
@@ -219,7 +219,7 @@ export default function GameBoard() {
             onClick={() => {
               setTimeout(() => {
                 state.enterLobby();
-              }, 1500); // Wait 1.5 seconds so the bat logo completely opens
+              }, 1500); // 1.5s delay to let the Batman button animation play out
             }}
             className="batman-btn"
           >
@@ -565,11 +565,10 @@ export default function GameBoard() {
           ))}
         </div>
 
-        {/* EXACT BARISDOGANSUTCU BATMAN BUTTON (PLAY AGAIN) */}
         <div className="w-full flex justify-center mt-12 mb-6 relative z-10">
           <button 
             onClick={() => {
-              setTimeout(() => { state.playAgain(); }, 1500); // Wait 1.5 seconds so the bat logo opens
+              setTimeout(() => { state.playAgain(); }, 1500); // 1.5s delay
             }}
             className="batman-btn"
           >
