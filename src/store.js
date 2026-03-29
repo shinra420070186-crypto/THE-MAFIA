@@ -16,7 +16,7 @@ const savePlayers = (players) => {
 };
 
 export const useGameStore = create((set, get) => ({
-  phase: 'lobby', 
+  phase: 'splash', // Starts on the Batman Splash Screen
   players: loadPlayers(), 
   settings: { revealRoles: true },
   revealIndex: 0, 
@@ -27,6 +27,8 @@ export const useGameStore = create((set, get) => ({
   doctorHasSelfSaved: false,
   votingState: { currentVoterIndex: 0, votes: {} }, 
   winner: null, 
+
+  enterLobby: () => set({ phase: 'lobby' }),
 
   addPlayer: (name) => set((state) => {
     const newPlayers = [...state.players, { id: Math.random().toString(36).substr(2, 9), name, role: 'Civilian', isAlive: true }];
@@ -262,7 +264,7 @@ export const useGameStore = create((set, get) => ({
   resetToLobby: () => set((state) => {
     const resetPlayers = state.players.map(p => ({ ...p, role: 'Civilian', isAlive: true }));
     return { 
-      phase: 'lobby', 
+      phase: 'lobby', // Returns to Lobby, not Splash, to save time
       players: resetPlayers, 
       winner: null,
       nightActions: { mafia: null, doctor: null, sheriff: null },
