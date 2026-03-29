@@ -81,6 +81,7 @@ export const useGameStore = create((set, get) => ({
     if (revealIndex + 1 < players.length) {
       set({ revealIndex: revealIndex + 1 });
     } else {
+      // Triggers the "Close Your Eyes" auto-screen
       set({ phase: 'night_transition' }); 
     }
   },
@@ -172,6 +173,7 @@ export const useGameStore = create((set, get) => ({
 
     if (recap.length === 0) recap.push("The night was quiet. Nobody died.");
 
+    // Triggers the "Open Your Eyes" auto-screen
     set({ players: nextPlayers, dayRecap: recap, phase: 'day_transition', nightActions: { mafia: null, doctor: null, sheriff: null } });
     get().checkWinCondition();
   },
