@@ -8,6 +8,41 @@ html, body {
 }
 
 /* ==============================================
+   TITLE SHINE CSS (From neerajbaniwal)
+   ============================================== */
+.mafia-title-shine {
+  color: #fff;
+  background: linear-gradient(to right, #9f9f9f 0, #fff 10%, #868686 20%);
+  background-position: 0;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shine 3s infinite linear;
+  animation-fill-mode: forwards;
+  -webkit-text-size-adjust: none;
+}
+
+@-moz-keyframes shine {
+  0% { background-position: 0; }
+  60% { background-position: 180px; }
+  100% { background-position: 180px; }
+}
+@-webkit-keyframes shine {
+  0% { background-position: 0; }
+  60% { background-position: 180px; }
+  100% { background-position: 180px; }
+}
+@-o-keyframes shine {
+  0% { background-position: 0; }
+  60% { background-position: 180px; }
+  100% { background-position: 180px; }
+}
+@keyframes shine {
+  0% { background-position: 0; }
+  60% { background-position: 180px; }
+  100% { background-position: 180px; }
+}
+
+/* ==============================================
    EXACT LAKSHAY-ART PODA INPUT CSS
    ============================================== */
 .poda-wrapper { display: flex; align-items: center; justify-content: center; position: relative; width: 100%; max-width: 314px; margin: 0 auto; z-index: 10; }
@@ -92,7 +127,7 @@ html, body {
 @keyframes stealth_pulse_3011 { 0% { transform: scale(0.75); box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 0, 0, 0); } 100% { transform: scale(0.75); box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); } }
 
 /* ==============================================
-   ISOLATED BATMAN BUTTON CSS (For Splash Screen)
+   EXACT BARISDOGANSUTCU BATMAN BUTTON CSS (For Splash Screen)
    ============================================== */
 .splash-batman-btn {
   border: none;
