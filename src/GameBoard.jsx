@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useGameStore } from './store';
 
 // ==============================================
-// 1. NIGHT SKY BACKGROUND (Lobby, Transitions, Game Over)
+// 1. NIGHT SKY BACKGROUND (Lobby & Night)
 // ==============================================
 const MidnightSky = () => (
-  <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ backgroundColor: '#050505' }}>
+  <div className="absolute inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ backgroundColor: '#050505' }}>
     <style>{`
       .stars { position: absolute; inset: 0; background-repeat: repeat; pointer-events: none; will-change: opacity; transform: translateZ(0); }
       .stars-1 { background-image: radial-gradient(1px 1px at 10% 10%, #fff, transparent), radial-gradient(1px 1px at 30% 20%, #fff, transparent), radial-gradient(1px 1px at 50% 50%, #fff, transparent), radial-gradient(1px 1px at 70% 30%, #fff, transparent), radial-gradient(1px 1px at 90% 10%, #fff, transparent); background-size: 100px 100px; animation: twinkle 3s ease-in-out infinite; }
@@ -34,7 +34,7 @@ const MidnightSky = () => (
 // 2. MORNING SKY BACKGROUND (Day Phases)
 // ==============================================
 const MorningSky = () => (
-  <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, #4A90E2 0%, #FFB75E 100%)' }}>
+  <div className="absolute inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, #4A90E2 0%, #FFB75E 100%)' }}>
     <style>{`
       .motes { position: absolute; inset: 0; background-repeat: repeat; pointer-events: none; will-change: opacity; transform: translateZ(0); }
       .motes-1 { background-image: radial-gradient(1.5px 1.5px at 15% 15%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 35% 25%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 55% 55%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 75% 35%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 95% 15%, rgba(255,255,255,0.7), transparent); background-size: 100px 100px; animation: twinkle 4s ease-in-out infinite; }
@@ -56,32 +56,35 @@ const MorningSky = () => (
 );
 
 // ==============================================
-// 3. DARK COSMIC BACKGROUND (For Role Reveal)
+// 3. TWILIGHT SKY (Dark Cosmic for Role Reveal)
 // ==============================================
-const DarkCosmicSky = () => (
-  <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%)' }}>
+const TwilightSky = () => (
+  <div className="absolute inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, #2B1055 0%, #7597DE 100%)' }}>
     <style>{`
-      .cosmic-stars { position: absolute; inset: 0; background-repeat: repeat; pointer-events: none; will-change: opacity; transform: translateZ(0); }
-      .c-stars-1 { background-image: radial-gradient(1px 1px at 10% 10%, #fff, transparent), radial-gradient(1px 1px at 30% 20%, #fff, transparent), radial-gradient(1px 1px at 50% 50%, #fff, transparent), radial-gradient(1px 1px at 70% 30%, #fff, transparent), radial-gradient(1px 1px at 90% 10%, #fff, transparent); background-size: 100px 100px; animation: twinkle 3s ease-in-out infinite; }
-      .c-stars-2 { background-image: radial-gradient(1.5px 1.5px at 20% 40%, rgba(255,255,255,0.8), transparent), radial-gradient(1.5px 1.5px at 60% 85%, rgba(255,255,255,0.8), transparent), radial-gradient(1.5px 1.5px at 85% 65%, rgba(255,255,255,0.8), transparent); background-size: 150px 150px; animation: twinkle 5s ease-in-out infinite 1s; }
-      .c-stars-3 { background-image: radial-gradient(2px 2px at 40% 70%, rgba(255,255,255,0.6), transparent), radial-gradient(2px 2px at 10% 80%, rgba(255,255,255,0.6), transparent), radial-gradient(2px 2px at 80% 40%, rgba(255,255,255,0.6), transparent); background-size: 200px 200px; animation: twinkle 7s ease-in-out infinite 2s; }
-      .c-meteor { position: absolute; width: 1.5px; height: 1.5px; background: #fff; border-radius: 50%; box-shadow: 0 0 5px 1px rgba(255, 255, 255, 0.5); opacity: 0; pointer-events: none; will-change: transform, opacity; transform: translateZ(0); }
-      .c-meteor::after { content: ""; position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 1px; background: linear-gradient(90deg, #fff, transparent); }
-      .c-m1 { top: 15%; left: 110%; animation: shoot 6s linear infinite; }
-      .c-m2 { top: 45%; left: 110%; animation: shoot 10s linear infinite 3s; }
-      .c-m3 { top: 65%; left: 110%; animation: shoot 8s linear infinite 1s; }
-      .cosmic-glow { position: absolute; top: 50%; left: 50%; width: 600px; height: 600px; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, rgba(138,43,226,0.1) 0%, transparent 70%); animation: pulseGlow 8s infinite alternate; }
-      @keyframes pulseGlow { 0% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.8); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); } }
+      .twinkle-stars { position: absolute; inset: 0; background-repeat: repeat; pointer-events: none; will-change: opacity; transform: translateZ(0); }
+      .tw-1 { background-image: radial-gradient(1px 1px at 15% 15%, #fff, transparent), radial-gradient(1px 1px at 35% 25%, #fff, transparent), radial-gradient(1px 1px at 55% 55%, #fff, transparent), radial-gradient(1px 1px at 75% 35%, #fff, transparent), radial-gradient(1px 1px at 95% 15%, #fff, transparent); background-size: 100px 100px; animation: twilight-twinkle 4s ease-in-out infinite; }
+      .tw-2 { background-image: radial-gradient(1.5px 1.5px at 25% 45%, #fff, transparent), radial-gradient(1.5px 1.5px at 65% 85%, #fff, transparent), radial-gradient(1.5px 1.5px at 85% 70%, #fff, transparent); background-size: 150px 150px; animation: twilight-twinkle 6s ease-in-out infinite 2s; }
+      .tw-3 { background-image: radial-gradient(2px 2px at 40% 70%, #fff, transparent), radial-gradient(2px 2px at 10% 80%, #fff, transparent), radial-gradient(2px 2px at 80% 40%, #fff, transparent); background-size: 200px 200px; animation: twilight-twinkle 7s ease-in-out infinite 3s; }
+      .tw-meteor { position: absolute; width: 1.5px; height: 1.5px; background: #fff; border-radius: 50%; box-shadow: 0 0 5px 1px rgba(255, 255, 255, 0.5); opacity: 0; pointer-events: none; will-change: transform, opacity; transform: translateZ(0); }
+      .tw-meteor::after { content: ""; position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 1px; background: linear-gradient(90deg, #fff, transparent); }
+      .tw-m1 { top: 15%; left: 110%; animation: twilight-shoot 6s linear infinite; }
+      .tw-m2 { top: 45%; left: 110%; animation: twilight-shoot 10s linear infinite 3s; }
+      .tw-m3 { top: 65%; left: 110%; animation: twilight-shoot 8s linear infinite 1s; }
+      .tw-body { position: absolute; top: 15%; right: 15%; width: 45px; height: 45px; border-radius: 50%; background: #FF9A9E; box-shadow: 0 0 50px 15px rgba(255, 154, 158, 0.6); z-index: 10; transform: translateZ(0); }
+
+      @keyframes twilight-twinkle { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+      @keyframes twilight-shoot { 0% { transform: translateX(0) translateY(0) rotate(-35deg); opacity: 0; } 5% { opacity: 1; } 15% { transform: translateX(-1500px) translateY(1000px) rotate(-35deg); opacity: 0; } 100% { transform: translateX(-1500px) translateY(1000px) rotate(-35deg); opacity: 0; } }
     `}</style>
-    <div className="cosmic-stars c-stars-1"></div>
-    <div className="cosmic-stars c-stars-2"></div>
-    <div className="cosmic-stars c-stars-3"></div>
-    <div className="c-meteor c-m1"></div>
-    <div className="c-meteor c-m2"></div>
-    <div className="c-meteor c-m3"></div>
-    <div className="cosmic-glow"></div>
+    <div className="twinkle-stars tw-1"></div>
+    <div className="twinkle-stars tw-2"></div>
+    <div className="twinkle-stars tw-3"></div>
+    <div className="tw-meteor tw-m1"></div>
+    <div className="tw-meteor tw-m2"></div>
+    <div className="tw-meteor tw-m3"></div>
+    <div className="tw-body"></div>
   </div>
 );
+
 
 // --- IMAGE PRELOADER ---
 const roleImages = {
@@ -114,13 +117,11 @@ const RoleCard = ({ isFlipped, role }) => {
     <div className="my-6 relative w-[240px] h-[360px] [perspective:1000px] select-none touch-none">
       <div className={`relative w-full h-full transition-transform duration-[600ms] [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}>
         
-        {/* Front of Card (Unflipped) */}
-        <div className="absolute inset-0 [backface-visibility:hidden] rounded-[2rem] bg-[#0a0a0a] border-2 border-slate-800 flex flex-col items-center justify-center p-4 shadow-xl">
+        <div className="absolute inset-0 [backface-visibility:hidden] rounded-[2rem] bg-[#0a0a0a] border border-slate-800 flex flex-col items-center justify-center p-4 shadow-xl">
            <p className="text-slate-500 font-black tracking-widest uppercase text-center text-xl">Secret Role</p>
            <p className="text-[10px] text-slate-600 mt-4 tracking-widest uppercase font-bold animate-pulse">Tap & Hold to Reveal</p>
         </div>
         
-        {/* Back of Card */}
         <div 
           className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[2rem] bg-black" 
           style={{ 
@@ -132,7 +133,6 @@ const RoleCard = ({ isFlipped, role }) => {
           }}
         >
         </div>
-
       </div>
     </div>
   );
@@ -145,10 +145,25 @@ export default function GameBoard() {
 
   const alivePlayers = state.players.filter(p => p.isAlive);
 
+  // --- AUTOMATIC CINEMATIC TIMERS ---
+  useEffect(() => {
+    let timer;
+    if (state.phase === 'night_transition') {
+      timer = setTimeout(() => {
+        state.startNightRoles();
+      }, 4000); // Wait 4 seconds, then auto-load the night actions
+    } else if (state.phase === 'day_transition') {
+      timer = setTimeout(() => {
+        state.startDayRecap();
+      }, 4000); // Wait 4 seconds, then auto-load the morning recap
+    }
+    return () => clearTimeout(timer);
+  }, [state.phase]);
+
   // Background Engine: Decides which sky to render based on phase
   const renderBackground = () => {
-    if (state.phase === 'role_reveal') return <DarkCosmicSky />;
-    if (state.phase.startsWith('day_')) return <MorningSky />;
+    if (state.phase === 'role_reveal') return <TwilightSky />;
+    if (state.phase === 'day_transition' || state.phase.startsWith('day_')) return <MorningSky />;
     return <MidnightSky />; // Lobby, Night phases, and Game Over use MidnightSky
   };
 
@@ -177,7 +192,7 @@ export default function GameBoard() {
             key={p.id} 
             onClick={() => onSelect(p.id)}
             disabled={isDisabled}
-            className={`w-full p-4 rounded-xl font-bold uppercase transition-all ${isDisabled ? 'bg-slate-900/80 text-slate-500 border border-slate-800' : 'bg-slate-800/90 backdrop-blur-sm text-white active:scale-95 border border-slate-700'}`}
+            className={`w-full p-4 rounded-xl font-bold uppercase transition-all ${isDisabled ? 'bg-slate-900/80 text-slate-600 border border-slate-800' : 'bg-[#111] text-white active:scale-95 border border-slate-700'}`}
           >
             {p.name} {isDisabled && <span className="text-[10px] ml-2 tracking-widest text-slate-600">(LOCKED)</span>}
           </button>
@@ -186,7 +201,7 @@ export default function GameBoard() {
       {includeSkip && (
         <button 
           onClick={() => onSelect(null)}
-          className="w-full p-4 bg-transparent border border-slate-700/80 backdrop-blur-sm text-slate-300 rounded-xl font-bold uppercase mt-4 active:scale-95"
+          className="w-full p-4 bg-transparent border border-slate-700/80 text-slate-400 rounded-xl font-bold uppercase mt-4 active:scale-95"
         >
           Skip / Nobody
         </button>
@@ -194,7 +209,7 @@ export default function GameBoard() {
     </div>
   );
 
-  // --- LOBBY ---
+  // --- LOBBY (Clean Original Design) ---
   if (state.phase === 'lobby') {
     return (
       <div className="relative min-h-screen text-white flex flex-col items-center p-6 overflow-hidden">
@@ -203,12 +218,12 @@ export default function GameBoard() {
         
         <h1 className="text-4xl font-black uppercase mb-8 tracking-[0.2em] text-red-600 mt-14 drop-shadow-[0_0_10px_rgba(220,38,38,0.5)] relative z-10">THE MAFIA</h1>
         
-        <div className="w-full max-w-sm bg-slate-900/60 backdrop-blur-md border border-slate-800 p-4 rounded-2xl mb-6 relative z-10">
+        <div className="w-full max-w-sm bg-[#0a0a0a]/80 backdrop-blur-md border border-slate-800 p-4 rounded-2xl mb-6 relative z-10">
           <input 
             value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && newPlayerName) { state.addPlayer(newPlayerName); setNewPlayerName(''); }}}
             placeholder="Add player..."
-            className="w-full p-3 bg-black/80 rounded-lg outline-none text-white font-bold mb-2"
+            className="w-full p-3 bg-black rounded-lg outline-none text-white font-bold mb-2 border border-slate-800"
           />
           <button 
             onClick={() => { if(newPlayerName) { state.addPlayer(newPlayerName); setNewPlayerName(''); }}}
@@ -218,15 +233,15 @@ export default function GameBoard() {
 
         <div className="w-full max-w-sm space-y-2 mb-6 max-h-48 overflow-y-auto pr-2 relative z-10">
           {state.players.map(p => (
-            <div key={p.id} className="flex justify-between items-center bg-slate-800/50 backdrop-blur-md p-3 rounded-lg border border-slate-700">
-              <span className="font-bold tracking-wider text-slate-100">{p.name}</span>
-              <button onClick={() => state.removePlayer(p.id)} className="text-slate-400 text-lg active:scale-90">✕</button>
+            <div key={p.id} className="flex justify-between items-center bg-[#0a0a0a]/80 backdrop-blur-md p-3 rounded-lg border border-slate-800">
+              <span className="font-bold tracking-wider text-slate-200">{p.name}</span>
+              <button onClick={() => state.removePlayer(p.id)} className="text-slate-500 text-lg active:scale-90">✕</button>
             </div>
           ))}
         </div>
 
-        <div className="w-full max-w-sm flex items-center justify-between bg-slate-900/60 backdrop-blur-md border border-slate-800 p-4 rounded-xl mb-6 relative z-10">
-          <span className="font-bold text-[10px] tracking-widest uppercase text-slate-300">Reveal Roles on Death?</span>
+        <div className="w-full max-w-sm flex items-center justify-between bg-[#0a0a0a]/80 backdrop-blur-md border border-slate-800 p-4 rounded-xl mb-6 relative z-10">
+          <span className="font-bold text-[10px] tracking-widest uppercase text-slate-400">Reveal Roles on Death?</span>
           <button 
             onClick={state.toggleRevealRoles} 
             className={`px-4 py-2 rounded text-[10px] uppercase font-black tracking-widest transition-colors ${state.settings.revealRoles ? 'bg-green-500/20 text-green-500 border border-green-500/50' : 'bg-slate-800 text-slate-500'}`}
@@ -258,7 +273,7 @@ export default function GameBoard() {
     );
   }
 
-  // --- ROLE REVEAL PHASE ---
+  // --- ROLE REVEAL PHASE (TwilightSky) ---
   if (state.phase === 'role_reveal') {
     const currentPlayer = state.players[state.revealIndex];
     const isLastPlayer = state.revealIndex === state.players.length - 1;
@@ -284,7 +299,7 @@ export default function GameBoard() {
         <button 
           onClick={() => { setIsFlipped(false); state.nextRoleReveal(); }}
           disabled={isFlipped} 
-          className={`mt-12 p-5 w-full max-w-sm rounded-xl font-black uppercase tracking-widest transition-all duration-300 relative z-10 ${isFlipped ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0 bg-slate-800/90 backdrop-blur-md text-white border border-slate-700 active:scale-95'}`}
+          className={`mt-12 p-5 w-full max-w-sm rounded-xl font-black uppercase tracking-widest transition-all duration-300 relative z-10 ${isFlipped ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0 bg-[#0a0a0a]/90 backdrop-blur-md text-white border border-slate-800 active:scale-95'}`}
         >
           {isLastPlayer ? 'Give to Moderator' : 'Next Player'}
         </button>
@@ -292,25 +307,16 @@ export default function GameBoard() {
     );
   }
 
-  // --- NEW: NIGHT TRANSITION SCREEN ---
+  // --- CINEMATIC: NIGHT TRANSITION (Auto-Advances after 4s) ---
   if (state.phase === 'night_transition') {
     return (
       <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden">
         {renderBackground()}
         {renderBackButton()}
         <div className="relative z-10 flex flex-col items-center">
-          <h2 className="text-5xl font-black text-blue-400 uppercase mb-4 tracking-widest drop-shadow-[0_0_20px_rgba(96,165,250,0.5)]">
+          <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-[0.2em] drop-shadow-[0_0_20px_rgba(255,255,255,0.5)] animate-pulse">
             EVERYONE CLOSE YOUR EYES
           </h2>
-          <p className="text-slate-300 font-bold tracking-widest uppercase text-sm mt-4">
-            The night is falling over the town...
-          </p>
-          <button 
-            onClick={state.startNightRoles}
-            className="mt-16 p-5 w-full max-w-sm bg-slate-800/90 backdrop-blur-md rounded-xl font-black tracking-widest uppercase active:scale-95 border border-slate-700"
-          >
-            Moderator: Begin Night
-          </button>
         </div>
       </div>
     );
@@ -323,8 +329,8 @@ export default function GameBoard() {
       <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden">
         {renderBackground()}
         {renderBackButton()}
-        <h2 className="text-red-500 font-black text-2xl uppercase mt-14 relative z-10 drop-shadow-md">Night Phase</h2>
-        <p className="text-slate-300 mt-2 text-sm relative z-10">Moderator: Ask the Mafia to wake up and point.</p>
+        <h2 className="text-red-600 font-black text-2xl uppercase mt-14 relative z-10 drop-shadow-md">Night Phase</h2>
+        <p className="text-slate-400 mt-2 text-sm relative z-10">Moderator: Ask the Mafia to wake up and point.</p>
         <h3 className="text-3xl font-black mt-8 relative z-10 drop-shadow-md">Who does the Mafia kill?</h3>
         {renderPlayerList((id) => state.submitNightAction('Mafia', id), true, disableCondition)}
       </div>
@@ -338,8 +344,8 @@ export default function GameBoard() {
       <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden">
         {renderBackground()}
         {renderBackButton()}
-        <h2 className="text-blue-400 font-black text-2xl uppercase mt-14 relative z-10 drop-shadow-md">Night Phase</h2>
-        <p className="text-slate-300 mt-2 text-sm relative z-10">Moderator: Ask the Doctor to wake up and point.</p>
+        <h2 className="text-blue-500 font-black text-2xl uppercase mt-14 relative z-10 drop-shadow-md">Night Phase</h2>
+        <p className="text-slate-400 mt-2 text-sm relative z-10">Moderator: Ask the Doctor to wake up and point.</p>
         <h3 className="text-3xl font-black mt-8 relative z-10 drop-shadow-md">Who does the Doctor save?</h3>
         {renderPlayerList((id) => state.submitNightAction('Doctor', id), true, disableCondition)}
       </div>
@@ -355,15 +361,15 @@ export default function GameBoard() {
         <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center justify-center overflow-hidden">
           {renderBackground()}
           {renderBackButton()}
-          <p className="text-slate-300 uppercase font-bold tracking-widest text-[10px] mb-4 relative z-10">
+          <p className="text-slate-400 uppercase font-bold tracking-widest text-[10px] mb-4 relative z-10">
             {isDeadRole ? "Moderator: Pretend to give an answer!" : "Moderator: Nod or shake your head."}
           </p>
-          <h1 className={`text-6xl font-black uppercase relative z-10 ${isDeadRole ? 'text-slate-500' : isMafia ? 'text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.5)]' : 'text-green-400 drop-shadow-[0_0_20px_rgba(74,222,128,0.5)]'}`}>
+          <h1 className={`text-6xl font-black uppercase relative z-10 ${isDeadRole ? 'text-slate-600' : isMafia ? 'text-red-600 drop-shadow-[0_0_20px_rgba(220,38,38,0.5)]' : 'text-green-500 drop-shadow-[0_0_20px_rgba(34,197,94,0.5)]'}`}>
             {isDeadRole ? 'ROLE DEAD' : state.investigationResult}
           </h1>
           <button 
             onClick={state.advanceFromDetective}
-            className="mt-12 p-5 w-full max-w-sm bg-slate-800/90 backdrop-blur-md rounded-xl font-black tracking-widest uppercase active:scale-95 relative z-10 border border-slate-700"
+            className="mt-12 p-5 w-full max-w-sm bg-[#0a0a0a]/90 backdrop-blur-md rounded-xl font-black tracking-widest uppercase active:scale-95 relative z-10 border border-slate-800"
           >
             Continue
           </button>
@@ -374,8 +380,8 @@ export default function GameBoard() {
       <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden">
         {renderBackground()}
         {renderBackButton()}
-        <h2 className="text-yellow-400 font-black text-2xl uppercase mt-14 relative z-10 drop-shadow-md">Night Phase</h2>
-        <p className="text-slate-300 mt-2 text-sm relative z-10">Moderator: Ask the Detective to wake up and point.</p>
+        <h2 className="text-yellow-500 font-black text-2xl uppercase mt-14 relative z-10 drop-shadow-md">Night Phase</h2>
+        <p className="text-slate-400 mt-2 text-sm relative z-10">Moderator: Ask the Detective to wake up and point.</p>
         <h3 className="text-3xl font-black mt-8 relative z-10 drop-shadow-md">Who is investigated?</h3>
         {renderPlayerList((id) => state.submitNightAction('Detective', id), false)}
       </div>
@@ -388,33 +394,24 @@ export default function GameBoard() {
       <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden">
         {renderBackground()}
         {renderBackButton()}
-        <h2 className="text-purple-400 font-black text-2xl uppercase mt-14 relative z-10 drop-shadow-md">Night Phase</h2>
-        <p className="text-slate-300 mt-2 text-sm relative z-10">Moderator: Ask the Sheriff to wake up and point.</p>
+        <h2 className="text-purple-500 font-black text-2xl uppercase mt-14 relative z-10 drop-shadow-md">Night Phase</h2>
+        <p className="text-slate-400 mt-2 text-sm relative z-10">Moderator: Ask the Sheriff to wake up and point.</p>
         <h3 className="text-3xl font-black mt-8 relative z-10 drop-shadow-md">Who does the Sheriff execute?</h3>
         {renderPlayerList((id) => state.submitNightAction('Sheriff', id), true)}
       </div>
     );
   }
 
-  // --- NEW: DAY TRANSITION SCREEN ---
+  // --- CINEMATIC: DAY TRANSITION (Auto-Advances after 4s) ---
   if (state.phase === 'day_transition') {
     return (
       <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden">
         {renderBackground()}
         {renderBackButton()}
         <div className="relative z-10 flex flex-col items-center">
-          <h2 className="text-5xl font-black text-yellow-300 uppercase mb-4 tracking-widest drop-shadow-[0_0_20px_rgba(253,224,71,0.5)]">
+          <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-[0.2em] drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] animate-pulse">
             EVERYONE OPEN YOUR EYES
           </h2>
-          <p className="text-slate-100 font-bold tracking-widest uppercase text-sm mt-4 drop-shadow-md">
-            The sun rises. Let's see what happened...
-          </p>
-          <button 
-            onClick={state.startDayRecap}
-            className="mt-16 p-5 w-full max-w-sm bg-white text-slate-900 rounded-xl font-black tracking-widest uppercase active:scale-95 shadow-xl border border-slate-200"
-          >
-            View Recap
-          </button>
         </div>
       </div>
     );
@@ -426,10 +423,10 @@ export default function GameBoard() {
       <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center justify-center overflow-hidden">
         {renderBackground()}
         {renderBackButton()}
-        <h2 className="text-3xl font-black uppercase mb-8 text-yellow-300 tracking-widest drop-shadow-md mt-14 relative z-10">The Town Awakens</h2>
+        <h2 className="text-3xl font-black uppercase mb-8 text-white tracking-widest drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] mt-14 relative z-10">The Town Awakens</h2>
         <div className="w-full max-w-sm space-y-4 relative z-10">
           {state.dayRecap.map((msg, i) => (
-            <div key={i} className="p-6 bg-slate-900/60 backdrop-blur-md rounded-xl text-lg font-bold border border-slate-700 shadow-xl">
+            <div key={i} className="p-6 bg-slate-900/40 backdrop-blur-md rounded-xl text-lg font-bold border border-slate-700/50 shadow-xl">
               {msg}
             </div>
           ))}
@@ -451,7 +448,7 @@ export default function GameBoard() {
       <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden">
         {renderBackground()}
         {renderBackButton()}
-        <h2 className="text-slate-200 font-bold uppercase tracking-widest text-[10px] mt-14 mb-2 relative z-10 drop-shadow-md">Town Voting</h2>
+        <h2 className="text-slate-100 font-bold uppercase tracking-widest text-[10px] mt-14 mb-2 relative z-10 drop-shadow-md">Town Voting</h2>
         <h3 className="text-4xl font-black text-white my-2 uppercase relative z-10 drop-shadow-md">{currentVoter.name}</h3>
         <p className="text-sm font-bold text-red-500 tracking-widest uppercase relative z-10 drop-shadow-md">Who do you exile?</p>
         
@@ -460,7 +457,7 @@ export default function GameBoard() {
             <button 
               key={p.id} 
               onClick={() => state.submitVote(p.id)}
-              className="w-full p-4 bg-slate-900/70 backdrop-blur-md text-white border border-slate-700 rounded-xl font-bold uppercase active:scale-95 transition-transform"
+              className="w-full p-4 bg-slate-900/60 backdrop-blur-md text-white border border-slate-700/50 rounded-xl font-bold uppercase active:scale-95 transition-transform"
             >
               Vote {p.name}
             </button>
@@ -472,7 +469,7 @@ export default function GameBoard() {
             Pass / No Vote
           </button>
         </div>
-        <p className="mt-8 text-slate-300 font-bold text-[10px] uppercase tracking-widest relative z-10">
+        <p className="mt-8 text-white font-bold text-[10px] uppercase tracking-widest relative z-10">
           Vote {state.votingState.currentVoterIndex + 1} of {alivePlayers.length}
         </p>
       </div>
@@ -486,16 +483,16 @@ export default function GameBoard() {
       <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden">
         {renderBackground()}
         {renderBackButton()}
-        <h1 className={`text-6xl font-black uppercase mb-4 mt-14 relative z-10 ${isMafiaWin ? 'text-red-500 drop-shadow-[0_0_30px_rgba(239,68,68,0.6)]' : 'text-blue-400 drop-shadow-[0_0_30px_rgba(96,165,250,0.6)]'}`}>
+        <h1 className={`text-6xl font-black uppercase mb-4 mt-14 relative z-10 ${isMafiaWin ? 'text-red-600 drop-shadow-[0_0_30px_rgba(220,38,38,0.6)]' : 'text-blue-500 drop-shadow-[0_0_30px_rgba(59,130,246,0.6)]'}`}>
           {state.winner} WIN!
         </h1>
         
-        <div className="w-full max-w-sm mt-8 space-y-2 text-left bg-slate-900/70 backdrop-blur-md p-6 rounded-2xl border border-slate-700 relative z-10">
-          <p className="text-slate-300 uppercase text-[10px] tracking-widest font-bold mb-4">Final Roles:</p>
+        <div className="w-full max-w-sm mt-8 space-y-2 text-left bg-[#0a0a0a]/80 backdrop-blur-md p-6 rounded-2xl border border-slate-800 relative z-10">
+          <p className="text-slate-400 uppercase text-[10px] tracking-widest font-bold mb-4">Final Roles:</p>
           {state.players.map(p => (
-            <div key={p.id} className="flex justify-between items-center py-2 border-b border-slate-700/50 last:border-0">
-              <span className={`font-bold uppercase text-sm tracking-wider ${p.isAlive ? 'text-white' : 'text-slate-500 line-through'}`}>{p.name}</span>
-              <span className={`font-bold text-xs tracking-widest uppercase ${p.role === 'Mafia' ? 'text-red-400' : p.role === 'Doctor' ? 'text-green-400' : p.role === 'Detective' ? 'text-blue-400' : p.role === 'Sheriff' ? 'text-purple-400' : 'text-slate-300'}`}>{p.role}</span>
+            <div key={p.id} className="flex justify-between items-center py-2 border-b border-slate-800/50 last:border-0">
+              <span className={`font-bold uppercase text-sm tracking-wider ${p.isAlive ? 'text-white' : 'text-slate-600 line-through'}`}>{p.name}</span>
+              <span className={`font-bold text-xs tracking-widest uppercase ${p.role === 'Mafia' ? 'text-red-500' : p.role === 'Doctor' ? 'text-green-500' : p.role === 'Detective' ? 'text-blue-500' : p.role === 'Sheriff' ? 'text-purple-500' : 'text-slate-400'}`}>{p.role}</span>
             </div>
           ))}
         </div>
