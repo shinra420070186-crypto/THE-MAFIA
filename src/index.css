@@ -8,7 +8,7 @@ html, body {
 }
 
 /* ==============================================
-   STEALTHWORM BUTTON CSS
+   STEALTHWORM BUTTON CSS (For Start Game)
    ============================================== */
 .stealth-btn {
   display: flex;
@@ -21,7 +21,7 @@ html, body {
   background-size: 300% 300%;
   cursor: pointer;
   backdrop-filter: blur(1rem);
-  border-radius: 5rem;
+  border-radius: 1rem;
   transition: 0.5s;
   animation: stealth_gradient_301 5s ease infinite;
   border: double 4px transparent;
@@ -33,15 +33,15 @@ html, body {
   position: relative;
 }
 .stealth-btn:disabled { opacity: 0.5; pointer-events: none; filter: grayscale(1); }
-.stealth-container-stars { position: absolute; z-index: -1; width: 100%; height: 100%; overflow: hidden; transition: 0.5s; backdrop-filter: blur(1rem); border-radius: 5rem; transform: translateZ(0); }
+.stealth-container-stars { position: absolute; z-index: -1; width: 100%; height: 100%; overflow: hidden; transition: 0.5s; backdrop-filter: blur(1rem); border-radius: 1rem; transform: translateZ(0); }
 .stealth-strong { z-index: 2; font-size: 1.125rem; font-weight: 900; letter-spacing: 0.2em; color: #ffffff; text-shadow: 0 0 4px white; text-transform: uppercase; }
 .stealth-glow { position: absolute; display: flex; width: 12rem; }
 .stealth-circle { width: 100%; height: 30px; filter: blur(2rem); animation: stealth_pulse_3011 4s infinite; z-index: -1; will-change: transform, box-shadow; transform: translateZ(0); }
 .stealth-circle:nth-of-type(1) { background: rgba(254, 83, 186, 0.636); }
 .stealth-circle:nth-of-type(2) { background: rgba(142, 81, 234, 0.704); }
 .stealth-btn:hover .stealth-container-stars { z-index: 1; background-color: #212121; }
-.stealth-btn:hover { transform: scale(1.05); }
-.stealth-btn:active { border: double 4px #fe53bb; background-origin: border-box; background-clip: content-box, border-box; animation: none; transform: scale(0.95); }
+.stealth-btn:hover { transform: scale(1.02); }
+.stealth-btn:active { border: double 4px #fe53bb; background-origin: border-box; background-clip: content-box, border-box; animation: none; transform: scale(0.97); }
 .stealth-btn:active .stealth-circle { background: #fe53bb; }
 .stealth-stars { position: relative; background: transparent; width: 200rem; height: 200rem; }
 .stealth-stars::after { content: ""; position: absolute; top: -10rem; left: -100rem; width: 100%; height: 100%; animation: stealth_animStarRotate 90s linear infinite; background-image: radial-gradient(#ffffff 1px, transparent 1%); background-size: 50px 50px; will-change: transform; }
