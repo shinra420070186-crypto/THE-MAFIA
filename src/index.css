@@ -26,7 +26,7 @@ html, body {
 }
 
 /* ==============================================
-   INPUT CSS
+   EXACT LAKSHAY-ART PODA INPUT CSS
    ============================================== */
 .poda-wrapper { display: flex; align-items: center; justify-content: center; position: relative; width: 100%; max-width: 314px; margin: 0 auto; z-index: 10; }
 .poda-input { background-color: #010201; border: none; width: 100%; height: 56px; border-radius: 10px; color: white; padding-inline: 59px; font-size: 18px; font-weight: bold; }
