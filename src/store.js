@@ -1,8 +1,25 @@
 import { create } from 'zustand';
 
+// --- AUTO-SAVE ENGINE FOR ROSTER ---
+const loadPlayers = () => {
+  try {
+    const saved = localStorage.getItem('mafia_roster');
+    if (saved) return JSON.parse(saved);
+  } catch (e) {
+    console.error("Could not load players", e);
+  }
+  return [];
+};
+
+const savePlayers = (players) => {
+  // We only save the names and IDs so people don't get stuck dead if you refresh!
+  const cleanPlayers = players.map(p => ({ id: p.id, name: p.name, role: 'Civilian', isAlive: true }));
+  localStorage.setItem('mafia_roster', JSON.stringify(cleanPlayers));
+};
+
 export const useGameStore = create((set, get) => ({
   phase: 'lobby', 
-  players: [],
+  players: loadPlayers(), // Loads your saved friends instantly
   settings: { revealRoles: true },
   
   revealIndex: 0, 
@@ -11,20 +28,23 @@ export const useGameStore = create((set, get) => ({
   investigationResult: null, 
   dayRecap: [], 
   
-  // Doctor Advanced Rules
   doctorLastSaved: null,
   doctorHasSelfSaved: false,
 
   votingState: { currentVoterIndex: 0, votes: {} }, 
   winner: null, 
 
-  addPlayer: (name) => set((state) => ({
-    players: [...state.players, { id: Math.random().toString(36).substr(2, 9), name, role: 'Civilian', isAlive: true }]
-  })),
+  addPlayer: (name) => set((state) => {
+    const newPlayers = [...state.players, { id: Math.random().toString(36).substr(2, 9), name, role: 'Civilian', isAlive: true }];
+    savePlayers(newPlayers); // Auto-save
+    return { players: newPlayers };
+  }),
 
-  removePlayer: (id) => set((state) => ({
-    players: state.players.filter(p => p.id !== id)
-  })),
+  removePlayer: (id) => set((state) => {
+    const newPlayers = state.players.filter(p => p.id !== id);
+    savePlayers(newPlayers); // Auto-save
+    return { players: newPlayers };
+  }),
 
   toggleRevealRoles: () => set((state) => ({
     settings: { ...state.settings, revealRoles: !state.settings.revealRoles }
@@ -80,11 +100,7 @@ export const useGameStore = create((set, get) => ({
     else if (role === 'Doctor') {
       let selfSaved = state.doctorHasSelfSaved;
       const doctorPlayer = state.players.find(p => p.role === 'Doctor');
-      
-      // Only record the self-save if the target is actually the Doctor
-      if (doctorPlayer && targetId === doctorPlayer.id) {
-         selfSaved = true;
-      }
+      if (doctorPlayer && targetId === doctorPlayer.id) selfSaved = true;
 
       set({ 
         nightActions: { ...state.nightActions, doctor: targetId }, 
@@ -95,8 +111,6 @@ export const useGameStore = create((set, get) => ({
     } 
     else if (role === 'Detective') {
       const detectivePlayer = state.players.find(p => p.role === 'Detective');
-      
-      // If detective is alive, give real result. If dead, give fake result!
       if (detectivePlayer && detectivePlayer.isAlive) {
         if (targetId) {
           const target = state.players.find(p => p.id === targetId);
@@ -116,7 +130,6 @@ export const useGameStore = create((set, get) => ({
 
   advanceFromDetective: () => {
     const state = get();
-    // Check if Sheriff exists in the GAME at all, even if dead, to keep the ghost phase illusion
     const gameHasSheriff = state.players.some(p => p.role === 'Sheriff');
     
     set({ investigationResult: null });
@@ -132,7 +145,6 @@ export const useGameStore = create((set, get) => ({
     let nextPlayers = [...state.players];
     let recap = [];
 
-    // Check who is actually alive to see if their actions count
     const isMafiaAlive = nextPlayers.some(p => p.role === 'Mafia' && p.isAlive);
     const isDoctorAlive = nextPlayers.some(p => p.role === 'Doctor' && p.isAlive);
     const isSheriffAlive = nextPlayers.some(p => p.role === 'Sheriff' && p.isAlive);
@@ -141,7 +153,6 @@ export const useGameStore = create((set, get) => ({
     const finalDoctorTarget = isDoctorAlive ? state.nightActions.doctor : null;
     const finalSheriffTarget = isSheriffAlive ? state.nightActions.sheriff : null;
 
-    // Process Mafia Kill (If doctor didn't save them)
     if (finalMafiaTarget && finalMafiaTarget !== finalDoctorTarget) {
       const victim = nextPlayers.find(p => p.id === finalMafiaTarget);
       if (victim) {
@@ -150,7 +161,6 @@ export const useGameStore = create((set, get) => ({
       }
     }
 
-    // Process Sheriff Kill (Sheriff dies if they hit an innocent)
     if (finalSheriffTarget) {
       const target = nextPlayers.find(p => p.id === finalSheriffTarget);
       const sheriff = nextPlayers.find(p => p.role === 'Sheriff');
@@ -246,5 +256,24 @@ export const useGameStore = create((set, get) => ({
     return false;
   },
 
-  playAgain: () => set({ phase: 'lobby', players: [], winner: null })
+  // Safely resets everyone back to civilian mode without deleting their names
+  playAgain: () => set((state) => {
+    const resetPlayers = state.players.map(p => ({ ...p, role: 'Civilian', isAlive: true }));
+    return { phase: 'lobby', players: resetPlayers, winner: null };
+  }),
+
+  // Used by the new Back Button to abort a game mid-way
+  resetToLobby: () => set((state) => {
+    const resetPlayers = state.players.map(p => ({ ...p, role: 'Civilian', isAlive: true }));
+    return { 
+      phase: 'lobby', 
+      players: resetPlayers, 
+      winner: null,
+      nightActions: { mafia: null, doctor: null, sheriff: null },
+      investigationResult: null,
+      dayRecap: [],
+      doctorLastSaved: null,
+      doctorHasSelfSaved: false,
+    };
+  })
 }));
