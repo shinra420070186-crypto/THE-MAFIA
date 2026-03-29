@@ -10,15 +10,16 @@ html, body {
 /* ==============================================
    EXACT LAKSHAY-ART PODA INPUT CSS
    ============================================== */
-.poda { display: flex; align-items: center; justify-content: center; position: relative; width: 100%; max-width: 314px; margin: 0 auto; z-index: 10; }
-.poda-input { background-color: #010201; border: none; width: 100%; height: 56px; border-radius: 10px; color: white; padding-inline: 59px; font-size: 16px; font-weight: bold; }
-.poda-input::placeholder { color: #5a545a; font-weight: normal; }
+.poda-wrapper { display: flex; align-items: center; justify-content: center; position: relative; width: 100%; max-width: 314px; margin: 0 auto; z-index: 10; }
+.poda-input { background-color: #010201; border: none; width: 100%; height: 56px; border-radius: 10px; color: white; padding-inline: 59px; font-size: 18px; font-weight: bold; }
+.poda-input::placeholder { color: #c0b9c0; font-weight: normal; }
 .poda-input:focus { outline: none; }
 .poda-main { position: relative; width: 100%; }
 .poda-main:focus-within > .poda-input-mask { display: none; }
-.poda-input-mask { pointer-events: none; width: 100px; height: 20px; position: absolute; background: linear-gradient(90deg, transparent, #010201); top: 18px; left: 70px; }
+.poda-input-mask { pointer-events: none; width: 100px; height: 20px; position: absolute; background: linear-gradient(90deg, transparent, black); top: 18px; left: 70px; }
 .poda-pink-mask { pointer-events: none; width: 30px; height: 20px; position: absolute; background: #cf30aa; top: 10px; left: 5px; filter: blur(20px); opacity: 0.8; transition: all 2s; }
 .poda-main:hover > .poda-pink-mask { opacity: 0; }
+
 .poda-white, .poda-border, .poda-darkBorderBg, .poda-glow { max-height: 70px; max-width: 314px; height: 100%; width: 100%; position: absolute; overflow: hidden; z-index: -1; border-radius: 12px; filter: blur(3px); }
 .poda-white { max-height: 63px; max-width: 307px; border-radius: 10px; filter: blur(2px); }
 .poda-white::before { content: ""; z-index: -2; text-align: center; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(83deg); position: absolute; width: 600px; height: 600px; background-repeat: no-repeat; background-position: 0 0; filter: brightness(1.4); background-image: conic-gradient(rgba(0,0,0,0) 0%, #a099d8, rgba(0,0,0,0) 8%, rgba(0,0,0,0) 50%, #dfa2da, rgba(0,0,0,0) 58%); transition: all 2s; will-change: transform; }
@@ -28,16 +29,19 @@ html, body {
 .poda-darkBorderBg::before { content: ""; z-index: -2; text-align: center; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(82deg); position: absolute; width: 600px; height: 600px; background-repeat: no-repeat; background-position: 0 0; background-image: conic-gradient(rgba(0,0,0,0), #18116a, rgba(0,0,0,0) 10%, rgba(0,0,0,0) 50%, #6e1b60, rgba(0,0,0,0) 60%); transition: all 2s; will-change: transform; }
 .poda-glow { overflow: hidden; filter: blur(30px); opacity: 0.4; max-height: 130px; max-width: 354px; }
 .poda-glow::before { content: ""; z-index: -2; text-align: center; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(60deg); position: absolute; width: 999px; height: 999px; background-repeat: no-repeat; background-position: 0 0; background-image: conic-gradient(#000, #402fb5 5%, #000 38%, #000 50%, #cf30aa 60%, #000 87%); transition: all 2s; will-change: transform; }
-.poda:hover .poda-darkBorderBg::before { transform: translate(-50%, -50%) rotate(262deg); }
-.poda:hover .poda-glow::before { transform: translate(-50%, -50%) rotate(240deg); }
-.poda:hover .poda-white::before { transform: translate(-50%, -50%) rotate(263deg); }
-.poda:hover .poda-border::before { transform: translate(-50%, -50%) rotate(250deg); }
-.poda:focus-within .poda-darkBorderBg::before { transform: translate(-50%, -50%) rotate(442deg); transition: all 4s; }
-.poda:focus-within .poda-glow::before { transform: translate(-50%, -50%) rotate(420deg); transition: all 4s; }
-.poda:focus-within .poda-white::before { transform: translate(-50%, -50%) rotate(443deg); transition: all 4s; }
-.poda:focus-within .poda-border::before { transform: translate(-50%, -50%) rotate(430deg); transition: all 4s; }
-.poda-add-btn { position: absolute; top: 8px; right: 8px; display: flex; align-items: center; justify-content: center; z-index: 2; max-height: 40px; max-width: 38px; height: 100%; width: 100%; isolation: isolate; overflow: hidden; border-radius: 10px; background: linear-gradient(180deg, #161329, black, #1d1b4b); border: 1px solid transparent; cursor: pointer; }
-.poda-add-btn:active { transform: scale(0.95); }
+
+.poda-wrapper:hover > .poda-darkBorderBg::before { transform: translate(-50%, -50%) rotate(-98deg); }
+.poda-wrapper:hover > .poda-glow::before { transform: translate(-50%, -50%) rotate(-120deg); }
+.poda-wrapper:hover > .poda-white::before { transform: translate(-50%, -50%) rotate(-97deg); }
+.poda-wrapper:hover > .poda-border::before { transform: translate(-50%, -50%) rotate(-110deg); }
+
+.poda-wrapper:focus-within > .poda-darkBorderBg::before { transform: translate(-50%, -50%) rotate(442deg); transition: all 4s; }
+.poda-wrapper:focus-within > .poda-glow::before { transform: translate(-50%, -50%) rotate(420deg); transition: all 4s; }
+.poda-wrapper:focus-within > .poda-white::before { transform: translate(-50%, -50%) rotate(443deg); transition: all 4s; }
+.poda-wrapper:focus-within > .poda-border::before { transform: translate(-50%, -50%) rotate(430deg); transition: all 4s; }
+
+.poda-filter-icon { position: absolute; top: 8px; right: 8px; display: flex; align-items: center; justify-content: center; z-index: 2; max-height: 40px; max-width: 38px; height: 100%; width: 100%; isolation: isolate; overflow: hidden; border-radius: 10px; background: linear-gradient(180deg, #161329, black, #1d1b4b); border: 1px solid transparent; cursor: pointer; }
+.poda-filter-icon:active { transform: scale(0.95); }
 .poda-filterBorder { height: 42px; width: 40px; position: absolute; overflow: hidden; top: 7px; right: 7px; border-radius: 10px; pointer-events: none; }
 .poda-filterBorder::before { content: ""; text-align: center; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(90deg); position: absolute; width: 600px; height: 600px; background-repeat: no-repeat; background-position: 0 0; filter: brightness(1.35); background-image: conic-gradient(rgba(0,0,0,0), #3d3a4f, rgba(0,0,0,0) 50%, rgba(0,0,0,0) 50%, #3d3a4f, rgba(0,0,0,0) 100%); animation: p-rotate 4s linear infinite; }
 .poda-search-icon { position: absolute; left: 20px; top: 15px; pointer-events: none; }
