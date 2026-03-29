@@ -237,13 +237,13 @@ export default function GameBoard() {
       <div className="relative min-h-screen text-white flex flex-col items-center p-6 overflow-hidden">
         {renderBackground()}
         
-        {/* FIXED, SMOOTH SHINE ANIMATION TO TITLE */}
-        <h1 className="text-4xl font-black uppercase mb-10 tracking-[0.2em] mt-14 relative z-10 mafia-title-shine text-center">
+        {/* EXACT CSS CLASS APPLIED TO TITLE */}
+        <h1 className="uppercase mb-10 tracking-[0.2em] mt-14 relative z-10 btn-shine text-center text-4xl">
           THE MAFIA
         </h1>
         
-        {/* PODA INPUT */}
-        <div className="w-full mb-10 flex justify-center relative z-10">
+        {/* EXACT LAKSHAY-ART PODA INPUT */}
+        <div className="w-full mb-10 flex justify-center relative z-10 mt-12">
           <div className="poda-wrapper">
             <div className="poda-glow"></div>
             <div className="poda-darkBorderBg"></div>
