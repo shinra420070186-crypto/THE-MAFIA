@@ -48,45 +48,75 @@ html, body {
 @keyframes p-rotate { 100% { transform: translate(-50%, -50%) rotate(450deg); } }
 
 /* ==============================================
-   STEALTHWORM BUTTON CSS (For Start Game)
+   EXACT BARISDOGANSUTCU BATMAN BUTTON CSS
    ============================================== */
-.stealth-btn {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  max-width: 24rem; 
-  overflow: hidden;
-  height: 4rem;
-  background-size: 300% 300%;
-  cursor: pointer;
-  backdrop-filter: blur(1rem);
-  border-radius: 5rem;
-  transition: 0.5s;
-  animation: stealth_gradient_301 5s ease infinite;
-  border: double 4px transparent;
-  background-image: linear-gradient(#212121, #212121), linear-gradient(137.48deg, #ffdb3b 10%, #fe53bb 45%, #8f51ea 67%, #0044ff 87%);
-  background-origin: border-box;
-  background-clip: content-box, border-box;
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
+.batman-btn {
+  border: none;
   position: relative;
+  width: 200px;
+  height: 73px;
+  padding: 0;
+  z-index: 2;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='868' width='2500' viewBox='0 0 726 252.17'%3E%3Cpath d='M483.92 0S481.38 24.71 466 40.11c-11.74 11.74-24.09 12.66-40.26 15.07-9.42 1.41-29.7 3.77-34.81-.79-2.37-2.11-3-21-3.22-27.62-.21-6.92-1.36-16.52-2.82-18-.75 3.06-2.49 11.53-3.09 13.61S378.49 34.3 378 36a85.13 85.13 0 0 0-30.09 0c-.46-1.67-3.17-11.48-3.77-13.56s-2.34-10.55-3.09-13.61c-1.45 1.45-2.61 11.05-2.82 18-.21 6.67-.84 25.51-3.22 27.62-5.11 4.56-25.38 2.2-34.8.79-16.16-2.47-28.51-3.39-40.21-15.13C244.57 24.71 242 0 242 0H0s69.52 22.74 97.52 68.59c16.56 27.11 14.14 58.49 9.92 74.73C170 140 221.46 140 273 158.57c69.23 24.93 83.2 76.19 90 93.6 6.77-17.41 20.75-68.67 90-93.6 51.54-18.56 103-18.59 165.56-15.25-4.21-16.24-6.63-47.62 9.93-74.73C656.43 22.74 726 0 726 0z'/%3E%3C/svg%3E") no-repeat 50% 50%;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='868' width='2500' viewBox='0 0 726 252.17'%3E%3Cpath d='M483.92 0S481.38 24.71 466 40.11c-11.74 11.74-24.09 12.66-40.26 15.07-9.42 1.41-29.7 3.77-34.81-.79-2.37-2.11-3-21-3.22-27.62-.21-6.92-1.36-16.52-2.82-18-.75 3.06-2.49 11.53-3.09 13.61S378.49 34.3 378 36a85.13 85.13 0 0 0-30.09 0c-.46-1.67-3.17-11.48-3.77-13.56s-2.34-10.55-3.09-13.61c-1.45 1.45-2.61 11.05-2.82 18-.21 6.67-.84 25.51-3.22 27.62-5.11 4.56-25.38 2.2-34.8.79-16.16-2.47-28.51-3.39-40.21-15.13C244.57 24.71 242 0 242 0H0s69.52 22.74 97.52 68.59c16.56 27.11 14.14 58.49 9.92 74.73C170 140 221.46 140 273 158.57c69.23 24.93 83.2 76.19 90 93.6 6.77-17.41 20.75-68.67 90-93.6 51.54-18.56 103-18.59 165.56-15.25-4.21-16.24-6.63-47.62 9.93-74.73C656.43 22.74 726 0 726 0z'/%3E%3C/svg%3E") no-repeat 50% 50%;
+  -webkit-mask-size: 100%;
+  cursor: pointer;
+  background-color: white; 
+  transform: translateY(8px);
 }
-.stealth-btn:disabled { opacity: 0.5; pointer-events: none; filter: grayscale(1); }
-.stealth-container-stars { position: absolute; z-index: -1; width: 100%; height: 100%; overflow: hidden; transition: 0.5s; backdrop-filter: blur(1rem); border-radius: 5rem; transform: translateZ(0); }
-.stealth-strong { z-index: 2; font-size: 1.125rem; font-weight: 900; letter-spacing: 0.2em; color: #ffffff; text-shadow: 0 0 4px white; text-transform: uppercase; }
-.stealth-glow { position: absolute; display: flex; width: 12rem; }
-.stealth-circle { width: 100%; height: 30px; filter: blur(2rem); animation: stealth_pulse_3011 4s infinite; z-index: -1; will-change: transform, box-shadow; transform: translateZ(0); }
-.stealth-circle:nth-of-type(1) { background: rgba(254, 83, 186, 0.636); }
-.stealth-circle:nth-of-type(2) { background: rgba(142, 81, 234, 0.704); }
-.stealth-btn:hover .stealth-container-stars { z-index: 1; background-color: #212121; }
-.stealth-btn:hover { transform: scale(1.02); }
-.stealth-btn:active { border: double 4px #fe53bb; background-origin: border-box; background-clip: content-box, border-box; animation: none; transform: scale(0.97); }
-.stealth-btn:active .stealth-circle { background: #fe53bb; }
-.stealth-stars { position: relative; background: transparent; width: 200rem; height: 200rem; }
-.stealth-stars::after { content: ""; position: absolute; top: -10rem; left: -100rem; width: 100%; height: 100%; animation: stealth_animStarRotate 90s linear infinite; background-image: radial-gradient(#ffffff 1px, transparent 1%); background-size: 50px 50px; will-change: transform; }
-.stealth-stars::before { content: ""; position: absolute; top: 0; left: -50%; width: 170%; height: 500%; animation: stealth_animStar 60s linear infinite; background-image: radial-gradient(#ffffff 1px, transparent 1%); background-size: 50px 50px; opacity: 0.5; will-change: transform; }
-@keyframes stealth_animStar { from { transform: translateY(0); } to { transform: translateY(-135rem); } }
-@keyframes stealth_animStarRotate { from { transform: rotate(360deg); } to { transform: rotate(0); } }
-@keyframes stealth_gradient_301 { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-@keyframes stealth_pulse_3011 { 0% { transform: scale(0.75); box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 0, 0, 0); } 100% { transform: scale(0.75); box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); } }
+
+.batman-btn:disabled {
+  opacity: 0.3;
+  pointer-events: none;
+  filter: grayscale(1);
+}
+
+.batman-btn:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  box-shadow: 0px 0 0 0 white;
+  transition: all 2s ease;
+}
+
+.batman-btn:hover:after {
+  box-shadow: 0px -13px 56px 12px #ffffffa6;
+}
+
+.batman-btn span {
+  position: absolute;
+  width: 100%;
+  font-size: 15px;
+  font-weight: 800;
+  left: 50%;
+  top: 39%;
+  letter-spacing: 3px;
+  text-align: center;
+  transform: translate(-50%,-50%);
+  color: black;
+  transition: all 2s ease;
+  z-index: 5;
+}
+
+.batman-btn:hover span {
+  color: white;
+}
+
+.batman-btn:before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 100%;
+  background-color: black;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 1s ease;
+  z-index: 0;
+}
+
+.batman-btn:hover:before {
+  width: 100%;
+}
