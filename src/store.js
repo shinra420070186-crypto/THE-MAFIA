@@ -12,14 +12,13 @@ const loadPlayers = () => {
 };
 
 const savePlayers = (players) => {
-  // We only save the names and IDs so people don't get stuck dead if you refresh!
   const cleanPlayers = players.map(p => ({ id: p.id, name: p.name, role: 'Civilian', isAlive: true }));
   localStorage.setItem('mafia_roster', JSON.stringify(cleanPlayers));
 };
 
 export const useGameStore = create((set, get) => ({
   phase: 'lobby', 
-  players: loadPlayers(), // Loads your saved friends instantly
+  players: loadPlayers(), 
   settings: { revealRoles: true },
   
   revealIndex: 0, 
@@ -36,13 +35,13 @@ export const useGameStore = create((set, get) => ({
 
   addPlayer: (name) => set((state) => {
     const newPlayers = [...state.players, { id: Math.random().toString(36).substr(2, 9), name, role: 'Civilian', isAlive: true }];
-    savePlayers(newPlayers); // Auto-save
+    savePlayers(newPlayers);
     return { players: newPlayers };
   }),
 
   removePlayer: (id) => set((state) => {
     const newPlayers = state.players.filter(p => p.id !== id);
-    savePlayers(newPlayers); // Auto-save
+    savePlayers(newPlayers);
     return { players: newPlayers };
   }),
 
@@ -256,13 +255,11 @@ export const useGameStore = create((set, get) => ({
     return false;
   },
 
-  // Safely resets everyone back to civilian mode without deleting their names
   playAgain: () => set((state) => {
     const resetPlayers = state.players.map(p => ({ ...p, role: 'Civilian', isAlive: true }));
     return { phase: 'lobby', players: resetPlayers, winner: null };
   }),
 
-  // Used by the new Back Button to abort a game mid-way
   resetToLobby: () => set((state) => {
     const resetPlayers = state.players.map(p => ({ ...p, role: 'Civilian', isAlive: true }));
     return { 
