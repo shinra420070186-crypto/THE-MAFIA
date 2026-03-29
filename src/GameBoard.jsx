@@ -209,17 +209,21 @@ export default function GameBoard() {
     </div>
   );
 
-  // --- NEW SPLASH SCREEN ---
+  // --- NEW SPLASH SCREEN (Added 1.5s delay to let Batman button animate) ---
   if (state.phase === 'splash') {
     return (
       <div className="relative min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden" style={{ backgroundColor: '#e5e5e5' }}>
         <ImagePreloader />
         <div className="relative z-10">
           <button 
-            onClick={() => state.enterLobby()}
+            onClick={() => {
+              setTimeout(() => {
+                state.enterLobby();
+              }, 1500); // Wait 1.5 seconds so the bat logo completely opens
+            }}
             className="batman-btn"
           >
-            <span>PLAY NOW</span>
+            <span>PLAY GAME</span>
           </button>
         </div>
       </div>
@@ -565,7 +569,7 @@ export default function GameBoard() {
         <div className="w-full flex justify-center mt-12 mb-6 relative z-10">
           <button 
             onClick={() => {
-              setTimeout(() => { state.playAgain(); }, 250);
+              setTimeout(() => { state.playAgain(); }, 1500); // Wait 1.5 seconds so the bat logo opens
             }}
             className="batman-btn"
           >
