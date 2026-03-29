@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useGameStore } from './store';
 
 // ==============================================
-// 1. EXACT NIGHT SKY BACKGROUND (from briefcase-bluff)
+// 1. EXACT NIGHT SKY BACKGROUND
 // ==============================================
 const MidnightSky = () => (
   <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ backgroundColor: '#050505' }}>
@@ -44,7 +44,7 @@ const MidnightSky = () => (
 );
 
 // ==============================================
-// 2. EXACT MORNING SKY BACKGROUND (from briefcase-bluff)
+// 2. EXACT MORNING SKY BACKGROUND
 // ==============================================
 const MorningSky = () => (
   <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, #4A90E2 0%, #FFB75E 100%)' }}>
@@ -78,7 +78,7 @@ const MorningSky = () => (
 );
 
 // ==============================================
-// 3. EXACT ACTIVE GAME SKY (TWILIGHT) (from briefcase-bluff)
+// 3. EXACT ACTIVE GAME SKY (TWILIGHT)
 // ==============================================
 const TwilightSky = () => (
   <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, #2B1055 0%, #7597DE 100%)' }}>
@@ -118,6 +118,7 @@ const TwilightSky = () => (
     <div className="tw-body"></div>
   </div>
 );
+
 
 // --- IMAGE PRELOADER ---
 const roleImages = {
@@ -251,17 +252,53 @@ export default function GameBoard() {
         
         <h1 className="text-4xl font-black uppercase mb-8 tracking-[0.2em] text-red-600 mt-14 drop-shadow-[0_0_10px_rgba(220,38,38,0.5)] relative z-10">THE MAFIA</h1>
         
-        <div className="w-full max-w-sm bg-[#0a0a0a]/80 backdrop-blur-md border border-slate-800 p-4 rounded-2xl mb-6 relative z-10">
-          <input 
-            value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && newPlayerName) { state.addPlayer(newPlayerName); setNewPlayerName(''); }}}
-            placeholder="Add player..."
-            className="w-full p-3 bg-black rounded-lg outline-none text-white font-bold mb-2 border border-slate-800"
-          />
-          <button 
-            onClick={() => { if(newPlayerName) { state.addPlayer(newPlayerName); setNewPlayerName(''); }}}
-            className="w-full p-3 bg-red-600/20 text-red-500 border border-red-500/50 rounded-lg font-bold uppercase tracking-widest active:scale-95 transition-transform"
-          >Add</button>
+        {/* EXACT PODA INPUT FROM BRIEFCASE BLUFF */}
+        <div className="w-full mb-6 flex justify-center relative z-10">
+          <div className="poda">
+            <div className="poda-glow"></div>
+            <div className="poda-darkBorderBg"></div>
+            <div className="poda-darkBorderBg"></div>
+            <div className="poda-darkBorderBg"></div>
+            <div className="poda-white"></div>
+            <div className="poda-border"></div>
+            <div className="poda-main">
+              <input 
+                placeholder="Add Player..." 
+                type="text" 
+                value={newPlayerName}
+                onChange={(e) => setNewPlayerName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && newPlayerName) { state.addPlayer(newPlayerName); setNewPlayerName(''); } }}
+                className="poda-input" 
+              />
+              <div className="poda-input-mask"></div>
+              <div className="poda-pink-mask"></div>
+              <div className="poda-filterBorder"></div>
+              
+              <div className="poda-add-btn" onClick={() => { if(newPlayerName) { state.addPlayer(newPlayerName); setNewPlayerName(''); } }}>
+                <svg preserveAspectRatio="none" height="20" width="20" viewBox="0 0 24 24" fill="none" stroke="#d6d6e6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </div>
+              
+              <div className="poda-search-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" viewBox="0 0 24 24" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" height="24" fill="none">
+                  <path stroke="url(#search)" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle stroke="url(#searchl)" cx="12" cy="7" r="4"></circle>
+                  <defs>
+                    <linearGradient gradientTransform="rotate(50)" id="search">
+                      <stop stopColor="#f8e7f8" offset="0%"></stop>
+                      <stop stopColor="#b6a9b7" offset="50%"></stop>
+                    </linearGradient>
+                    <linearGradient id="searchl">
+                      <stop stopColor="#b6a9b7" offset="0%"></stop>
+                      <stop stopColor="#837484" offset="50%"></stop>
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="w-full max-w-sm space-y-2 mb-6 max-h-48 overflow-y-auto pr-2 relative z-10">
