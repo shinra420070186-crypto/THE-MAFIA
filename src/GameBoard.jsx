@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useGameStore } from './store';
 
 // ==============================================
-// 1. NIGHT SKY BACKGROUND
+// 1. EXACT NIGHT SKY BACKGROUND
 // ==============================================
 const MidnightSky = () => (
   <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ backgroundColor: '#050505' }}>
@@ -31,7 +31,7 @@ const MidnightSky = () => (
 );
 
 // ==============================================
-// 2. MORNING SKY BACKGROUND
+// 2. EXACT MORNING SKY BACKGROUND
 // ==============================================
 const MorningSky = () => (
   <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, #4A90E2 0%, #FFB75E 100%)' }}>
@@ -56,7 +56,7 @@ const MorningSky = () => (
 );
 
 // ==============================================
-// 3. ACTIVE GAME SKY (TWILIGHT)
+// 3. EXACT ACTIVE GAME SKY (TWILIGHT)
 // ==============================================
 const TwilightSky = () => (
   <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, #2B1055 0%, #7597DE 100%)' }}>
