@@ -21,7 +21,7 @@ html, body {
   background-size: 300% 300%;
   cursor: pointer;
   backdrop-filter: blur(1rem);
-  border-radius: 1rem;
+  border-radius: 5rem;
   transition: 0.5s;
   animation: stealth_gradient_301 5s ease infinite;
   border: double 4px transparent;
@@ -33,7 +33,7 @@ html, body {
   position: relative;
 }
 .stealth-btn:disabled { opacity: 0.5; pointer-events: none; filter: grayscale(1); }
-.stealth-container-stars { position: absolute; z-index: -1; width: 100%; height: 100%; overflow: hidden; transition: 0.5s; backdrop-filter: blur(1rem); border-radius: 1rem; transform: translateZ(0); }
+.stealth-container-stars { position: absolute; z-index: -1; width: 100%; height: 100%; overflow: hidden; transition: 0.5s; backdrop-filter: blur(1rem); border-radius: 5rem; transform: translateZ(0); }
 .stealth-strong { z-index: 2; font-size: 1.125rem; font-weight: 900; letter-spacing: 0.2em; color: #ffffff; text-shadow: 0 0 4px white; text-transform: uppercase; }
 .stealth-glow { position: absolute; display: flex; width: 12rem; }
 .stealth-circle { width: 100%; height: 30px; filter: blur(2rem); animation: stealth_pulse_3011 4s infinite; z-index: -1; will-change: transform, box-shadow; transform: translateZ(0); }
