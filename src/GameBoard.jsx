@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { signOut } from 'firebase/auth';
+import { auth } from './firebase';
 import { useGameStore } from './store';
 
 // ==============================================
@@ -236,6 +238,14 @@ export default function GameBoard() {
     return (
       <div className="relative min-h-screen text-white flex flex-col items-center p-6 overflow-hidden">
         {renderBackground()}
+
+        {/* SIGN OUT BUTTON */}
+        <button
+          onClick={() => signOut(auth)}
+          className="absolute top-4 right-4 text-slate-400 font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 active:scale-90 z-50 p-3 bg-[#0a0a0a]/80 backdrop-blur-md rounded-lg border border-slate-800 shadow-xl"
+        >
+          Sign Out ⏻
+        </button>
         
         {/* FAST DIAGONAL SHINE TEXT */}
         <h1 className="text-5xl md:text-6xl font-black uppercase mb-10 tracking-[0.2em] mt-14 relative z-10 shine-text text-center">
