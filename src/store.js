@@ -1,5 +1,36 @@
 import { create } from 'zustand';
 
+const DEFAULT_SETTINGS = {
+  revealRoles: true,
+  mafiaCount: 'auto',
+  sheriffMode: 'auto'
+};
+
+const loadSettings = () => {
+  try {
+    const saved = localStorage.getItem('mafia_settings');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      const sanitized = {
+        revealRoles: typeof parsed.revealRoles === 'boolean' ? parsed.revealRoles : DEFAULT_SETTINGS.revealRoles,
+        mafiaCount: parsed.mafiaCount ?? DEFAULT_SETTINGS.mafiaCount,
+        sheriffMode: parsed.sheriffMode ?? DEFAULT_SETTINGS.sheriffMode,
+      };
+      return {
+        ...DEFAULT_SETTINGS,
+        ...sanitized
+      };
+    }
+  } catch (e) {
+    console.error('Could not load settings', e);
+  }
+  return DEFAULT_SETTINGS;
+};
+
+const saveSettings = (settings) => {
+  localStorage.setItem('mafia_settings', JSON.stringify(settings));
+};
+
 const loadPlayers = () => {
   try {
     const saved = localStorage.getItem('mafia_roster');
@@ -31,7 +62,7 @@ export const useGameStore = create((set, get) => ({
   phase: 'splash',
   players: loadPlayers(), 
   recentNames: loadRecentNames(),
-  settings: { revealRoles: true },
+  settings: loadSettings(),
   revealIndex: 0, 
   nightActions: { mafia: null, doctor: null, sheriff: null },
   investigationResult: null, 
@@ -60,20 +91,42 @@ export const useGameStore = create((set, get) => ({
   }),
 
   toggleRevealRoles: () => set((state) => ({
-    settings: { ...state.settings, revealRoles: !state.settings.revealRoles }
+    settings: (() => {
+      const next = { ...state.settings, revealRoles: !state.settings.revealRoles };
+      saveSettings(next);
+      return next;
+    })()
   })),
 
+  setMafiaCount: (countMode) => set((state) => {
+    const next = { ...state.settings, mafiaCount: countMode };
+    saveSettings(next);
+    return { settings: next };
+  }),
+
+  setSheriffMode: (mode) => set((state) => {
+    const next = { ...state.settings, sheriffMode: mode };
+    saveSettings(next);
+    return { settings: next };
+  }),
+
   startGame: () => {
-    const { players } = get();
+    const { players, settings } = get();
     if (players.length < 4) return;
 
     let deck = [...players];
     const count = deck.length;
 
-    const mafiaCount = count >= 8 ? 2 : 1;
+    const requestedMafia = settings.mafiaCount === 'auto'
+      ? (count >= 8 ? 2 : 1)
+      : Number(settings.mafiaCount) || 1;
+    const mafiaCount = Math.max(1, Math.min(requestedMafia, Math.max(1, count - 2)));
     const roles = Array(mafiaCount).fill('Mafia');
     roles.push('Doctor', 'Detective');
-    if (count >= 8) roles.push('Sheriff');
+    const sheriffWanted = settings.sheriffMode === 'always'
+      || (settings.sheriffMode === 'auto' && count >= 8);
+    const canIncludeSheriff = roles.length < count;
+    if (sheriffWanted && canIncludeSheriff) roles.push('Sheriff');
     while (roles.length < count) roles.push('Civilian');
 
     for (let i = roles.length - 1; i > 0; i--) {
