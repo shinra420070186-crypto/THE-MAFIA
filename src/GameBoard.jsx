@@ -826,6 +826,11 @@ export default function GameBoard() {
     return () => clearTimeout(timer);
   }, [state.phase]);
 
+  // --- RESET voteSelected WHEN THE ACTIVE VOTER CHANGES ---
+  useEffect(() => {
+    setVoteSelected(false);
+  }, [state.votingState.currentVoterIndex]);
+
   // --- BACKGROUND FADE EFFECT (skip for animated transitions) ---
   useEffect(() => {
     // Reset interaction states when phase changes
@@ -1244,7 +1249,7 @@ export default function GameBoard() {
         <h2 className="text-3xl md:text-4xl font-black text-blue-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(96,165,250,0.6)] tracking-[0.15em]">Night Phase</h2>
         <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold">🔍 Moderator: Ask the Detective to wake up and point.</p>
         <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(96,165,250,0.4)] tracking-[0.1em]">Who is investigated?</h3>
-        {renderPlayerList((id) => state.submitNightAction('Detective', id), false)}
+        {renderPlayerList((id) => state.submitNightAction('Detective', id), true)}
       </div>
     );
   }
