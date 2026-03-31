@@ -75,7 +75,7 @@ export const useGameStore = create((set, get) => ({
   enterLobby: () => set({ phase: 'lobby' }),
 
   addPlayer: (name) => set((state) => {
-    const newPlayers = [...state.players, { id: Math.random().toString(36).substr(2, 9), name, role: 'Civilian', isAlive: true }];
+    const newPlayers = [...state.players, { id: Math.random().toString(36).slice(2, 11), name, role: 'Civilian', isAlive: true }];
     savePlayers(newPlayers);
     
     const newRecent = [name, ...state.recentNames.filter(n => n !== name)].slice(0, 15);
@@ -198,7 +198,7 @@ export const useGameStore = create((set, get) => ({
 
   advanceFromDetective: () => {
     const state = get();
-    const gameHasSheriff = state.players.some(p => p.role === 'Sheriff');
+    const gameHasSheriff = state.players.some(p => p.role === 'Sheriff' && p.isAlive);
     
     set({ investigationResult: null });
     if (gameHasSheriff) {
@@ -210,7 +210,7 @@ export const useGameStore = create((set, get) => ({
 
   processNight: () => {
     const state = get();
-    let nextPlayers = [...state.players];
+    let nextPlayers = state.players.map(p => ({ ...p }));
     let recap = [];
 
     const isMafiaAlive = nextPlayers.some(p => p.role === 'Mafia' && p.isAlive);
@@ -232,7 +232,7 @@ export const useGameStore = create((set, get) => ({
     if (finalSheriffTarget) {
       const target = nextPlayers.find(p => p.id === finalSheriffTarget);
       const sheriff = nextPlayers.find(p => p.role === 'Sheriff');
-      if (target && sheriff) {
+      if (target && sheriff && target.isAlive) {
         target.isAlive = false;
         recap.push(`The Sheriff executed ${target.name}.`);
         if (target.role !== 'Mafia') {
@@ -268,7 +268,7 @@ export const useGameStore = create((set, get) => ({
 
   processVoting: (votes) => {
     const { players, settings } = get();
-    let nextPlayers = [...players];
+    let nextPlayers = players.map(p => ({ ...p }));
     let recap = [];
 
     const voteCounts = {};
@@ -294,10 +294,12 @@ export const useGameStore = create((set, get) => ({
       recap.push("The vote was a tie. Nobody was exiled today.");
     } else {
       const victim = nextPlayers.find(p => p.id === kickedId);
-      victim.isAlive = false;
-      let msg = `The town voted out ${victim.name}.`;
-      if (settings.revealRoles) msg += ` They were ${victim.role === 'Mafia' ? 'the MAFIA' : 'an INNOCENT'}.`;
-      recap.push(msg);
+      if (victim) {
+        victim.isAlive = false;
+        let msg = `The town voted out ${victim.name}.`;
+        if (settings.revealRoles) msg += ` They were ${victim.role === 'Mafia' ? 'the MAFIA' : 'an INNOCENT'}.`;
+        recap.push(msg);
+      }
     }
 
     set({ players: nextPlayers, dayRecap: recap, phase: 'day_recap' });
