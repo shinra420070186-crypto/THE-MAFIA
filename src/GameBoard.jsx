@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from './store';
 
-const TRANSITION_MS = 5000;
+const TRANSITION_MS = 8000;
 const BEST_GRAPHICS_PROFILE = 'ultra';
 
 const clamp01 = (value) => Math.min(1, Math.max(0, value));
@@ -20,6 +20,8 @@ const hexToRgb = (hex) => {
 };
 
 const lerp = (a, b, t) => a + (b - a) * t;
+
+const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
 const BODY_PATH = {
   dayX: 78,
@@ -355,11 +357,12 @@ const SkyTimelineTransition = ({ direction }) => {
     };
 
     const tick = (now) => {
-      const p = clamp01((now - startedAt) / TRANSITION_MS);
+      const linearT = clamp01((now - startedAt) / TRANSITION_MS);
+      const p = easeInOutCubic(linearT);
       const frame = pickFrame(timeline, p);
       applyFrame(frame);
 
-      if (p < 1) {
+      if (linearT < 1) {
         rafId = requestAnimationFrame(tick);
       }
     };
@@ -462,16 +465,21 @@ const MidnightSky = () => {
       }}
     />
     {!isLow && (
-      <div
-        className="absolute inset-0 live-sky-twinkle"
-        style={{
-          backgroundImage: 'radial-gradient(1px 1px at 12% 76%, #fff, transparent), radial-gradient(1px 1px at 26% 52%, #fff, transparent), radial-gradient(1px 1px at 46% 16%, #fff, transparent), radial-gradient(1px 1px at 62% 68%, #fff, transparent), radial-gradient(1px 1px at 82% 42%, #fff, transparent), radial-gradient(1.5px 1.5px at 90% 78%, #fff, transparent)',
-          backgroundSize: `${Math.round(profile.starsSize * 0.8)}px ${Math.round(profile.starsSize * 0.8)}px`,
-          opacity: 0.45 * profile.starsDensity,
-          animationDuration: '3.6s',
-          animationDelay: '0.9s',
-        }}
-      />
+      <>
+        <div
+          className="absolute inset-0 live-sky-twinkle"
+          style={{
+            backgroundImage: 'radial-gradient(1px 1px at 12% 76%, #fff, transparent), radial-gradient(1px 1px at 26% 52%, #fff, transparent), radial-gradient(1px 1px at 46% 16%, #fff, transparent), radial-gradient(1px 1px at 62% 68%, #fff, transparent), radial-gradient(1px 1px at 82% 42%, #fff, transparent), radial-gradient(1.5px 1.5px at 90% 78%, #fff, transparent)',
+            backgroundSize: `${Math.round(profile.starsSize * 0.8)}px ${Math.round(profile.starsSize * 0.8)}px`,
+            opacity: 0.45 * profile.starsDensity,
+            animationDuration: '3.6s',
+            animationDelay: '0.9s',
+          }}
+        />
+        <div className="interstellar-shooting interstellar-shooting-a" />
+        <div className="interstellar-shooting interstellar-shooting-b" />
+        <div className="interstellar-shooting interstellar-shooting-c" />
+      </>
     )}
     <div
       className="absolute inset-0"
@@ -707,7 +715,13 @@ const InterstellarSky = () => {
           }}
         />
 
-        {isUltra && <div className="interstellar-shooting interstellar-shooting-a" />}
+        {isUltra && (
+          <>
+            <div className="interstellar-shooting interstellar-shooting-a" />
+            <div className="interstellar-shooting interstellar-shooting-b" />
+            <div className="interstellar-shooting interstellar-shooting-c" />
+          </>
+        )}
       </>
     )}
 
