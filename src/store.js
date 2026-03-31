@@ -141,10 +141,12 @@ export const useGameStore = create((set, get) => ({
       phase: 'role_reveal',
       revealIndex: 0,
       nightActions: { mafia: null, doctor: null, sheriff: null },
+      investigationResult: null,
       dayRecap: [],
       winner: null,
       doctorLastSaved: null,
       doctorHasSelfSaved: false,
+      votingState: { currentVoterIndex: 0, votes: {} },
     });
   },
 
@@ -210,7 +212,7 @@ export const useGameStore = create((set, get) => ({
 
   processNight: () => {
     const state = get();
-    let nextPlayers = [...state.players];
+    let nextPlayers = state.players.map(p => ({ ...p }));
     let recap = [];
 
     const isMafiaAlive = nextPlayers.some(p => p.role === 'Mafia' && p.isAlive);
@@ -268,7 +270,7 @@ export const useGameStore = create((set, get) => ({
 
   processVoting: (votes) => {
     const { players, settings } = get();
-    let nextPlayers = [...players];
+    let nextPlayers = players.map(p => ({ ...p }));
     let recap = [];
 
     const voteCounts = {};
@@ -328,7 +330,17 @@ export const useGameStore = create((set, get) => ({
 
   playAgain: () => set((state) => {
     const resetPlayers = state.players.map(p => ({ ...p, role: 'Civilian', isAlive: true }));
-    return { phase: 'lobby', players: resetPlayers, winner: null };
+    return {
+      phase: 'lobby',
+      players: resetPlayers,
+      winner: null,
+      nightActions: { mafia: null, doctor: null, sheriff: null },
+      investigationResult: null,
+      dayRecap: [],
+      doctorLastSaved: null,
+      doctorHasSelfSaved: false,
+      votingState: { currentVoterIndex: 0, votes: {} },
+    };
   }),
 
   resetToLobby: () => set((state) => {
@@ -342,6 +354,7 @@ export const useGameStore = create((set, get) => ({
       dayRecap: [],
       doctorLastSaved: null,
       doctorHasSelfSaved: false,
+      votingState: { currentVoterIndex: 0, votes: {} },
     };
   })
 }));

@@ -828,6 +828,11 @@ export default function GameBoard() {
     return () => clearTimeout(timer);
   }, [state.phase]);
 
+  // --- RESET VOTE SELECTION BETWEEN VOTERS ---
+  useEffect(() => {
+    setVoteSelected(false);
+  }, [state.votingState.currentVoterIndex]);
+
   // Background Engine
   const renderBackground = () => {
     const BgComponent = (() => {
