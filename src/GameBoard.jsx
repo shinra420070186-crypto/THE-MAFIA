@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from './store';
 
 const TRANSITION_MS = 5000;
-const BEST_GRAPHICS_PROFILE = 'ultra';
+const BEST_GRAPHICS_PROFILE = '4k';
 
 const clamp01 = (value) => Math.min(1, Math.max(0, value));
 
@@ -61,6 +61,17 @@ const GRAPHICS_PROFILES = {
     sunShadowBoost: 1.2,
     moonShadowBoost: 1.16,
     textureOpacityBoost: 1.08,
+    backdropBlur: 'blur(0px)'
+  },
+  '4k': {
+    skyFilter: 'saturate(1.32) contrast(1.18) brightness(1.03)',
+    cloudBlend: true,
+    haze: true,
+    starsDensity: 1.6,
+    starsSize: 44,
+    sunShadowBoost: 1.55,
+    moonShadowBoost: 1.45,
+    textureOpacityBoost: 1.28,
     backdropBlur: 'blur(0px)'
   }
 };
@@ -130,6 +141,29 @@ const DAY_TO_NIGHT_TIMELINE = [
     coolHazeOpacity: 0,
   },
   {
+    t: 0.18,
+    skyTop: '#5590e8',
+    skyMid: '#c0c8f0',
+    skyBottom: '#f8c98a',
+    cloudTint: '#ffe8cc',
+    cloudOpacity: 0.30,
+    sunColor: '#ffd080',
+    sunX: 76,
+    sunY: 28,
+    sunSize: 88,
+    sunGlow: 136,
+    sunOpacity: 1,
+    moonColor: '#eaeef8',
+    moonX: BODY_PATH.moonX,
+    moonY: 96,
+    moonSize: 64,
+    moonGlow: 22,
+    moonOpacity: 0.04,
+    starsOpacity: 0.02,
+    warmHazeOpacity: 0.14,
+    coolHazeOpacity: 0.02,
+  },
+  {
     t: 0.35,
     skyTop: '#4f78c6',
     skyMid: '#f5b06a',
@@ -153,6 +187,29 @@ const DAY_TO_NIGHT_TIMELINE = [
     coolHazeOpacity: 0.05,
   },
   {
+    t: 0.52,
+    skyTop: '#31508e',
+    skyMid: '#8a5aa0',
+    skyBottom: '#563060',
+    cloudTint: '#d0b8dc',
+    cloudOpacity: 0.22,
+    sunColor: '#f08840',
+    sunX: 70,
+    sunY: 58,
+    sunSize: 78,
+    sunGlow: 110,
+    sunOpacity: 0.78,
+    moonColor: '#eaeffc',
+    moonX: BODY_PATH.moonX,
+    moonY: 62,
+    moonSize: 67,
+    moonGlow: 27,
+    moonOpacity: 0.42,
+    starsOpacity: 0.32,
+    warmHazeOpacity: 0.12,
+    coolHazeOpacity: 0.11,
+  },
+  {
     t: 0.7,
     skyTop: '#20326c',
     skyMid: '#6a3f83',
@@ -174,6 +231,29 @@ const DAY_TO_NIGHT_TIMELINE = [
     starsOpacity: 0.56,
     warmHazeOpacity: 0.07,
     coolHazeOpacity: 0.16,
+  },
+  {
+    t: 0.86,
+    skyTop: '#0d1428',
+    skyMid: '#1a2240',
+    skyBottom: '#0b0c14',
+    cloudTint: '#aab0c8',
+    cloudOpacity: 0.12,
+    sunColor: '#6a3830',
+    sunX: 66,
+    sunY: 92,
+    sunSize: 66,
+    sunGlow: 50,
+    sunOpacity: 0.2,
+    moonColor: '#f0f4ff',
+    moonX: BODY_PATH.moonX,
+    moonY: 30,
+    moonSize: 69,
+    moonGlow: 33,
+    moonOpacity: 0.88,
+    starsOpacity: 0.82,
+    warmHazeOpacity: 0.02,
+    coolHazeOpacity: 0.14,
   },
   {
     t: 1,
@@ -225,6 +305,29 @@ const NIGHT_TO_DAY_TIMELINE = [
     coolHazeOpacity: 0.14,
   },
   {
+    t: 0.16,
+    skyTop: '#0e1530',
+    skyMid: '#1c2248',
+    skyBottom: '#120f1a',
+    cloudTint: '#a8afc4',
+    cloudOpacity: 0.11,
+    sunColor: '#5c2e2a',
+    sunX: 65,
+    sunY: 100,
+    sunSize: 62,
+    sunGlow: 34,
+    sunOpacity: 0.08,
+    moonColor: '#eef2ff',
+    moonX: BODY_PATH.moonX,
+    moonY: 26,
+    moonSize: 70,
+    moonGlow: 34,
+    moonOpacity: 0.9,
+    starsOpacity: 0.9,
+    warmHazeOpacity: 0.03,
+    coolHazeOpacity: 0.13,
+  },
+  {
     t: 0.33,
     skyTop: '#232f60',
     skyMid: '#65417f',
@@ -248,6 +351,29 @@ const NIGHT_TO_DAY_TIMELINE = [
     coolHazeOpacity: 0.13,
   },
   {
+    t: 0.50,
+    skyTop: '#3a6ab8',
+    skyMid: '#d4907e',
+    skyBottom: '#cc6e50',
+    cloudTint: '#ffcca0',
+    cloudOpacity: 0.21,
+    sunColor: '#ffab5e',
+    sunX: 71,
+    sunY: 62,
+    sunSize: 79,
+    sunGlow: 108,
+    sunOpacity: 0.76,
+    moonColor: '#dce4f2',
+    moonX: BODY_PATH.moonX,
+    moonY: 65,
+    moonSize: 67,
+    moonGlow: 24,
+    moonOpacity: 0.38,
+    starsOpacity: 0.36,
+    warmHazeOpacity: 0.14,
+    coolHazeOpacity: 0.08,
+  },
+  {
     t: 0.68,
     skyTop: '#4e7ecf',
     skyMid: '#f7b36f',
@@ -269,6 +395,29 @@ const NIGHT_TO_DAY_TIMELINE = [
     starsOpacity: 0.14,
     warmHazeOpacity: 0.19,
     coolHazeOpacity: 0.05,
+  },
+  {
+    t: 0.84,
+    skyTop: '#5c98ef',
+    skyMid: '#a6d4ff',
+    skyBottom: '#f8e0b4',
+    cloudTint: '#fff4e0',
+    cloudOpacity: 0.29,
+    sunColor: '#ffd898',
+    sunX: BODY_PATH.dayX - 2,
+    sunY: BODY_PATH.dayY + 4,
+    sunSize: 88,
+    sunGlow: 130,
+    sunOpacity: 1,
+    moonColor: '#dddfe8',
+    moonX: BODY_PATH.moonX,
+    moonY: 96,
+    moonSize: 64,
+    moonGlow: 15,
+    moonOpacity: 0.03,
+    starsOpacity: 0.04,
+    warmHazeOpacity: 0.11,
+    coolHazeOpacity: 0.01,
   },
   {
     t: 1,
@@ -300,9 +449,13 @@ const toRgb = (color) => `rgb(${color.r}, ${color.g}, ${color.b})`;
 const SkyTimelineTransition = ({ direction }) => {
   const skyRef = useRef(null);
   const sunRef = useRef(null);
+  const sunCoronaRef = useRef(null);
   const moonRef = useRef(null);
+  const moonHaloRef = useRef(null);
   const starsRef = useRef(null);
+  const starsRef2 = useRef(null);
   const cloudsRef = useRef(null);
+  const clouds2Ref = useRef(null);
   const warmHazeRef = useRef(null);
   const coolHazeRef = useRef(null);
   const timeline = direction === 'sunset' ? DAY_TO_NIGHT_TIMELINE : NIGHT_TO_DAY_TIMELINE;
@@ -327,6 +480,17 @@ const SkyTimelineTransition = ({ direction }) => {
         sunRef.current.style.boxShadow = `0 0 ${Math.round(frame.sunGlow * profile.sunShadowBoost)}px ${Math.round(frame.sunGlow * 0.4 * profile.sunShadowBoost)}px rgba(${frame.sunColor.r}, ${frame.sunColor.g}, ${frame.sunColor.b}, 0.52)`;
       }
 
+      if (sunCoronaRef.current) {
+        const coronaSize = frame.sunSize * 2.8;
+        sunCoronaRef.current.style.transform = `translate3d(${frame.sunX}vw, ${frame.sunY}vh, 0)`;
+        sunCoronaRef.current.style.width = `${coronaSize}px`;
+        sunCoronaRef.current.style.height = `${coronaSize}px`;
+        sunCoronaRef.current.style.marginLeft = `${-(coronaSize - frame.sunSize) / 2}px`;
+        sunCoronaRef.current.style.marginTop = `${-(coronaSize - frame.sunSize) / 2}px`;
+        sunCoronaRef.current.style.opacity = String(frame.sunOpacity * 0.45);
+        sunCoronaRef.current.style.background = `radial-gradient(circle, rgba(${frame.sunColor.r}, ${frame.sunColor.g}, ${frame.sunColor.b}, 0.28) 0%, rgba(${frame.sunColor.r}, ${frame.sunColor.g}, ${frame.sunColor.b}, 0.08) 50%, transparent 78%)`;
+      }
+
       if (moonRef.current) {
         moonRef.current.style.transform = `translate3d(${frame.moonX}vw, ${frame.moonY}vh, 0)`;
         moonRef.current.style.width = `${frame.moonSize}px`;
@@ -336,13 +500,32 @@ const SkyTimelineTransition = ({ direction }) => {
         moonRef.current.style.boxShadow = `0 0 ${Math.round(frame.moonGlow * profile.moonShadowBoost)}px ${Math.round(frame.moonGlow * 0.55 * profile.moonShadowBoost)}px rgba(210, 223, 255, 0.45)`;
       }
 
+      if (moonHaloRef.current) {
+        const haloSize = frame.moonSize * 3.2;
+        moonHaloRef.current.style.transform = `translate3d(${frame.moonX}vw, ${frame.moonY}vh, 0)`;
+        moonHaloRef.current.style.width = `${haloSize}px`;
+        moonHaloRef.current.style.height = `${haloSize}px`;
+        moonHaloRef.current.style.marginLeft = `${-(haloSize - frame.moonSize) / 2}px`;
+        moonHaloRef.current.style.marginTop = `${-(haloSize - frame.moonSize) / 2}px`;
+        moonHaloRef.current.style.opacity = String(frame.moonOpacity * 0.5);
+      }
+
       if (starsRef.current) {
         starsRef.current.style.opacity = String(frame.starsOpacity * profile.starsDensity);
+      }
+
+      if (starsRef2.current) {
+        starsRef2.current.style.opacity = String(frame.starsOpacity * profile.starsDensity * 0.55);
       }
 
       if (cloudsRef.current) {
         cloudsRef.current.style.opacity = String(frame.cloudOpacity * profile.textureOpacityBoost);
         cloudsRef.current.style.background = `radial-gradient(ellipse at 22% 24%, rgba(${frame.cloudTint.r}, ${frame.cloudTint.g}, ${frame.cloudTint.b}, 0.18) 0%, transparent 54%), radial-gradient(ellipse at 68% 33%, rgba(${frame.cloudTint.r}, ${frame.cloudTint.g}, ${frame.cloudTint.b}, 0.17) 0%, transparent 58%), radial-gradient(ellipse at 45% 58%, rgba(${frame.cloudTint.r}, ${frame.cloudTint.g}, ${frame.cloudTint.b}, 0.14) 0%, transparent 62%)`;
+      }
+
+      if (clouds2Ref.current) {
+        clouds2Ref.current.style.opacity = String(frame.cloudOpacity * profile.textureOpacityBoost * 0.7);
+        clouds2Ref.current.style.background = `radial-gradient(ellipse at 14% 62%, rgba(${frame.cloudTint.r}, ${frame.cloudTint.g}, ${frame.cloudTint.b}, 0.14) 0%, transparent 50%), radial-gradient(ellipse at 56% 72%, rgba(${frame.cloudTint.r}, ${frame.cloudTint.g}, ${frame.cloudTint.b}, 0.12) 0%, transparent 54%), radial-gradient(ellipse at 82% 48%, rgba(${frame.cloudTint.r}, ${frame.cloudTint.g}, ${frame.cloudTint.b}, 0.13) 0%, transparent 52%)`;
       }
 
       if (warmHazeRef.current) {
@@ -372,21 +555,54 @@ const SkyTimelineTransition = ({ direction }) => {
   return (
     <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none">
       <div ref={skyRef} className="absolute inset-0" />
+      {/* Dense near stars */}
       <div
         ref={starsRef}
         className="absolute inset-0"
         style={{
           opacity: direction === 'sunset' ? 0 : 1,
-          backgroundImage: 'radial-gradient(1px 1px at 10% 10%, #fff, transparent), radial-gradient(1px 1px at 30% 20%, #fff, transparent), radial-gradient(1px 1px at 50% 50%, #fff, transparent), radial-gradient(1px 1px at 70% 30%, #fff, transparent), radial-gradient(1px 1px at 90% 10%, #fff, transparent), radial-gradient(1.5px 1.5px at 20% 40%, #fff, transparent), radial-gradient(1.5px 1.5px at 60% 85%, #fff, transparent), radial-gradient(2px 2px at 40% 70%, #fff, transparent)',
+          backgroundImage: 'radial-gradient(1.3px 1.3px at 6% 14%, #f8fbff, transparent), radial-gradient(1.1px 1.1px at 18% 7%, #fffef8, transparent), radial-gradient(1.4px 1.4px at 28% 42%, #f7fbff, transparent), radial-gradient(1px 1px at 38% 22%, #e8f0ff, transparent), radial-gradient(1.2px 1.2px at 48% 68%, #fffaf0, transparent), radial-gradient(1.5px 1.5px at 58% 30%, #f9fbff, transparent), radial-gradient(1.1px 1.1px at 68% 54%, #f0f5ff, transparent), radial-gradient(1.3px 1.3px at 78% 10%, #ffffff, transparent), radial-gradient(1px 1px at 88% 76%, #f8f9ff, transparent), radial-gradient(1.2px 1.2px at 96% 44%, #fff8f0, transparent), radial-gradient(1px 1px at 12% 86%, #fafcff, transparent), radial-gradient(1.1px 1.1px at 34% 60%, #f5f8ff, transparent), radial-gradient(1.2px 1.2px at 52% 92%, #fffef8, transparent), radial-gradient(1px 1px at 72% 36%, #f0f4ff, transparent), radial-gradient(1.3px 1.3px at 84% 90%, #ffffff, transparent)',
           backgroundSize: `${profile.starsSize}px ${profile.starsSize}px`,
+        }}
+      />
+      {/* Far distant stars — smaller tile, dimmer */}
+      <div
+        ref={starsRef2}
+        className="absolute inset-0"
+        style={{
+          opacity: direction === 'sunset' ? 0 : 0.5,
+          backgroundImage: 'radial-gradient(1px 1px at 4% 38%, #e8eeff, transparent), radial-gradient(1px 1px at 22% 64%, #f0f6ff, transparent), radial-gradient(1px 1px at 44% 12%, #f8fbff, transparent), radial-gradient(1px 1px at 62% 82%, #edf3ff, transparent), radial-gradient(1px 1px at 80% 28%, #fefefe, transparent), radial-gradient(1px 1px at 92% 56%, #e5eeff, transparent), radial-gradient(1.1px 1.1px at 16% 50%, #f8fbff, transparent), radial-gradient(1px 1px at 36% 78%, #eef4ff, transparent)',
+          backgroundSize: `${Math.round(profile.starsSize * 0.72)}px ${Math.round(profile.starsSize * 0.72)}px`,
         }}
       />
       <div
         ref={cloudsRef}
-        className="absolute inset-0"
+        className="absolute inset-0 live-sky-cloud-drift-slow"
         style={{
           opacity: 0.25,
           mixBlendMode: profile.cloudBlend ? 'soft-light' : 'normal',
+        }}
+      />
+      <div
+        ref={clouds2Ref}
+        className="absolute inset-0 live-sky-cloud-drift-fast"
+        style={{
+          opacity: 0.15,
+          mixBlendMode: profile.cloudBlend ? 'soft-light' : 'normal',
+        }}
+      />
+      {/* Sun corona */}
+      <div
+        ref={sunCoronaRef}
+        className="absolute rounded-full"
+        style={{
+          transform: `translate3d(${BODY_PATH.dayX}vw, ${BODY_PATH.dayY}vh, 0)`,
+          width: '252px',
+          height: '252px',
+          marginLeft: '-81px',
+          marginTop: '-81px',
+          background: 'radial-gradient(circle, rgba(255, 227, 166, 0.28) 0%, rgba(255, 200, 100, 0.08) 50%, transparent 78%)',
+          opacity: 0.45,
         }}
       />
       <div
@@ -398,6 +614,20 @@ const SkyTimelineTransition = ({ direction }) => {
           height: '90px',
           backgroundColor: '#ffe3a6',
           opacity: 1,
+        }}
+      />
+      {/* Moon halo */}
+      <div
+        ref={moonHaloRef}
+        className="absolute rounded-full"
+        style={{
+          transform: `translate3d(${BODY_PATH.moonX}vw, ${BODY_PATH.horizonY}vh, 0)`,
+          width: '224px',
+          height: '224px',
+          marginLeft: '-80px',
+          marginTop: '-80px',
+          background: 'radial-gradient(circle, rgba(189, 207, 255, 0.22) 0%, rgba(136, 162, 236, 0.06) 56%, transparent 78%)',
+          opacity: 0,
         }}
       />
       <div
@@ -445,42 +675,73 @@ const MidnightSky = () => {
   return (
   <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none">
     <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #090d1b 0%, #101a35 56%, #06070d 100%)', filter: profile.skyFilter }} />
+    {/* Nebula atmospheric tint */}
     <div
       className="absolute inset-0 live-sky-night-haze"
       style={{
         background: 'radial-gradient(ellipse at 18% 36%, rgba(76, 105, 180, 0.22) 0%, transparent 54%), radial-gradient(ellipse at 72% 44%, rgba(63, 90, 165, 0.2) 0%, transparent 58%), radial-gradient(ellipse at 50% 82%, rgba(40, 64, 130, 0.15) 0%, transparent 60%)',
         mixBlendMode: 'screen',
-        opacity: profile.haze ? 0.22 : 0,
+        opacity: profile.haze ? 0.24 : 0,
       }}
     />
+    {/* Layer 1 — bright near stars, dense */}
     <div
       className="absolute inset-0 live-sky-twinkle"
       style={{
-        backgroundImage: 'radial-gradient(1px 1px at 10% 10%, #fff, transparent), radial-gradient(1px 1px at 30% 20%, #fff, transparent), radial-gradient(1px 1px at 50% 50%, #fff, transparent), radial-gradient(1px 1px at 70% 30%, #fff, transparent), radial-gradient(1px 1px at 90% 10%, #fff, transparent), radial-gradient(1.5px 1.5px at 20% 40%, #fff, transparent), radial-gradient(1.5px 1.5px at 60% 85%, #fff, transparent), radial-gradient(2px 2px at 40% 70%, #fff, transparent)',
+        backgroundImage: 'radial-gradient(1.3px 1.3px at 6% 14%, #f8fbff, transparent), radial-gradient(1.1px 1.1px at 18% 7%, #fffef8, transparent), radial-gradient(1.4px 1.4px at 28% 42%, #f7fbff, transparent), radial-gradient(1px 1px at 38% 22%, #e8f0ff, transparent), radial-gradient(1.2px 1.2px at 48% 68%, #fffaf0, transparent), radial-gradient(1.5px 1.5px at 58% 30%, #f9fbff, transparent), radial-gradient(1.1px 1.1px at 68% 54%, #f0f5ff, transparent), radial-gradient(1.3px 1.3px at 78% 10%, #ffffff, transparent), radial-gradient(1px 1px at 88% 76%, #f8f9ff, transparent), radial-gradient(1.2px 1.2px at 96% 44%, #fff8f0, transparent), radial-gradient(1px 1px at 12% 86%, #fafcff, transparent), radial-gradient(1.1px 1.1px at 34% 60%, #f5f8ff, transparent), radial-gradient(1.2px 1.2px at 52% 92%, #fffef8, transparent), radial-gradient(1px 1px at 72% 36%, #f0f4ff, transparent), radial-gradient(1.3px 1.3px at 84% 90%, #ffffff, transparent)',
         backgroundSize: `${profile.starsSize}px ${profile.starsSize}px`,
         opacity: 0.95 * profile.starsDensity,
       }}
     />
+    {/* Layer 2 — mid-distance stars, different tile size for parallax */}
     {!isLow && (
       <div
         className="absolute inset-0 live-sky-twinkle"
         style={{
-          backgroundImage: 'radial-gradient(1px 1px at 12% 76%, #fff, transparent), radial-gradient(1px 1px at 26% 52%, #fff, transparent), radial-gradient(1px 1px at 46% 16%, #fff, transparent), radial-gradient(1px 1px at 62% 68%, #fff, transparent), radial-gradient(1px 1px at 82% 42%, #fff, transparent), radial-gradient(1.5px 1.5px at 90% 78%, #fff, transparent)',
-          backgroundSize: `${Math.round(profile.starsSize * 0.8)}px ${Math.round(profile.starsSize * 0.8)}px`,
-          opacity: 0.45 * profile.starsDensity,
+          backgroundImage: 'radial-gradient(1px 1px at 8% 72%, #eef4ff, transparent), radial-gradient(1px 1px at 22% 48%, #f8fbff, transparent), radial-gradient(1.1px 1.1px at 42% 18%, #e8eeff, transparent), radial-gradient(1px 1px at 56% 64%, #f0f6ff, transparent), radial-gradient(1.2px 1.2px at 74% 38%, #fefefe, transparent), radial-gradient(1px 1px at 90% 82%, #e5eeff, transparent), radial-gradient(1px 1px at 32% 90%, #f9fbff, transparent), radial-gradient(1.1px 1.1px at 62% 8%, #edf3ff, transparent), radial-gradient(1px 1px at 16% 30%, #f5f9ff, transparent)',
+          backgroundSize: `${Math.round(profile.starsSize * 0.72)}px ${Math.round(profile.starsSize * 0.72)}px`,
+          opacity: 0.55 * profile.starsDensity,
           animationDuration: '3.6s',
           animationDelay: '0.9s',
         }}
       />
     )}
+    {/* Layer 3 — far tiny stars, very small tile */}
+    {!isLow && (
+      <div
+        className="absolute inset-0 live-sky-twinkle"
+        style={{
+          backgroundImage: 'radial-gradient(0.8px 0.8px at 11% 25%, #d8e4ff, transparent), radial-gradient(0.8px 0.8px at 33% 55%, #dce6ff, transparent), radial-gradient(0.8px 0.8px at 55% 15%, #e0e8ff, transparent), radial-gradient(0.8px 0.8px at 77% 72%, #d4dcff, transparent), radial-gradient(0.8px 0.8px at 91% 40%, #e4eeff, transparent), radial-gradient(0.8px 0.8px at 25% 80%, #dae4ff, transparent)',
+          backgroundSize: `${Math.round(profile.starsSize * 0.52)}px ${Math.round(profile.starsSize * 0.52)}px`,
+          opacity: 0.32 * profile.starsDensity,
+          animationDuration: '6.8s',
+          animationDelay: '1.6s',
+        }}
+      />
+    )}
+    {/* Subtle cloud/milky-way wisps */}
     <div
       className="absolute inset-0"
       style={{
-        background: 'radial-gradient(ellipse at 22% 24%, rgba(190, 204, 234, 0.12) 0%, transparent 56%), radial-gradient(ellipse at 68% 33%, rgba(178, 192, 223, 0.1) 0%, transparent 60%), radial-gradient(ellipse at 45% 58%, rgba(160, 174, 207, 0.08) 0%, transparent 64%)',
+        background: 'radial-gradient(ellipse at 22% 24%, rgba(190, 204, 234, 0.14) 0%, transparent 56%), radial-gradient(ellipse at 68% 33%, rgba(178, 192, 223, 0.12) 0%, transparent 60%), radial-gradient(ellipse at 45% 58%, rgba(160, 174, 207, 0.1) 0%, transparent 64%)',
         mixBlendMode: profile.cloudBlend ? 'soft-light' : 'normal',
-        opacity: 0.12 * profile.textureOpacityBoost,
+        opacity: 0.14 * profile.textureOpacityBoost,
       }}
     />
+    {/* Moon halo / aura */}
+    <div
+      className="absolute rounded-full live-sky-aura-pulse"
+      style={{
+        transform: `translate3d(${BODY_PATH.moonX}vw, ${BODY_PATH.moonY}vh, 0)`,
+        width: '220px',
+        height: '220px',
+        marginLeft: '-75px',
+        marginTop: '-75px',
+        background: 'radial-gradient(circle, rgba(189, 207, 255, 0.28) 0%, rgba(136, 162, 236, 0.1) 52%, transparent 76%)',
+        opacity: isLow ? 0.6 : 1,
+      }}
+    />
+    {/* Moon body */}
     <div
       className="absolute rounded-full live-sky-moon-drift"
       style={{
@@ -488,29 +749,21 @@ const MidnightSky = () => {
         width: '70px',
         height: '70px',
         backgroundColor: '#eff3ff',
-        boxShadow: '0 0 36px 18px rgba(210, 223, 255, 0.45)',
+        boxShadow: `0 0 ${Math.round(36 * profile.moonShadowBoost)}px ${Math.round(20 * profile.moonShadowBoost)}px rgba(210, 223, 255, 0.45)`,
       }}
     />
-    <div
-      className="absolute rounded-full live-sky-aura-pulse"
-      style={{
-        transform: `translate3d(${BODY_PATH.moonX}vw, ${BODY_PATH.moonY}vh, 0)`,
-        width: '155px',
-        height: '155px',
-        marginLeft: '-42px',
-        marginTop: '-42px',
-        background: 'radial-gradient(circle, rgba(189, 207, 255, 0.22) 0%, rgba(136, 162, 236, 0.08) 56%, transparent 78%)',
-        opacity: isLow ? 0.6 : 1,
-      }}
-    />
+    {/* Cool horizon haze */}
     <div
       className="absolute inset-0"
       style={{
         background: 'radial-gradient(circle at 48% 90%, rgba(130, 160, 255, 0.3) 0%, rgba(72, 98, 180, 0.14) 38%, transparent 70%)',
         mixBlendMode: 'screen',
-        opacity: profile.haze ? 0.14 : 0,
+        opacity: profile.haze ? 0.16 : 0,
       }}
     />
+    {/* Shooting stars */}
+    <div className="interstellar-shooting interstellar-shooting-b" />
+    <div className="interstellar-shooting interstellar-shooting-c" />
   </div>
   );
 };
@@ -524,32 +777,63 @@ const MorningSky = () => {
 
   return (
   <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-    <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #66a4f4 0%, #91cbff 56%, #f4d9a8 100%)', filter: profile.skyFilter }} />
+    {/* Sky gradient */}
+    <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #66a4f4 0%, #7bbaf8 28%, #91cbff 56%, #d9eefc 80%, #f4d9a8 100%)', filter: profile.skyFilter }} />
+    {/* Slow upper clouds */}
     <div
       className="absolute inset-0 live-sky-cloud-drift-slow"
       style={{
-        background: 'radial-gradient(ellipse at 12% 18%, rgba(255, 255, 255, 0.35) 0%, transparent 42%), radial-gradient(ellipse at 42% 28%, rgba(255, 255, 255, 0.28) 0%, transparent 45%), radial-gradient(ellipse at 76% 22%, rgba(255, 255, 255, 0.26) 0%, transparent 42%)',
-        opacity: 0.36 * profile.textureOpacityBoost,
+        background: 'radial-gradient(ellipse at 12% 18%, rgba(255, 255, 255, 0.42) 0%, transparent 42%), radial-gradient(ellipse at 42% 28%, rgba(255, 255, 255, 0.35) 0%, transparent 45%), radial-gradient(ellipse at 76% 22%, rgba(255, 255, 255, 0.32) 0%, transparent 42%), radial-gradient(ellipse at 58% 12%, rgba(255, 248, 235, 0.28) 0%, transparent 38%)',
+        opacity: 0.38 * profile.textureOpacityBoost,
       }}
     />
+    {/* Fast lower clouds */}
     {!isLow && (
       <div
         className="absolute inset-0 live-sky-cloud-drift-fast"
         style={{
-          background: 'radial-gradient(ellipse at 20% 52%, rgba(255, 242, 220, 0.22) 0%, transparent 48%), radial-gradient(ellipse at 62% 60%, rgba(255, 240, 214, 0.2) 0%, transparent 50%), radial-gradient(ellipse at 88% 46%, rgba(255, 234, 204, 0.18) 0%, transparent 48%)',
-          opacity: 0.3 * profile.textureOpacityBoost,
+          background: 'radial-gradient(ellipse at 20% 52%, rgba(255, 242, 220, 0.26) 0%, transparent 48%), radial-gradient(ellipse at 62% 60%, rgba(255, 240, 214, 0.24) 0%, transparent 50%), radial-gradient(ellipse at 88% 46%, rgba(255, 234, 204, 0.22) 0%, transparent 48%), radial-gradient(ellipse at 36% 68%, rgba(255, 245, 220, 0.2) 0%, transparent 45%)',
+          opacity: 0.34 * profile.textureOpacityBoost,
           mixBlendMode: 'screen',
         }}
       />
     )}
+    {/* High-altitude wispy clouds */}
+    {!isLow && (
+      <div
+        className="absolute inset-0 live-sky-cloud-drift-slow"
+        style={{
+          background: 'radial-gradient(ellipse at 30% 8%, rgba(255, 255, 255, 0.18) 0%, transparent 36%), radial-gradient(ellipse at 70% 6%, rgba(255, 255, 255, 0.15) 0%, transparent 34%), radial-gradient(ellipse at 50% 14%, rgba(255, 250, 240, 0.12) 0%, transparent 30%)',
+          opacity: 0.28 * profile.textureOpacityBoost,
+          mixBlendMode: profile.cloudBlend ? 'soft-light' : 'normal',
+          animationDuration: '28s',
+          animationDelay: '-6s',
+        }}
+      />
+    )}
+    {/* Soft-light cloud detail */}
     <div
       className="absolute inset-0"
       style={{
-        background: 'radial-gradient(ellipse at 22% 24%, rgba(255, 255, 255, 0.2) 0%, transparent 56%), radial-gradient(ellipse at 68% 33%, rgba(255, 255, 255, 0.19) 0%, transparent 60%), radial-gradient(ellipse at 45% 58%, rgba(255, 255, 255, 0.16) 0%, transparent 64%)',
+        background: 'radial-gradient(ellipse at 22% 24%, rgba(255, 255, 255, 0.24) 0%, transparent 56%), radial-gradient(ellipse at 68% 33%, rgba(255, 255, 255, 0.22) 0%, transparent 60%), radial-gradient(ellipse at 45% 58%, rgba(255, 255, 255, 0.18) 0%, transparent 64%), radial-gradient(ellipse at 80% 70%, rgba(255, 250, 235, 0.16) 0%, transparent 50%)',
         mixBlendMode: profile.cloudBlend ? 'soft-light' : 'normal',
-        opacity: 0.32 * profile.textureOpacityBoost,
+        opacity: 0.34 * profile.textureOpacityBoost,
       }}
     />
+    {/* Sun outer corona */}
+    <div
+      className="absolute rounded-full live-sky-aura-pulse"
+      style={{
+        transform: `translate3d(${BODY_PATH.dayX}vw, ${BODY_PATH.dayY}vh, 0)`,
+        width: '280px',
+        height: '280px',
+        marginLeft: '-95px',
+        marginTop: '-95px',
+        background: 'radial-gradient(circle, rgba(255, 220, 150, 0.22) 0%, rgba(255, 190, 100, 0.06) 52%, transparent 74%)',
+        opacity: 1,
+      }}
+    />
+    {/* Sun inner aura */}
     <div
       className="absolute rounded-full live-sky-aura-pulse"
       style={{
@@ -558,9 +842,11 @@ const MorningSky = () => {
         height: '180px',
         marginLeft: '-45px',
         marginTop: '-45px',
-        background: 'radial-gradient(circle, rgba(255, 208, 132, 0.36) 0%, rgba(255, 173, 96, 0.08) 56%, transparent 76%)',
+        background: 'radial-gradient(circle, rgba(255, 208, 132, 0.42) 0%, rgba(255, 173, 96, 0.1) 56%, transparent 76%)',
+        animationDelay: '-1.8s',
       }}
     />
+    {/* Sun body */}
     <div
       className="absolute rounded-full"
       style={{
@@ -568,24 +854,26 @@ const MorningSky = () => {
         width: '90px',
         height: '90px',
         backgroundColor: '#ffe3a6',
-        boxShadow: '0 0 126px 50px rgba(255, 205, 133, 0.52)',
+        boxShadow: `0 0 ${Math.round(126 * profile.sunShadowBoost)}px ${Math.round(50 * profile.sunShadowBoost)}px rgba(255, 205, 133, 0.52)`,
       }}
     />
+    {/* Warm horizon haze */}
     <div
       className="absolute inset-0"
       style={{
-        background: 'radial-gradient(circle at 52% 86%, rgba(255, 170, 104, 0.58) 0%, rgba(255, 120, 80, 0.18) 36%, transparent 72%)',
+        background: 'radial-gradient(circle at 52% 86%, rgba(255, 170, 104, 0.62) 0%, rgba(255, 120, 80, 0.2) 36%, transparent 72%)',
         mixBlendMode: 'screen',
-        opacity: profile.haze ? 0.1 : 0,
+        opacity: profile.haze ? 0.12 : 0,
       }}
     />
+    {/* Atmospheric shimmer */}
     {!isLow && (
       <div
         className="absolute inset-0 live-sky-day-shimmer"
         style={{
-          background: 'linear-gradient(110deg, transparent 20%, rgba(255, 255, 255, 0.12) 44%, transparent 68%)',
+          background: 'linear-gradient(110deg, transparent 20%, rgba(255, 255, 255, 0.14) 44%, transparent 68%)',
           mixBlendMode: 'screen',
-          opacity: 0.2,
+          opacity: 0.22,
         }}
       />
     )}
@@ -618,52 +906,72 @@ const InterstellarSky = () => {
       }}
     />
 
+    {/* Nebula color tint */}
     <div
       className="absolute inset-0 interstellar-nebula-drift"
       style={{
-        background: 'radial-gradient(ellipse at 18% 26%, rgba(108, 130, 168, 0.14) 0%, transparent 58%), radial-gradient(ellipse at 78% 20%, rgba(94, 112, 146, 0.1) 0%, transparent 62%), radial-gradient(ellipse at 44% 70%, rgba(86, 102, 136, 0.1) 0%, transparent 60%)',
+        background: 'radial-gradient(ellipse at 18% 26%, rgba(108, 130, 168, 0.16) 0%, transparent 58%), radial-gradient(ellipse at 78% 20%, rgba(94, 112, 146, 0.12) 0%, transparent 62%), radial-gradient(ellipse at 44% 70%, rgba(86, 102, 136, 0.12) 0%, transparent 60%), radial-gradient(ellipse at 62% 44%, rgba(72, 90, 128, 0.08) 0%, transparent 55%)',
         mixBlendMode: 'screen',
-        opacity: 0.22,
+        opacity: 0.26,
       }}
     />
 
+    {/* Film grain */}
     <div
       className="absolute inset-0 interstellar-film-grain"
       style={{
         backgroundImage: 'radial-gradient(rgba(255,255,255,0.08) 0.5px, transparent 0.5px)',
         backgroundSize: '3px 3px',
         mixBlendMode: 'soft-light',
-        opacity: isLow ? 0.08 : 0.13,
+        opacity: isLow ? 0.08 : 0.14,
       }}
     />
 
+    {/* Near stars — dense */}
     <div
       className="absolute inset-0 interstellar-stars-near"
       style={{
-        backgroundImage: 'radial-gradient(1.2px 1.2px at 12% 14%, #f5f9ff, transparent), radial-gradient(1.2px 1.2px at 28% 33%, #fffef8, transparent), radial-gradient(1.3px 1.3px at 45% 22%, #f7fbff, transparent), radial-gradient(1.2px 1.2px at 63% 41%, #e8f0ff, transparent), radial-gradient(1.3px 1.3px at 82% 27%, #fffaf0, transparent), radial-gradient(1.5px 1.5px at 73% 73%, #f9fbff, transparent), radial-gradient(1.2px 1.2px at 21% 74%, #f0f5ff, transparent), radial-gradient(1.7px 1.7px at 90% 58%, #ffffff, transparent)',
+        backgroundImage: 'radial-gradient(1.3px 1.3px at 6% 14%, #f8fbff, transparent), radial-gradient(1.2px 1.2px at 18% 7%, #fffef8, transparent), radial-gradient(1.4px 1.4px at 28% 42%, #f7fbff, transparent), radial-gradient(1.1px 1.1px at 38% 22%, #e8f0ff, transparent), radial-gradient(1.3px 1.3px at 48% 68%, #fffaf0, transparent), radial-gradient(1.5px 1.5px at 58% 30%, #f9fbff, transparent), radial-gradient(1.2px 1.2px at 68% 54%, #f0f5ff, transparent), radial-gradient(1.4px 1.4px at 78% 10%, #ffffff, transparent), radial-gradient(1.1px 1.1px at 88% 76%, #f8f9ff, transparent), radial-gradient(1.3px 1.3px at 96% 44%, #fff8f0, transparent), radial-gradient(1px 1px at 12% 86%, #fafcff, transparent), radial-gradient(1.2px 1.2px at 34% 60%, #f5f8ff, transparent), radial-gradient(1.1px 1.1px at 52% 92%, #fffef8, transparent), radial-gradient(1px 1px at 72% 36%, #f0f4ff, transparent), radial-gradient(1.3px 1.3px at 84% 90%, #ffffff, transparent)',
         backgroundSize: `${Math.round(profile.starsSize * 0.92)}px ${Math.round(profile.starsSize * 0.92)}px`,
-        opacity: 0.78 * profile.starsDensity,
+        opacity: 0.82 * profile.starsDensity,
       }}
     />
 
+    {/* Mid-distance stars */}
     <div
       className="absolute inset-0 interstellar-stars-far"
       style={{
-        backgroundImage: 'radial-gradient(1px 1px at 10% 52%, #f6f9ff, transparent), radial-gradient(1px 1px at 34% 66%, #fffaf5, transparent), radial-gradient(1px 1px at 52% 84%, #edf3ff, transparent), radial-gradient(1px 1px at 68% 12%, #fefefe, transparent), radial-gradient(1px 1px at 88% 38%, #e5eeff, transparent), radial-gradient(1.1px 1.1px at 56% 56%, #f8fbff, transparent)',
-        backgroundSize: `${Math.round(profile.starsSize * 0.66)}px ${Math.round(profile.starsSize * 0.66)}px`,
-        opacity: 0.38 * profile.starsDensity,
+        backgroundImage: 'radial-gradient(1px 1px at 8% 48%, #f6f9ff, transparent), radial-gradient(1px 1px at 24% 66%, #fffaf5, transparent), radial-gradient(1px 1px at 44% 82%, #edf3ff, transparent), radial-gradient(1px 1px at 60% 12%, #fefefe, transparent), radial-gradient(1px 1px at 76% 38%, #e5eeff, transparent), radial-gradient(1.1px 1.1px at 90% 56%, #f8fbff, transparent), radial-gradient(1px 1px at 32% 28%, #f0f4ff, transparent), radial-gradient(1px 1px at 52% 50%, #e8eeff, transparent), radial-gradient(1px 1px at 16% 78%, #f4f8ff, transparent)',
+        backgroundSize: `${Math.round(profile.starsSize * 0.64)}px ${Math.round(profile.starsSize * 0.64)}px`,
+        opacity: 0.44 * profile.starsDensity,
       }}
     />
 
+    {/* Tiny far stars */}
+    {!isLow && (
+      <div
+        className="absolute inset-0 interstellar-stars-far"
+        style={{
+          backgroundImage: 'radial-gradient(0.8px 0.8px at 14% 24%, #d8e4ff, transparent), radial-gradient(0.8px 0.8px at 36% 58%, #dce6ff, transparent), radial-gradient(0.8px 0.8px at 58% 16%, #e0e8ff, transparent), radial-gradient(0.8px 0.8px at 78% 72%, #d4dcff, transparent), radial-gradient(0.8px 0.8px at 92% 44%, #e4eeff, transparent), radial-gradient(0.8px 0.8px at 26% 88%, #dae4ff, transparent)',
+          backgroundSize: `${Math.round(profile.starsSize * 0.46)}px ${Math.round(profile.starsSize * 0.46)}px`,
+          opacity: 0.28 * profile.starsDensity,
+          animationDuration: '18s',
+          animationDelay: '2s',
+        }}
+      />
+    )}
+
+    {/* Dust / Milky Way band */}
     <div
       className="absolute inset-0 interstellar-dust-flow"
       style={{
-        background: 'linear-gradient(112deg, transparent 12%, rgba(188, 204, 230, 0.05) 44%, rgba(148, 168, 198, 0.08) 54%, transparent 82%)',
+        background: 'linear-gradient(112deg, transparent 12%, rgba(188, 204, 230, 0.06) 44%, rgba(148, 168, 198, 0.1) 54%, transparent 82%)',
         mixBlendMode: 'screen',
-        opacity: isLow ? 0.08 : 0.16,
+        opacity: isLow ? 0.08 : 0.18,
       }}
     />
 
+    {/* Black hole shadow center */}
     <div
       className="absolute"
       style={{
@@ -684,9 +992,9 @@ const InterstellarSky = () => {
         <div
           className="absolute inset-0 interstellar-depth-drift"
           style={{
-            background: 'radial-gradient(ellipse at 50% 104%, rgba(28, 40, 62, 0.35) 0%, rgba(12, 18, 32, 0.16) 42%, transparent 72%)',
+            background: 'radial-gradient(ellipse at 50% 104%, rgba(28, 40, 62, 0.38) 0%, rgba(12, 18, 32, 0.18) 42%, transparent 72%)',
             mixBlendMode: 'screen',
-            opacity: 0.16,
+            opacity: 0.18,
           }}
         />
 
@@ -695,19 +1003,20 @@ const InterstellarSky = () => {
           style={{
             top: '36%',
             left: '57%',
-            width: isUltra ? '330px' : '300px',
-            height: isUltra ? '330px' : '300px',
-            marginLeft: isUltra ? '-165px' : '-150px',
-            marginTop: isUltra ? '-165px' : '-150px',
+            width: isUltra ? '370px' : '300px',
+            height: isUltra ? '370px' : '300px',
+            marginLeft: isUltra ? '-185px' : '-150px',
+            marginTop: isUltra ? '-185px' : '-150px',
             borderRadius: '9999px',
-            background: 'conic-gradient(from 0deg, rgba(185, 206, 235, 0.02), rgba(135, 163, 198, 0.1), rgba(68, 88, 120, 0.16), rgba(185, 206, 235, 0.02))',
-            filter: 'blur(8px)',
-            opacity: isUltra ? 0.45 : 0.34,
+            background: 'conic-gradient(from 0deg, rgba(185, 206, 235, 0.02), rgba(135, 163, 198, 0.12), rgba(68, 88, 120, 0.18), rgba(185, 206, 235, 0.02))',
+            filter: 'blur(10px)',
+            opacity: isUltra ? 0.52 : 0.34,
             mixBlendMode: 'screen',
           }}
         />
 
         {isUltra && <div className="interstellar-shooting interstellar-shooting-a" />}
+        {isUltra && <div className="interstellar-shooting interstellar-shooting-b" />}
       </>
     )}
 

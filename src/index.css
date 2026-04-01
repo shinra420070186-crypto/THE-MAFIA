@@ -77,13 +77,24 @@ html, body {
 
 @keyframes liveSkyTwinkle {
   0%, 100% { opacity: 0.75; }
+  25% { opacity: 0.88; }
   35% { opacity: 0.96; }
+  65% { opacity: 0.70; }
   70% { opacity: 0.62; }
+  85% { opacity: 0.80; }
+}
+
+@keyframes liveSkyTwinkleSlow {
+  0%, 100% { opacity: 0.60; }
+  40% { opacity: 0.85; }
+  75% { opacity: 0.50; }
 }
 
 @keyframes liveSkyAuraPulse {
-  0%, 100% { opacity: 0.68; }
-  50% { opacity: 1; }
+  0%, 100% { opacity: 0.68; transform: scale(1); }
+  30% { opacity: 0.82; transform: scale(1.03); }
+  50% { opacity: 1; transform: scale(1.06); }
+  70% { opacity: 0.88; transform: scale(1.02); }
 }
 
 @keyframes liveSkyMoonDrift {
@@ -93,14 +104,18 @@ html, body {
 
 @keyframes liveSkyNightHaze {
   0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.18; }
-  50% { transform: translate3d(-1.4%, 1.2%, 0) scale(1.03); opacity: 0.3; }
+  25% { transform: translate3d(-0.8%, 0.6%, 0) scale(1.015); opacity: 0.24; }
+  50% { transform: translate3d(-1.4%, 1.2%, 0) scale(1.03); opacity: 0.30; }
+  75% { transform: translate3d(-0.6%, 0.9%, 0) scale(1.02); opacity: 0.22; }
   100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.18; }
 }
 
 @keyframes liveSkyDayShimmer {
-  0% { transform: translate3d(-30%, 0, 0); opacity: 0; }
-  30% { opacity: 0.18; }
-  100% { transform: translate3d(30%, 0, 0); opacity: 0; }
+  0% { transform: translate3d(-40%, 0, 0); opacity: 0; }
+  20% { opacity: 0.12; }
+  50% { opacity: 0.20; }
+  80% { opacity: 0.10; }
+  100% { transform: translate3d(40%, 0, 0); opacity: 0; }
 }
 
 .live-sky-cloud-drift-slow {
@@ -115,6 +130,11 @@ html, body {
 
 .live-sky-twinkle {
   animation: liveSkyTwinkle 4.8s ease-in-out infinite;
+  will-change: opacity;
+}
+
+.live-sky-twinkle-slow {
+  animation: liveSkyTwinkleSlow 8.4s ease-in-out infinite;
   will-change: opacity;
 }
 
