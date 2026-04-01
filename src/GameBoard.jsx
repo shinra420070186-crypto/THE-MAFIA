@@ -1,208 +1,291 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from './store';
 
-const TRANSITION_MS = 5000;
+// ─── CONSTANTS ───────────────────────────────────────
+const TRANSITION_MS = 5000; // Exactly 5 seconds for smooth transitions
+const TAU = Math.PI * 2;
 
-// ─── MATH & COLOR UTILITIES ───
-const smoothstep = (edge0, edge1, x) => {
-  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+// ─── COLOR & MATH UTILITIES ──────────────────────────
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function clamp(v, min = 0, max = 1) {
+  return Math.max(min, Math.min(max, v));
+}
+
+function smoothstep(edge0, edge1, x) {
+  const t = clamp((x - edge0) / (edge1 - edge0));
   return t * t * (3 - 2 * t);
-};
+}
 
-const smootherstep = (edge0, edge1, x) => {
-  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
-  return t * t * t * (t * (t * 6 - 15) + 10);
-};
+function easeInOutSine(t) {
+  return -(Math.cos(Math.PI * t) - 1) / 2;
+}
 
-const lerp = (a, b, t) => a + (b - a) * t;
+function rgb(r, g, b) { return { r, g, b }; }
 
-const lerpColor = (c1, c2, t) => [
-  lerp(c1[0], c2[0], t),
-  lerp(c1[1], c2[1], t),
-  lerp(c1[2], c2[2], t)
+function lerpColor(a, b, t) {
+  return { r: lerp(a.r, b.r, t), g: lerp(a.g, b.g, t), b: lerp(a.b, b.b, t) };
+}
+
+function rgbStr(c, a = 1) {
+  return `rgba(${Math.round(c.r)},${Math.round(c.g)},${Math.round(c.b)},${a})`;
+}
+
+// ─── NEW SKY COLOR PALETTES ──────────────────────────
+// Phase: 0=midnight, 0.25=sunrise, 0.5=noon, 0.75=sunset, 1=midnight
+const SKY_PHASES = [
+  { pos: 0.00, zenith: rgb(8, 10, 28),     horizon: rgb(15, 18, 40) },
+  { pos: 0.15, zenith: rgb(12, 14, 35),     horizon: rgb(30, 25, 50) },
+  { pos: 0.20, zenith: rgb(25, 20, 55),     horizon: rgb(120, 50, 60) },
+  { pos: 0.25, zenith: rgb(60, 45, 90),     horizon: rgb(220, 120, 60) },
+  { pos: 0.30, zenith: rgb(80, 100, 170),   horizon: rgb(240, 170, 100) },
+  { pos: 0.35, zenith: rgb(100, 140, 210),  horizon: rgb(200, 190, 160) },
+  { pos: 0.45, zenith: rgb(85, 150, 225),   horizon: rgb(170, 195, 215) },
+  { pos: 0.50, zenith: rgb(75, 140, 220),   horizon: rgb(160, 190, 215) },
+  { pos: 0.55, zenith: rgb(85, 150, 225),   horizon: rgb(170, 195, 215) },
+  { pos: 0.65, zenith: rgb(100, 140, 210),  horizon: rgb(200, 185, 155) },
+  { pos: 0.70, zenith: rgb(80, 90, 160),    horizon: rgb(230, 150, 80) },
+  { pos: 0.75, zenith: rgb(55, 40, 85),     horizon: rgb(210, 100, 50) },
+  { pos: 0.80, zenith: rgb(25, 18, 52),     horizon: rgb(110, 45, 55) },
+  { pos: 0.85, zenith: rgb(12, 14, 35),     horizon: rgb(30, 25, 50) },
+  { pos: 1.00, zenith: rgb(8, 10, 28),      horizon: rgb(15, 18, 40) },
 ];
 
-const multiLerpColor = (colors, stops, t) => {
-  for (let i = 0; i < stops.length - 1; i++) {
-    if (t >= stops[i] && t <= stops[i + 1]) {
-      const local = (t - stops[i]) / (stops[i + 1] - stops[i]);
-      return lerpColor(colors[i], colors[i + 1], local);
+function getSkyColors(phase) {
+  const p = phase % 1;
+  for (let i = 0; i < SKY_PHASES.length - 1; i++) {
+    if (p >= SKY_PHASES[i].pos && p <= SKY_PHASES[i + 1].pos) {
+      const localT = (p - SKY_PHASES[i].pos) / (SKY_PHASES[i + 1].pos - SKY_PHASES[i].pos);
+      const t = easeInOutSine(localT);
+      return {
+        zenith: lerpColor(SKY_PHASES[i].zenith, SKY_PHASES[i + 1].zenith, t),
+        horizon: lerpColor(SKY_PHASES[i].horizon, SKY_PHASES[i + 1].horizon, t),
+      };
     }
   }
-  return t <= stops[0] ? colors[0] : colors[colors.length - 1];
-};
+  return { zenith: SKY_PHASES[0].zenith, horizon: SKY_PHASES[0].horizon };
+}
 
-const rgba = (c, a = 1) => `rgba(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])},${a})`;
-const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+// ─── GENERATORS ──────────────────────────────────────
+function generateStars(count) {
+  const stars = [];
+  for (let i = 0; i < count; i++) {
+    stars.push({
+      x: Math.random(),
+      y: Math.random() * 0.7,
+      size: Math.random() * 2.2 + 0.4,
+      brightness: Math.random() * 0.5 + 0.5,
+      twinkleSpeed: Math.random() * 2 + 0.5,
+      twinkleOffset: Math.random() * TAU,
+    });
+  }
+  return stars;
+}
 
-// ─── CINEMATIC CANVAS ENGINE ───
+function generateClouds(count) {
+  const clouds = [];
+  for (let i = 0; i < count; i++) {
+    const layer = Math.floor(Math.random() * 3);
+    clouds.push({
+      x: Math.random() * 1.4 - 0.2,
+      y: 0.08 + Math.random() * 0.35,
+      width: 0.12 + Math.random() * 0.18,
+      height: 0.02 + Math.random() * 0.025,
+      speed: (0.008 + Math.random() * 0.015) * (1 + layer * 0.3),
+      opacity: 0.15 + Math.random() * 0.25,
+      layer,
+    });
+  }
+  return clouds;
+}
+
+function generateLightRays() {
+  const rays = [];
+  for (let i = 0; i < 12; i++) {
+    rays.push({
+      angle: -0.5 + Math.random() * 1.0,
+      width: 0.01 + Math.random() * 0.025,
+      length: 0.3 + Math.random() * 0.4,
+      opacity: 0.03 + Math.random() * 0.05,
+    });
+  }
+  return rays;
+}
+
+function createNoiseTexture(size) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const imageData = ctx.createImageData(size, size);
+  for (let i = 0; i < imageData.data.length; i += 4) {
+    const v = Math.random() * 255;
+    imageData.data[i] = v;
+    imageData.data[i + 1] = v;
+    imageData.data[i + 2] = v;
+    imageData.data[i + 3] = 255;
+  }
+  return imageData;
+}
+
+// ─── LANDSCAPE RENDERING ─────────────────────────────
+function drawTrees(ctx, w, h, baseY, dayFactor, time) {
+  const treeColor = `rgb(${Math.round(lerp(5, 18, dayFactor * 0.5))},${Math.round(lerp(10, 30, dayFactor * 0.5))},${Math.round(lerp(18, 40, dayFactor * 0.5))})`;
+  
+  const seed = 42;
+  const treePosns = [];
+  let rng = seed;
+  for (let i = 0; i < 35; i++) {
+    rng = (rng * 16807 + 0) % 2147483647;
+    treePosns.push((rng / 2147483647));
+  }
+  
+  for (let i = 0; i < treePosns.length; i++) {
+    const tx = treePosns[i] * w;
+    rng = (rng * 16807 + 0) % 2147483647;
+    const treeH = h * (0.03 + (rng / 2147483647) * 0.05);
+    const ty = baseY + h * 0.01;
+    
+    ctx.fillStyle = treeColor;
+    
+    ctx.beginPath();
+    ctx.moveTo(tx, ty - treeH);
+    ctx.lineTo(tx - treeH * 0.3, ty);
+    ctx.lineTo(tx + treeH * 0.3, ty);
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.beginPath();
+    ctx.moveTo(tx, ty - treeH * 0.7);
+    ctx.lineTo(tx - treeH * 0.35, ty - treeH * 0.1);
+    ctx.lineTo(tx + treeH * 0.35, ty - treeH * 0.1);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+function drawLandscape(ctx, w, h, phase, dayFactor, nightFactor, time) {
+  const baseY = h * 0.82;
+  
+  const layers = [
+    { yOff: -0.08, color: [20, 30, 50], dayColor: [70, 90, 120], detail: 0.003, amp: 0.08 },
+    { yOff: -0.04, color: [15, 22, 38], dayColor: [50, 70, 95], detail: 0.005, amp: 0.06 },
+    { yOff: 0, color: [8, 12, 22], dayColor: [30, 45, 65], detail: 0.008, amp: 0.04 },
+  ];
+  
+  for (const layer of layers) {
+    const lr = lerp(layer.color[0], layer.dayColor[0], dayFactor * 0.7);
+    const lg = lerp(layer.color[1], layer.dayColor[1], dayFactor * 0.7);
+    const lb = lerp(layer.color[2], layer.dayColor[2], dayFactor * 0.7);
+    
+    ctx.beginPath();
+    ctx.moveTo(0, h);
+    
+    const ly = baseY + layer.yOff * h;
+    for (let x = 0; x <= w; x += 3) {
+      const nx = x * layer.detail;
+      const mountain =
+        Math.sin(nx * 1.0 + 0.5) * 0.4 +
+        Math.sin(nx * 2.3 + 1.2) * 0.25 +
+        Math.sin(nx * 4.7 + 3.1) * 0.15 +
+        Math.sin(nx * 8.1 + 0.7) * 0.1 +
+        Math.sin(nx * 15.3 + 2.4) * 0.05;
+      
+      const y = ly - mountain * layer.amp * h;
+      ctx.lineTo(x, y);
+    }
+    
+    ctx.lineTo(w, h);
+    ctx.closePath();
+    ctx.fillStyle = `rgb(${Math.round(lr)},${Math.round(lg)},${Math.round(lb)})`;
+    ctx.fill();
+  }
+  
+  const groundGrad = ctx.createLinearGradient(0, baseY + h * 0.02, 0, h);
+  const gDay = dayFactor;
+  groundGrad.addColorStop(0, `rgb(${Math.round(lerp(10, 25, gDay))},${Math.round(lerp(15, 40, gDay))},${Math.round(lerp(25, 55, gDay))})`);
+  groundGrad.addColorStop(1, `rgb(${Math.round(lerp(5, 15, gDay))},${Math.round(lerp(8, 25, gDay))},${Math.round(lerp(15, 35, gDay))})`);
+  ctx.fillStyle = groundGrad;
+  ctx.fillRect(0, baseY + h * 0.02, w, h * 0.2);
+  
+  drawTrees(ctx, w, h, baseY, dayFactor, time);
+}
+
+// ─── 4K CINEMATIC SKY ENGINE ─────────────────────────
 const CinematicSky = ({ gamePhase }) => {
   const canvasRef = useRef(null);
-  const grainRef = useRef(null);
   
-  // Persist objects so they don't re-generate on re-renders
   const engineRef = useRef({
     stars: [],
     clouds: [],
-    skyPhase: 0.0, // 0 = Midnight, 0.5 = Noon
+    meteors: [],
+    rays: [],
+    skyPhase: 0.0,
     targetSkyPhase: 0.0,
     transitionSpeed: 0,
     globalTime: 0,
     lastTime: performance.now(),
-    dpr: Math.max(2.5, window.devicePixelRatio || 1) // 4K Crispness Super-Sampling
+    dpr: Math.max(2.5, window.devicePixelRatio || 1) // Enforces Ultra 4K Crispness
   });
 
-  // Handle Game Phase changes smoothly
+  // Hook Game Phase to the Time of Day Transition
   useEffect(() => {
     const engine = engineRef.current;
     
-    // Day Transition (Sunrise)
     if (gamePhase === 'day_transition') {
-      engine.targetSkyPhase = 0.5;
-      engine.skyPhase = 0.0; // Start exactly at night
-      engine.transitionSpeed = 0.5 / (TRANSITION_MS / 1000); 
-    } 
-    // Night Transition (Sunset)
-    else if (gamePhase === 'night_transition') {
-      engine.targetSkyPhase = 1.0;
-      engine.skyPhase = 0.5; // Start exactly at day
-      engine.transitionSpeed = 0.5 / (TRANSITION_MS / 1000);
-    } 
-    // Static Day Phases
-    else if (gamePhase.startsWith('day')) {
-      engine.targetSkyPhase = 0.5;
-      engine.skyPhase = 0.5;
-      engine.transitionSpeed = 0;
-    } 
-    // Static Night Phases
-    else {
-      engine.targetSkyPhase = 0.0;
       engine.skyPhase = 0.0;
+      engine.targetSkyPhase = 0.5;
+      engine.transitionSpeed = 0.5 / (TRANSITION_MS / 1000); 
+    } else if (gamePhase === 'night_transition') {
+      engine.skyPhase = 0.5;
+      engine.targetSkyPhase = 1.0;
+      engine.transitionSpeed = 0.5 / (TRANSITION_MS / 1000);
+    } else if (gamePhase.startsWith('day')) {
+      engine.skyPhase = 0.5;
+      engine.targetSkyPhase = 0.5;
+      engine.transitionSpeed = 0;
+    } else {
+      engine.skyPhase = 1.0; 
+      engine.targetSkyPhase = 1.0;
       engine.transitionSpeed = 0;
     }
   }, [gamePhase]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false });
     const engine = engineRef.current;
-
-    // Generate Grain Data URI
-    if (!engine.grainUrl) {
-      const c = document.createElement('canvas');
-      c.width = 256; c.height = 256;
-      const cCtx = c.getContext('2d');
-      const id = cCtx.createImageData(256, 256);
-      for (let i = 0; i < id.data.length; i += 4) {
-        const v = Math.random() * 255;
-        id.data[i] = id.data[i + 1] = id.data[i + 2] = v;
-        id.data[i + 3] = 255;
-      }
-      cCtx.putImageData(id, 0, 0);
-      engine.grainUrl = c.toDataURL();
-      if (grainRef.current) grainRef.current.style.backgroundImage = `url(${engine.grainUrl})`;
-    }
 
     let W, H;
     const resize = () => {
-      // Scale canvas internal resolution by DPR for 4K quality
-      W = window.innerWidth * engine.dpr;
-      H = window.innerHeight * engine.dpr;
-      canvas.width = W;
-      canvas.height = H;
-      canvas.style.width = window.innerWidth + 'px';
-      canvas.style.height = window.innerHeight + 'px';
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = W * engine.dpr;
+      canvas.height = H * engine.dpr;
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(engine.dpr, 0, 0, engine.dpr, 0, 0);
     };
     window.addEventListener('resize', resize);
     resize();
 
-    // Init Stars
-    if (engine.stars.length === 0) {
-      for (let i = 0; i < 280; i++) {
-        engine.stars.push({
-          x: Math.random(),
-          y: Math.random() * 0.75,
-          size: 0.3 + Math.random() * 1.8,
-          brightness: 0.3 + Math.random() * 0.7,
-          twinkleSpeed: 0.3 + Math.random() * 1.5,
-          twinklePhase: Math.random() * Math.PI * 2,
-        });
-      }
+    // Initialize Generators exactly once
+    if (engine.stars.length === 0) engine.stars = generateStars(300);
+    if (engine.clouds.length === 0) engine.clouds = generateClouds(14);
+    if (engine.rays.length === 0) engine.rays = generateLightRays();
+    if (!engine.noiseCanvas) {
+      const c = document.createElement('canvas');
+      c.width = 256; c.height = 256;
+      c.getContext('2d').putImageData(createNoiseTexture(256), 0, 0);
+      engine.noiseCanvas = c;
     }
-
-    // Init Clouds
-    if (engine.clouds.length === 0) {
-      for (let i = 0; i < 8; i++) {
-        const puffs = [];
-        const puffCount = 5 + Math.floor(Math.random() * 8);
-        for (let j = 0; j < puffCount; j++) {
-          puffs.push({
-            ox: (Math.random() - 0.5) * 200,
-            oy: (Math.random() - 0.5) * 40,
-            rx: 40 + Math.random() * 80,
-            ry: 15 + Math.random() * 30,
-          });
-        }
-        engine.clouds.push({
-          x: Math.random() * 1.4 - 0.2,
-          y: 0.08 + Math.random() * 0.35,
-          speed: 0.002 + Math.random() * 0.004,
-          opacity: 0.06 + Math.random() * 0.10,
-          scale: 0.6 + Math.random() * 0.8,
-          depth: 0.3 + Math.random() * 0.7,
-          puffs,
-        });
-      }
-      engine.clouds.sort((a, b) => a.depth - b.depth);
-    }
-
-    const getSkyColors = (p) => {
-      const zC = [[8,11,28],[8,11,28],[18,22,48],[45,50,85],[85,75,100],[140,120,130],[120,155,200],[135,175,220],[145,185,228],[140,178,222],[130,155,195],[115,105,130],[90,65,85],[50,40,70],[22,25,52],[10,13,32],[8,11,28]];
-      const hC = [[12,15,35],[12,15,35],[35,30,55],[90,65,75],[180,120,90],[220,160,100],[210,185,150],[175,200,225],[180,210,235],[178,205,228],[190,170,155],[215,145,100],[210,110,65],[140,60,55],[50,35,60],[18,18,40],[12,15,35]];
-      const mC = [[10,13,32],[10,13,32],[28,28,52],[65,58,80],[130,95,95],[175,140,115],[160,170,195],[155,190,222],[162,198,232],[158,192,225],[155,160,175],[160,120,115],[145,82,75],[85,48,62],[32,30,55],[14,16,36],[10,13,32]];
-      const stops = [0,0.10,0.18,0.22,0.25,0.28,0.33,0.40,0.50,0.60,0.68,0.73,0.77,0.82,0.88,0.94,1.0];
-      return { z: multiLerpColor(zC, stops, p), m: multiLerpColor(mC, stops, p), h: multiLerpColor(hC, stops, p) };
-    };
-
-    const getAtmo = (p) => {
-      const c = [[0,0,0,0],[0,0,0,0],[40,25,15,0.02],[120,70,35,0.08],[200,140,60,0.15],[230,180,90,0.12],[180,190,200,0.04],[160,180,200,0.02],[160,180,200,0.02],[180,170,155,0.04],[210,150,80,0.12],[230,130,50,0.18],[180,70,40,0.10],[60,30,40,0.04],[0,0,0,0],[0,0,0,0]];
-      const s = [0,0.10,0.18,0.22,0.26,0.30,0.38,0.50,0.60,0.68,0.73,0.77,0.83,0.90,0.95,1.0];
-      for (let i=0; i<s.length-1; i++) {
-        if (p >= s[i] && p <= s[i+1]) {
-          const l = (p - s[i]) / (s[i+1] - s[i]);
-          return { color: lerpColor(c[i], c[i+1], l), alpha: lerp(c[i][3], c[i+1][3], l) };
-        }
-      }
-      return { color: [0,0,0], alpha: 0 };
-    };
-
-    const getPos = (prog) => {
-      const angle = lerp(Math.PI, 0, prog);
-      return { x: W/2 + Math.cos(angle) * (W*0.55), y: H*0.95 - Math.sin(angle) * (H*0.55) };
-    };
-
-    const getSunPhase = (p) => {
-      if (p < 0.20 || p > 0.80) return { vis: false, prog: 0 };
-      if (p < 0.28) return { vis: true, prog: smootherstep(0.20, 0.28, p) * 0.08 };
-      if (p > 0.72) return { vis: true, prog: 0.92 + (1 - smootherstep(0.72, 0.80, p)) * 0.08 };
-      return { vis: true, prog: 0.08 + ((p - 0.28) / (0.72 - 0.28)) * 0.84 };
-    };
-
-    const getMoonPhase = (p) => {
-      let t;
-      if (p >= 0.78) t = (p - 0.78) / 0.44;
-      else if (p <= 0.22) t = (0.22 + p) / 0.44;
-      else return { vis: false, prog: 0 };
-      let o = 1;
-      if (t < 0.08) o = smootherstep(0, 0.08, t);
-      else if (t > 0.92) o = smootherstep(1, 0.92, t);
-      return { vis: true, prog: t, o };
-    };
 
     let rafId;
-    const render = (now) => {
-      const dt = (now - engine.lastTime) / 1000;
-      engine.lastTime = now;
+    const render = (timestamp) => {
+      const dt = (timestamp - engine.lastTime) / 1000;
+      engine.lastTime = timestamp;
       engine.globalTime += dt;
 
       // Animate Sky Phase
@@ -212,310 +295,349 @@ const CinematicSky = ({ gamePhase }) => {
         engine.skyPhase = Math.max(engine.targetSkyPhase, engine.skyPhase - engine.transitionSpeed * dt);
       }
 
-      // Wrap around Midnight
       if (engine.skyPhase === 1.0 && engine.targetSkyPhase === 1.0) {
         engine.skyPhase = 0.0;
         engine.targetSkyPhase = 0.0;
       }
 
-      const p = engine.skyPhase;
-      const t = engine.globalTime;
+      const phase = engine.skyPhase;
+      const time = engine.globalTime;
 
-      ctx.clearRect(0, 0, W, H);
-
-      // 1. SKY GRADIENT
-      const cols = getSkyColors(p);
-      const grd = ctx.createLinearGradient(0, 0, 0, H);
-      grd.addColorStop(0, rgba(cols.z));
-      grd.addColorStop(0.35, rgba(cols.m));
-      grd.addColorStop(0.65, rgba(lerpColor(cols.m, cols.h, 0.5)));
-      grd.addColorStop(0.85, rgba(cols.h));
-      grd.addColorStop(1, rgba(lerpColor(cols.h, [0,0,0], 0.15)));
-      ctx.fillStyle = grd;
+      // ─── Sky Gradient ───
+      const sky = getSkyColors(phase);
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      const midColor = lerpColor(sky.zenith, sky.horizon, 0.35);
+      const lowerMid = lerpColor(sky.zenith, sky.horizon, 0.65);
+      grad.addColorStop(0, rgbStr(sky.zenith));
+      grad.addColorStop(0.3, rgbStr(midColor));
+      grad.addColorStop(0.65, rgbStr(lowerMid));
+      grad.addColorStop(0.88, rgbStr(sky.horizon));
+      grad.addColorStop(1.0, rgbStr(lerpColor(sky.horizon, rgb(0, 0, 0), 0.1)));
+      ctx.fillStyle = grad;
       ctx.fillRect(0, 0, W, H);
 
-      const atmoGrd = ctx.createLinearGradient(0, H*0.5, 0, H);
-      const atmoColor = lerpColor(cols.h, cols.m, 0.3);
-      atmoGrd.addColorStop(0, rgba(atmoColor, 0));
-      atmoGrd.addColorStop(0.6, rgba(atmoColor, 0.08));
-      atmoGrd.addColorStop(1, rgba(atmoColor, 0.15));
-      ctx.fillStyle = atmoGrd;
-      ctx.fillRect(0, H*0.5, W, H*0.5);
-
-      // 2. STARS
-      let starOp = 0;
-      if (p < 0.20) starOp = smootherstep(0.20, 0.12, p);
-      if (p > 0.80) starOp = smootherstep(0.80, 0.88, p);
+      // ─── Atmospheric Horizon Glow ───
+      const isSunrise = smoothstep(0.18, 0.30, phase) * (1 - smoothstep(0.30, 0.40, phase));
+      const isSunset = smoothstep(0.60, 0.72, phase) * (1 - smoothstep(0.72, 0.85, phase));
+      const horizonGlow = Math.max(isSunrise, isSunset);
       
-      if (starOp > 0.01) {
-        for (const s of engine.stars) {
-          const tw = 0.6 + 0.4 * Math.sin(t * s.twinkleSpeed + s.twinklePhase);
-          const a = starOp * s.brightness * tw;
-          if (a < 0.01) continue;
-          const px = s.x * W;
-          const py = s.y * H;
-          const sz = s.size * engine.dpr;
+      if (horizonGlow > 0.01) {
+        const glowColor = isSunrise > isSunset ? rgb(255, 140, 50) : rgb(245, 100, 40);
+        const glowGrad = ctx.createRadialGradient(W * 0.5, H * 0.82, 0, W * 0.5, H * 0.82, W * 0.7);
+        glowGrad.addColorStop(0, rgbStr(glowColor, horizonGlow * 0.35));
+        glowGrad.addColorStop(0.3, rgbStr(glowColor, horizonGlow * 0.15));
+        glowGrad.addColorStop(0.6, rgbStr(glowColor, horizonGlow * 0.04));
+        glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glowGrad;
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      const nightFactor = phase < 0.5 ? 1 - smoothstep(0.15, 0.30, phase) : smoothstep(0.70, 0.85, phase);
+      const dayFactor = 1 - nightFactor;
+
+      // ─── Stars ───
+      if (nightFactor > 0.01) {
+        for (const star of engine.stars) {
+          const twinkle = 0.6 + 0.4 * Math.sin(time * star.twinkleSpeed + star.twinkleOffset);
+          const alpha = nightFactor * star.brightness * twinkle;
+          if (alpha < 0.01) continue;
           
-          if (sz > 1) {
-            const sg = ctx.createRadialGradient(px, py, 0, px, py, sz*3);
-            sg.addColorStop(0, rgba([220,225,240], a*0.5));
-            sg.addColorStop(1, rgba([220,225,240], 0));
-            ctx.fillStyle = sg;
-            ctx.fillRect(px - sz*3, py - sz*3, sz*6, sz*6);
+          const sx = star.x * W;
+          const sy = star.y * H;
+          
+          if (star.size > 1.5) {
+            const glowR = star.size * 4;
+            const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, glowR);
+            glow.addColorStop(0, `rgba(200,220,255,${alpha * 0.3})`);
+            glow.addColorStop(1, 'rgba(200,220,255,0)');
+            ctx.fillStyle = glow;
+            ctx.fillRect(sx - glowR, sy - glowR, glowR * 2, glowR * 2);
           }
+          
           ctx.beginPath();
-          ctx.arc(px, py, sz*0.5, 0, Math.PI*2);
-          ctx.fillStyle = rgba([235,238,250], a*0.9);
+          ctx.arc(sx, sy, star.size * 0.6, 0, TAU);
+          ctx.fillStyle = `rgba(220,230,255,${alpha})`;
           ctx.fill();
         }
       }
 
-      // 3. SUN BLOOM
-      const sun = getSunPhase(p);
-      if (sun.vis) {
-        const sPos = getPos(sun.prog);
-        const hr = 1 - (sPos.y / H);
-        const bs = (1 - smoothstep(0, 0.35, hr)) * 0.3;
-        if (bs >= 0.01) {
-          const bc = lerpColor([255,180,80], [255,220,180], hr);
-          const bw = W * 0.6;
-          const bh = H * 0.4;
-          const bg = ctx.createRadialGradient(sPos.x, H*0.95, 0, sPos.x, H*0.95, bw);
-          bg.addColorStop(0, rgba(bc, bs));
-          bg.addColorStop(0.3, rgba(bc, bs*0.4));
-          bg.addColorStop(0.6, rgba(bc, bs*0.1));
-          bg.addColorStop(1, rgba(bc, 0));
-          ctx.fillStyle = bg;
-          ctx.fillRect(sPos.x - bw, H*0.95 - bh, bw*2, bh + H*0.1);
+      // ─── Sun ───
+      const sunProgress = (phase - 0.2) / 0.6;
+      const sunAngleRad = sunProgress * Math.PI;
+      const sunX = W * (0.15 + sunProgress * 0.7);
+      const sunY = H * 0.85 - Math.sin(sunAngleRad) * H * 0.65;
+      const sunVisible = sunProgress > 0 && sunProgress < 1 && sunY < H * 0.9;
+      
+      if (sunVisible && dayFactor > 0.01) {
+        const sunRadius = 28;
+        
+        if (horizonGlow > 0.02) {
+          ctx.save();
+          ctx.translate(sunX, sunY);
+          for (const ray of engine.rays) {
+            ctx.save();
+            ctx.rotate(ray.angle);
+            const rayLen = ray.length * H;
+            const rayGrad = ctx.createLinearGradient(0, 0, rayLen, 0);
+            rayGrad.addColorStop(0, `rgba(255,200,100,${ray.opacity * horizonGlow * 1.5})`);
+            rayGrad.addColorStop(0.5, `rgba(255,180,80,${ray.opacity * horizonGlow * 0.5})`);
+            rayGrad.addColorStop(1, 'rgba(255,180,80,0)');
+            ctx.fillStyle = rayGrad;
+            ctx.fillRect(0, -ray.width * W * 0.5, rayLen, ray.width * W);
+            ctx.restore();
+          }
+          ctx.restore();
+        }
+        
+        for (let i = 4; i >= 0; i--) {
+          const bloomR = sunRadius + i * 35;
+          const bloomAlpha = dayFactor * 0.04 * (1 - i / 5);
+          const bloomGrad = ctx.createRadialGradient(sunX, sunY, sunRadius * 0.5, sunX, sunY, bloomR);
+          bloomGrad.addColorStop(0, `rgba(255,250,230,${bloomAlpha})`);
+          bloomGrad.addColorStop(0.4, `rgba(255,220,150,${bloomAlpha * 0.4})`);
+          bloomGrad.addColorStop(1, 'rgba(255,200,100,0)');
+          ctx.fillStyle = bloomGrad;
+          ctx.beginPath();
+          ctx.arc(sunX, sunY, bloomR, 0, TAU);
+          ctx.fill();
+        }
+        
+        const sunGrad = ctx.createRadialGradient(
+          sunX - sunRadius * 0.15, sunY - sunRadius * 0.15, 0,
+          sunX, sunY, sunRadius
+        );
+        sunGrad.addColorStop(0, `rgba(255,255,250,${dayFactor})`);
+        sunGrad.addColorStop(0.6, `rgba(255,245,220,${dayFactor * 0.95})`);
+        sunGrad.addColorStop(0.85, `rgba(255,220,150,${dayFactor * 0.7})`);
+        sunGrad.addColorStop(1, `rgba(255,180,80,0)`);
+        ctx.fillStyle = sunGrad;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, sunRadius, 0, TAU);
+        ctx.fill();
+      }
+
+      // ─── Moon ───
+      const moonProgress = ((phase + 0.5) % 1 - 0.2) / 0.6;
+      const moonAngleRad = moonProgress * Math.PI;
+      const moonX = W * (0.15 + moonProgress * 0.7);
+      const moonY = H * 0.85 - Math.sin(moonAngleRad) * H * 0.6;
+      const moonVisible = moonProgress > 0 && moonProgress < 1 && moonY < H * 0.9;
+      
+      if (moonVisible && nightFactor > 0.01) {
+        const moonRadius = 22;
+        
+        for (let i = 3; i >= 0; i--) {
+          const glowR = moonRadius + i * 25;
+          const glowAlpha = nightFactor * 0.03 * (1 - i / 4);
+          const moonGlow = ctx.createRadialGradient(moonX, moonY, moonRadius * 0.3, moonX, moonY, glowR);
+          moonGlow.addColorStop(0, `rgba(180,200,230,${glowAlpha})`);
+          moonGlow.addColorStop(0.5, `rgba(140,160,200,${glowAlpha * 0.3})`);
+          moonGlow.addColorStop(1, 'rgba(100,120,180,0)');
+          ctx.fillStyle = moonGlow;
+          ctx.beginPath();
+          ctx.arc(moonX, moonY, glowR, 0, TAU);
+          ctx.fill();
+        }
+        
+        const moonGrad = ctx.createRadialGradient(
+          moonX - moonRadius * 0.25, moonY - moonRadius * 0.25, 0,
+          moonX, moonY, moonRadius
+        );
+        moonGrad.addColorStop(0, `rgba(230,235,245,${nightFactor * 0.95})`);
+        moonGrad.addColorStop(0.5, `rgba(210,215,230,${nightFactor * 0.9})`);
+        moonGrad.addColorStop(0.8, `rgba(185,195,215,${nightFactor * 0.8})`);
+        moonGrad.addColorStop(1, `rgba(160,170,195,${nightFactor * 0.3})`);
+        ctx.fillStyle = moonGrad;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, moonRadius, 0, TAU);
+        ctx.fill();
+
+        const craters = [
+          { ox: -0.2, oy: -0.15, r: 0.18 },
+          { ox: 0.15, oy: 0.2, r: 0.12 },
+          { ox: -0.05, oy: 0.3, r: 0.09 },
+          { ox: 0.25, oy: -0.1, r: 0.07 },
+          { ox: -0.3, oy: 0.1, r: 0.1 },
+        ];
+        for (const c of craters) {
+          const cx = moonX + c.ox * moonRadius;
+          const cy = moonY + c.oy * moonRadius;
+          const cr = c.r * moonRadius;
+          ctx.beginPath();
+          ctx.arc(cx, cy, cr, 0, TAU);
+          ctx.fillStyle = `rgba(160,170,195,${nightFactor * 0.2})`;
+          ctx.fill();
         }
       }
 
-      // 4. HORIZON HAZE
-      const haze = getAtmo(p);
-      if (haze.alpha >= 0.005) {
-        const hh = H * 0.35;
-        const hy = H - hh;
-        const hg = ctx.createLinearGradient(0, H, 0, hy);
-        hg.addColorStop(0, rgba(haze.color, haze.alpha * 1.2));
-        hg.addColorStop(0.3, rgba(haze.color, haze.alpha * 0.6));
-        hg.addColorStop(0.7, rgba(haze.color, haze.alpha * 0.15));
-        hg.addColorStop(1, rgba(haze.color, 0));
-        ctx.fillStyle = hg;
-        ctx.fillRect(0, hy, W, hh);
-      }
-
-      // 5. LIGHT RAYS
-      let rayInt = 0;
-      if (p > 0.22 && p < 0.32) rayInt = smoothstep(0.22, 0.26, p) * (1 - smoothstep(0.28, 0.32, p));
-      else if (p > 0.70 && p < 0.80) rayInt = smoothstep(0.70, 0.74, p) * (1 - smoothstep(0.76, 0.80, p));
-      
-      if (rayInt >= 0.01 && sun.vis) {
-        const sPos = getPos(sun.prog);
-        for (let i=0; i<8; i++) {
-          const ang = -Math.PI*0.5 + (i/8 - 0.5) * Math.PI*0.6;
-          const rAng = ang + Math.sin(t*0.1 + i*2.5) * 0.03;
-          const ex = sPos.x + Math.cos(rAng) * (H*0.7);
-          const ey = sPos.y + Math.sin(rAng) * (H*0.7);
-          const rg = ctx.createLinearGradient(sPos.x, sPos.y, ex, ey);
-          rg.addColorStop(0, rgba([255,200,120], 0.03*rayInt));
-          rg.addColorStop(0.3, rgba([255,200,120], 0.015*rayInt));
-          rg.addColorStop(1, rgba([255,200,120], 0));
+      // ─── Clouds ───
+      for (const cloud of engine.clouds) {
+        cloud.x += cloud.speed * dt * 0.15;
+        if (cloud.x > 1.3) cloud.x = -0.3;
+        
+        const cx = cloud.x * W;
+        const cy = cloud.y * H;
+        const cw = cloud.width * W;
+        const ch = cloud.height * H;
+        
+        const cloudBrightness = dayFactor > 0.5 ? lerp(180, 245, dayFactor) : lerp(40, 180, dayFactor * 2);
+        const cloudR = cloudBrightness + (horizonGlow > 0.1 ? horizonGlow * 40 : 0);
+        const cloudG = cloudBrightness + (horizonGlow > 0.1 ? horizonGlow * 15 : 0);
+        const cloudB = cloudBrightness - (horizonGlow > 0.1 ? horizonGlow * 20 : 0);
+        const layerOpacity = cloud.opacity * (0.6 + cloud.layer * 0.15);
+        
+        const puffs = [
+          { ox: 0, oy: 0, sw: 1, sh: 1 },
+          { ox: -0.3, oy: 0.1, sw: 0.7, sh: 0.8 },
+          { ox: 0.3, oy: 0.05, sw: 0.65, sh: 0.75 },
+          { ox: -0.15, oy: -0.15, sw: 0.8, sh: 0.6 },
+          { ox: 0.15, oy: -0.1, sw: 0.75, sh: 0.65 },
+        ];
+        
+        for (const puff of puffs) {
+          const px = cx + puff.ox * cw;
+          const py = cy + puff.oy * ch;
+          const pw = cw * puff.sw;
+          const ph = ch * puff.sh;
+          
+          const cloudGrad = ctx.createRadialGradient(px, py, 0, px, py, Math.max(pw, ph));
+          cloudGrad.addColorStop(0, `rgba(${Math.round(cloudR)},${Math.round(cloudG)},${Math.round(cloudB)},${layerOpacity * 0.5})`);
+          cloudGrad.addColorStop(0.5, `rgba(${Math.round(cloudR)},${Math.round(cloudG)},${Math.round(cloudB)},${layerOpacity * 0.25})`);
+          cloudGrad.addColorStop(1, `rgba(${Math.round(cloudR)},${Math.round(cloudG)},${Math.round(cloudB)},0)`);
+          
           ctx.save();
-          ctx.globalCompositeOperation = 'screen';
-          ctx.strokeStyle = rg;
-          ctx.lineWidth = 20 + Math.sin(t*0.15 + i)*8;
-          ctx.lineCap = 'round';
-          ctx.beginPath(); ctx.moveTo(sPos.x, sPos.y); ctx.lineTo(ex, ey); ctx.stroke();
+          ctx.translate(px, py);
+          ctx.scale(pw / Math.max(pw, ph), ph / Math.max(pw, ph));
+          ctx.fillStyle = cloudGrad;
+          ctx.beginPath();
+          ctx.arc(0, 0, Math.max(pw, ph), 0, TAU);
+          ctx.fill();
           ctx.restore();
         }
       }
 
-      // 6. CLOUDS
-      const cC = [[15,18,35],[15,18,35],[55,45,55],[150,110,90],[220,180,140],[230,210,190],[225,230,238],[225,230,238],[228,225,218],[230,190,145],[220,140,90],[140,70,60],[40,30,50],[15,18,35]];
-      const cS = [0,0.10,0.18,0.24,0.28,0.35,0.45,0.55,0.65,0.72,0.78,0.84,0.92,1.0];
-      const clColor = multiLerpColor(cC, cS, p);
-      let opMult = 1.0;
-      if (p < 0.15) opMult = 0.2;
-      else if (p < 0.25) opMult = smoothstep(0.15, 0.25, p) * 0.8 + 0.2;
-      else if (p > 0.85) opMult = 0.2;
-      else if (p > 0.75) opMult = (1 - smoothstep(0.75, 0.85, p)) * 0.8 + 0.2;
-
-      for (const cl of engine.clouds) {
-        const cx = ((cl.x + t * cl.speed * 0.015) % 1.6 - 0.2) * W;
-        const cy = cl.y * H;
-        const sc = cl.scale * engine.dpr;
-        const al = cl.opacity * opMult;
-        if (al < 0.01) continue;
-        ctx.save();
-        ctx.globalAlpha = al;
-        for (const pf of cl.puffs) {
-          const px = cx + pf.ox * sc;
-          const py = cy + pf.oy * sc;
-          const rx = pf.rx * sc;
-          const ry = pf.ry * sc;
-          const pg = ctx.createRadialGradient(px, py, 0, px, py, rx);
-          pg.addColorStop(0, rgba(clColor, 0.6));
-          pg.addColorStop(0.4, rgba(clColor, 0.3));
-          pg.addColorStop(1, rgba(clColor, 0));
-          ctx.fillStyle = pg;
-          ctx.beginPath(); ctx.ellipse(px, py, rx, ry, 0, 0, Math.PI*2); ctx.fill();
+      // ─── Heat Shimmer ───
+      if (dayFactor > 0.3) {
+        const shimmerOpacity = dayFactor * 0.015;
+        for (let i = 0; i < 3; i++) {
+          const sy = H * (0.4 + i * 0.15);
+          const shimmerX = Math.sin(time * 0.4 + i * 1.5) * W * 0.1;
+          const shimmerW = W * 0.6;
+          const shimmerGrad = ctx.createRadialGradient(
+            W * 0.5 + shimmerX, sy, 0,
+            W * 0.5 + shimmerX, sy, shimmerW
+          );
+          shimmerGrad.addColorStop(0, `rgba(255,250,230,${shimmerOpacity})`);
+          shimmerGrad.addColorStop(0.5, `rgba(255,245,220,${shimmerOpacity * 0.3})`);
+          shimmerGrad.addColorStop(1, 'rgba(255,245,220,0)');
+          ctx.fillStyle = shimmerGrad;
+          ctx.fillRect(0, sy - shimmerW, W, shimmerW * 2);
         }
-        ctx.restore();
       }
 
-      // 7. SUN
-      if (sun.vis) {
-        const sPos = getPos(sun.prog);
-        const bR = 22 * engine.dpr;
-        const hr = 1 - (sPos.y / H);
-        const nh = smoothstep(0.05, 0.25, hr);
-        const sCol = lerpColor([255,180,80], [255,248,235], nh);
-        
-        for (let i=4; i>=0; i--) {
-          const blR = bR * (3 + i*5);
-          const blA = 0.015 * (1 - i*0.15) * (1 - nh*0.4);
-          const blC = lerpColor([255,160,60], [255,220,180], nh);
-          const bg = ctx.createRadialGradient(sPos.x, sPos.y, 0, sPos.x, sPos.y, blR);
-          bg.addColorStop(0, rgba(blC, blA));
-          bg.addColorStop(0.5, rgba(blC, blA*0.3));
-          bg.addColorStop(1, rgba(blC, 0));
-          ctx.fillStyle = bg;
-          ctx.fillRect(sPos.x - blR, sPos.y - blR, blR*2, blR*2);
+      // ─── Meteors ───
+      if (nightFactor > 0.5) {
+        if (timestamp - engine.lastMeteorTime > 800 + Math.random() * 2500 || !engine.lastMeteorTime) {
+          if (Math.random() < 0.4) {
+            engine.meteors.push({
+              x: Math.random() * W * 0.8 + W * 0.1,
+              y: Math.random() * H * 0.3,
+              angle: Math.PI * 0.2 + Math.random() * Math.PI * 0.15,
+              speed: 400 + Math.random() * 350,
+              length: 60 + Math.random() * 80,
+              life: 0,
+              maxLife: 0.4 + Math.random() * 0.4,
+              brightness: 0.5 + Math.random() * 0.5,
+            });
+            engine.lastMeteorTime = timestamp;
+          }
         }
         
-        const iG = ctx.createRadialGradient(sPos.x, sPos.y, 0, sPos.x, sPos.y, bR*3);
-        iG.addColorStop(0, rgba(sCol, 1));
-        iG.addColorStop(0.3, rgba(sCol, 0.6));
-        iG.addColorStop(0.6, rgba([255,210,150], 0.15));
-        iG.addColorStop(1, rgba([255,200,120], 0));
-        ctx.fillStyle = iG;
-        ctx.beginPath(); ctx.arc(sPos.x, sPos.y, bR*3, 0, Math.PI*2); ctx.fill();
-        
-        const cG = ctx.createRadialGradient(sPos.x, sPos.y, 0, sPos.x, sPos.y, bR);
-        cG.addColorStop(0, rgba([255,255,250], 1));
-        cG.addColorStop(0.7, rgba(sCol, 0.95));
-        cG.addColorStop(1, rgba(sCol, 0.2));
-        ctx.fillStyle = cG;
-        ctx.beginPath(); ctx.arc(sPos.x, sPos.y, bR, 0, Math.PI*2); ctx.fill();
-      }
-
-      // 8. MOON
-      const moon = getMoonPhase(p);
-      if (moon.vis) {
-        const mPos = getPos(moon.prog);
-        const mR = 18 * engine.dpr;
-        const mA = moon.o;
-        for (let i=3; i>=0; i--) {
-          const hR = mR * (4 + i*4);
-          const hA = 0.02 * mA * (1 - i*0.2);
-          const hG = ctx.createRadialGradient(mPos.x, mPos.y, 0, mPos.x, mPos.y, hR);
-          hG.addColorStop(0, rgba([180,200,230], hA));
-          hG.addColorStop(0.5, rgba([140,170,210], hA*0.3));
-          hG.addColorStop(1, rgba([100,130,180], 0));
-          ctx.fillStyle = hG;
-          ctx.fillRect(mPos.x - hR, mPos.y - hR, hR*2, hR*2);
+        for (let i = engine.meteors.length - 1; i >= 0; i--) {
+          const m = engine.meteors[i];
+          m.life += dt;
+          if (m.life > m.maxLife) {
+            engine.meteors.splice(i, 1);
+            continue;
+          }
+          
+          const lifeProgress = m.life / m.maxLife;
+          const fade = lifeProgress < 0.1 ? lifeProgress / 0.1 : 1 - smoothstep(0.3, 1, lifeProgress);
+          
+          const mx = m.x + Math.cos(m.angle) * m.speed * m.life;
+          const my = m.y + Math.sin(m.angle) * m.speed * m.life;
+          const tailX = mx - Math.cos(m.angle) * m.length * fade;
+          const tailY = my - Math.sin(m.angle) * m.length * fade;
+          
+          const trailGrad = ctx.createLinearGradient(tailX, tailY, mx, my);
+          trailGrad.addColorStop(0, 'rgba(255,255,255,0)');
+          trailGrad.addColorStop(0.7, `rgba(200,220,255,${fade * m.brightness * nightFactor * 0.3})`);
+          trailGrad.addColorStop(1, `rgba(255,255,255,${fade * m.brightness * nightFactor * 0.8})`);
+          
+          ctx.save();
+          ctx.lineCap = 'round';
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = trailGrad;
+          ctx.beginPath();
+          ctx.moveTo(tailX, tailY);
+          ctx.lineTo(mx, my);
+          ctx.stroke();
+          
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = `rgba(255,255,255,${fade * m.brightness * nightFactor})`;
+          ctx.beginPath();
+          ctx.moveTo(mx - Math.cos(m.angle) * 4, my - Math.sin(m.angle) * 4);
+          ctx.lineTo(mx, my);
+          ctx.stroke();
+          
+          const headGlow = ctx.createRadialGradient(mx, my, 0, mx, my, 8);
+          headGlow.addColorStop(0, `rgba(220,240,255,${fade * m.brightness * nightFactor * 0.4})`);
+          headGlow.addColorStop(1, 'rgba(220,240,255,0)');
+          ctx.fillStyle = headGlow;
+          ctx.fillRect(mx - 8, my - 8, 16, 16);
+          ctx.restore();
         }
-        const mg = ctx.createRadialGradient(mPos.x, mPos.y, mR*0.5, mPos.x, mPos.y, mR*2.5);
-        mg.addColorStop(0, rgba([210,220,240], 0.4*mA));
-        mg.addColorStop(0.5, rgba([180,195,220], 0.1*mA));
-        mg.addColorStop(1, rgba([150,170,200], 0));
-        ctx.fillStyle = mg;
-        ctx.beginPath(); ctx.arc(mPos.x, mPos.y, mR*2.5, 0, Math.PI*2); ctx.fill();
-        
-        ctx.save();
-        ctx.beginPath(); ctx.arc(mPos.x, mPos.y, mR, 0, Math.PI*2); ctx.clip();
-        
-        const mb = ctx.createRadialGradient(mPos.x - mR*0.2, mPos.y - mR*0.15, 0, mPos.x, mPos.y, mR);
-        mb.addColorStop(0, rgba([235,235,230], mA));
-        mb.addColorStop(0.5, rgba([215,215,212], mA));
-        mb.addColorStop(1, rgba([185,188,195], mA*0.9));
-        ctx.fillStyle = mb; ctx.fill();
-        
-        const crs = [{x:-0.25,y:-0.2,r:0.18,a:0.08},{x:0.15,y:0.25,r:0.22,a:0.06},{x:-0.1,y:0.35,r:0.12,a:0.07},{x:0.3,y:-0.15,r:0.15,a:0.05},{x:-0.35,y:0.1,r:0.1,a:0.09},{x:0.05,y:-0.35,r:0.14,a:0.06},{x:0.25,y:0.05,r:0.2,a:0.04},{x:-0.15,y:-0.05,r:0.25,a:0.05}];
-        for (const c of crs) {
-          const cx = mPos.x + c.x * mR;
-          const cy = mPos.y + c.y * mR;
-          const cr = c.r * mR;
-          const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, cr);
-          cg.addColorStop(0, rgba([160,162,170], c.a * mA));
-          cg.addColorStop(1, rgba([160,162,170], 0));
-          ctx.fillStyle = cg;
-          ctx.beginPath(); ctx.arc(cx, cy, cr, 0, Math.PI*2); ctx.fill();
-        }
-        
-        const shG = ctx.createLinearGradient(mPos.x - mR*1.2, mPos.y, mPos.x + mR*0.5, mPos.y);
-        shG.addColorStop(0, rgba([30,35,55], 0.25*mA));
-        shG.addColorStop(0.6, rgba([30,35,55], 0.05*mA));
-        shG.addColorStop(1, rgba([30,35,55], 0));
-        ctx.fillStyle = shG;
-        ctx.fillRect(mPos.x - mR, mPos.y - mR, mR*2, mR*2);
-        ctx.restore();
       }
 
-      // 9. LANDSCAPE
-      const br = (cols.h[0] + cols.h[1] + cols.h[2]) / 3;
-      const silC = lerpColor([8,10,18], [25,35,30], clamp(br/200, 0, 1));
-      
-      ctx.beginPath(); ctx.moveTo(0, H);
-      for (let i=0; i<=200; i++) {
-        const t = i/200;
-        const x = t*W;
-        const y = H*0.88 - Math.sin(t*Math.PI*1.2+0.5)*H*0.04 - Math.sin(t*Math.PI*2.8+1.2)*H*0.025 - Math.sin(t*Math.PI*5.5+0.8)*H*0.012;
-        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      // ─── Film Grain Overlay ───
+      ctx.save();
+      ctx.globalAlpha = 0.035;
+      ctx.globalCompositeOperation = 'overlay';
+      const grainOffX = (Math.random() * 256) | 0;
+      const grainOffY = (Math.random() * 256) | 0;
+      const pattern = ctx.createPattern(engine.noiseCanvas, 'repeat');
+      if (pattern) {
+        ctx.translate(grainOffX, grainOffY);
+        ctx.fillStyle = pattern;
+        ctx.fillRect(-grainOffX, -grainOffY, W + 256, H + 256);
       }
-      ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
-      
-      const lg = ctx.createLinearGradient(0, H*0.84, 0, H);
-      lg.addColorStop(0, rgba(lerpColor(silC, cols.h, 0.05), 1));
-      lg.addColorStop(0.3, rgba(silC, 1));
-      lg.addColorStop(1, rgba(lerpColor(silC, [0,0,0], 0.3), 1));
-      ctx.fillStyle = lg; ctx.fill();
-      
-      ctx.beginPath();
-      for (let i=0; i<=200; i++) {
-        const t = i/200;
-        const x = t*W;
-        const y = H*0.92 - Math.sin(t*Math.PI*1.8+2.0)*H*0.025 - Math.sin(t*Math.PI*4.2+0.5)*H*0.012;
-        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-      }
-      ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
-      ctx.fillStyle = rgba(lerpColor(silC, [0,0,0], 0.3)); ctx.fill();
+      ctx.restore();
 
-      // 10. COLOR GRADING
-      let oC, oA;
-      if (p < 0.20 || p > 0.80) { oC = [20,30,60]; oA = 0.06; }
-      else if ((p > 0.23 && p < 0.30) || (p > 0.72 && p < 0.79)) { oC = [60,30,10]; oA = 0.04; }
-      else { oC = [0,0,0]; oA = 0; }
-      
-      if (oA > 0) {
-        ctx.fillStyle = rgba(oC, oA);
-        ctx.fillRect(0, 0, W, H);
-      }
+      // ─── Vignette ───
+      const vignetteGrad = ctx.createRadialGradient(W * 0.5, H * 0.5, W * 0.25, W * 0.5, H * 0.5, W * 0.85);
+      vignetteGrad.addColorStop(0, 'rgba(0,0,0,0)');
+      vignetteGrad.addColorStop(0.7, 'rgba(0,0,0,0.05)');
+      vignetteGrad.addColorStop(1, 'rgba(0,0,0,0.25)');
+      ctx.fillStyle = vignetteGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      drawLandscape(ctx, W, H, phase, dayFactor, nightFactor, time);
 
       rafId = requestAnimationFrame(render);
     };
 
     rafId = requestAnimationFrame(render);
-
     return () => {
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(rafId);
     };
   }, []);
 
-  return (
-    <div className="fixed inset-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-      <canvas ref={canvasRef} className="absolute inset-0 z-0" />
-      <div className="vignette" />
-      <div ref={grainRef} className="grain" />
-      <div className="absolute top-0 left-0 w-full h-[6%] bg-black z-10" />
-      <div className="absolute bottom-0 left-0 w-full h-[6%] bg-black z-10" />
-    </div>
-  );
+  return <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none" />;
 };
 
 // ==============================================
-// LOBBY INTERSTELLAR SKY
+// LOBBY INTERSTELLAR SKY (Unchanged)
 // ==============================================
 const InterstellarSky = () => {
   return (
