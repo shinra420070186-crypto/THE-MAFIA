@@ -2,6 +2,6 @@
   width: 100%;
   height: 100%;
   position: relative;
-  /* CHANGED: Prevents mobile devices from scrolling when trying to interact with the galaxy */
+  /* CRITICAL FIX: Stops the mobile browser from fighting your touch inputs */
   touch-action: none; 
 }
