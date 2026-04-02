@@ -1,4 +1,4 @@
-import { Renderer, Program, Mesh, Color, Triangle } from 'ogl';
+import { Renderer, Program, Mesh, Triangle } from 'ogl';
 import { useEffect, useRef } from 'react';
 import './Galaxy.css';
 
@@ -198,11 +198,20 @@ export default function Galaxy({
   useEffect(() => {
     if (!ctnDom.current) return;
     const ctn = ctnDom.current;
-    const renderer = new Renderer({
-      alpha: transparent,
-      premultipliedAlpha: false
-    });
+    
+    // Fallback: If WebGL isn't supported, don't crash the app
+    let renderer;
+    try {
+      renderer = new Renderer({
+        alpha: transparent,
+        premultipliedAlpha: false
+      });
+    } catch (e) {
+      return;
+    }
+    
     const gl = renderer.gl;
+    if (!gl) return;
 
     if (transparent) {
       gl.enable(gl.BLEND);
@@ -218,11 +227,11 @@ export default function Galaxy({
       const scale = 1;
       renderer.setSize(ctn.offsetWidth * scale, ctn.offsetHeight * scale);
       if (program) {
-        program.uniforms.uResolution.value = new Color(
+        program.uniforms.uResolution.value = new Float32Array([
           gl.canvas.width,
           gl.canvas.height,
           gl.canvas.width / gl.canvas.height
-        );
+        ]);
       }
     }
     window.addEventListener('resize', resize, false);
@@ -235,7 +244,11 @@ export default function Galaxy({
       uniforms: {
         uTime: { value: 0 },
         uResolution: {
-          value: new Color(gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height)
+          value: new Float32Array([
+            gl.canvas.width, 
+            gl.canvas.height, 
+            gl.canvas.width / gl.canvas.height
+          ])
         },
         uFocal: { value: new Float32Array(focal) },
         uRotation: { value: new Float32Array(rotation) },
@@ -307,12 +320,16 @@ export default function Galaxy({
         ctn.removeEventListener('mousemove', handleMouseMove);
         ctn.removeEventListener('mouseleave', handleMouseLeave);
       }
-      ctn.removeChild(gl.canvas);
+      if (ctn.contains(gl.canvas)) {
+        ctn.removeChild(gl.canvas);
+      }
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
   }, [
-    focal,
-    rotation,
+    focal[0], 
+    focal[1],
+    rotation[0], 
+    rotation[1],
     starSpeed,
     density,
     hueShift,
