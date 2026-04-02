@@ -786,16 +786,16 @@ export default function GameBoard() {
 
   if (state.phase === 'splash') {
     return (
-      <div className="relative min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden pointer-events-none" style={{ backgroundColor: '#e5e5e5' }}>
+      <div className="relative min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden" style={{ backgroundColor: '#e5e5e5' }}>
         <ImagePreloader />
-        <div className="relative z-10 pointer-events-auto">
+        <div className="relative z-10">
           <button 
             onClick={() => {
               setTimeout(() => {
                 state.enterLobby();
               }, 1500); 
             }}
-            className="splash-batman-btn pointer-events-auto"
+            className="splash-batman-btn"
           >
             <span>PLAY GAME</span>
           </button>
