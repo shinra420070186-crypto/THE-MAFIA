@@ -282,8 +282,8 @@ export default function Galaxy({
     animateId = requestAnimationFrame(update);
     ctn.appendChild(gl.canvas);
 
-    // CHANGED: Upgraded to use Pointer Events for universal touch & mouse support
-    function handlePointerMove(e) {
+    // CHANGED: Unified interaction function for both taps and drags
+    function handlePointer(e) {
       const rect = ctn.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width;
       const y = 1.0 - (e.clientY - rect.top) / rect.height;
@@ -295,17 +295,24 @@ export default function Galaxy({
       targetMouseActive.current = 0.0;
     }
 
+    // CHANGED: We now listen to pointerdown (taps) and pointerup (finger lift)
     if (mouseInteraction) {
-      ctn.addEventListener('pointermove', handlePointerMove);
+      ctn.addEventListener('pointermove', handlePointer);
+      ctn.addEventListener('pointerdown', handlePointer);
+      ctn.addEventListener('pointerup', handlePointerLeave);
       ctn.addEventListener('pointerleave', handlePointerLeave);
+      ctn.addEventListener('pointercancel', handlePointerLeave);
     }
 
     return () => {
       cancelAnimationFrame(animateId);
       window.removeEventListener('resize', resize);
       if (mouseInteraction) {
-        ctn.removeEventListener('pointermove', handlePointerMove);
+        ctn.removeEventListener('pointermove', handlePointer);
+        ctn.removeEventListener('pointerdown', handlePointer);
+        ctn.removeEventListener('pointerup', handlePointerLeave);
         ctn.removeEventListener('pointerleave', handlePointerLeave);
+        ctn.removeEventListener('pointercancel', handlePointerLeave);
       }
       ctn.removeChild(gl.canvas);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
