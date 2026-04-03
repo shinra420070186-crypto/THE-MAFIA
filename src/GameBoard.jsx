@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from './store';
 import Galaxy from './Galaxy';
+import AnimeCanvas from './components/AnimeCanvas';
 
 // ─── CONSTANTS ───────────────────────────────────────
 const TRANSITION_MS = 5000;
@@ -739,7 +740,28 @@ export default function GameBoard() {
         </div>
       );
     }
-    return <CinematicSky gamePhase={state.phase} />;
+    return (
+      <>
+        <CinematicSky gamePhase={state.phase} />
+        <div className="fixed inset-0 z-0 pointer-events-none">
+          <AnimeCanvas />
+        </div>
+        <div
+          className="fixed inset-0 pointer-events-none z-[1] opacity-[0.03] mix-blend-overlay"
+          style={{
+            backgroundImage: 'url(/images/noise-texture.png)',
+            backgroundSize: '256px 256px',
+            backgroundRepeat: 'repeat',
+          }}
+        />
+        <div className="fixed top-0 left-0 right-0 h-[4vh] bg-black/40 z-[2] pointer-events-none"
+          style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0))' }}
+        />
+        <div className="fixed bottom-0 left-0 right-0 h-[4vh] bg-black/40 z-[2] pointer-events-none"
+          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.5), rgba(0,0,0,0))' }}
+        />
+      </>
+    );
   };
 
   const renderBackButton = () => {
@@ -825,7 +847,7 @@ export default function GameBoard() {
             strokeLinejoin="round"
           >
             <circle cx="12" cy="12" r="3.2" />
-            <path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.9 1.9 0 0 1-2.7 2.7l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 0 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.9 1.9 0 0 1-2.7-2.7l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 0 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.9 1.9 0 0 1 2.7-2.7l.1.1a1 1 0 0 0 1.1.2h0a1 1 0 0 0 .6-.9V4a2 2 0 0 1 4 0v.2a1 1 0 0 0 .6.9h0a1 1 0 0 0 1.1-.2l.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0-.2 1.1v0a1 1 0 0 0 .9.6h.2a2 2 0 0 1 0 4h-.2a1 1 0 0 0-.9.6Z" />
+            <path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.9 1.9 0 0 1-2.7 2.7l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 0 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.9 1.9 0 0 1-2.7-2.7l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 0 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0-.2 1.1v0a1 1 0 0 0 .9.6h.2a2 2 0 0 1 0 4h-.2a1 1 0 0 0-.9.6Z" />
           </svg>
         </button>
         
