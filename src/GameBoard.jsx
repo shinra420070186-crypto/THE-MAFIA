@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from './store';
 import Galaxy from './Galaxy';
 
 // ─── CONSTANTS ───────────────────────────────────────
 const TRANSITION_MS = 5000;
+const TAU = Math.PI * 2;
 
 // ─── FULL SCREEN SPOOKY HOUSE BACKGROUND ─────────────
 const FullScreenSpooky = ({ phase }) => {
@@ -23,39 +24,72 @@ const FullScreenSpooky = ({ phase }) => {
           transition: background-color 5s ease-in-out;
           background-color: var(--sky-color);
           overflow: hidden;
+          
+          /* Responsive Arc & Scale Settings */
+          --celestial-scale: 1;
+          --arc-radius: 80vh;
         }
 
+        @media (max-width: 768px) {
+          .full-spooky-bg {
+            --celestial-scale: 0.6;
+            --arc-radius: 75vh;
+          }
+        }
+
+        /* ─── DAY/NIGHT ANGLE TOGGLES ─── */
         .full-spooky-bg.theme-night {
           --sky-color: #212f3c;
           --window-color: #ffd166;
-          --moon-y: 10vh;
-          --sun-y: 110vh;
+          --sun-angle: 180deg; /* Sun sets to the right */
+          --moon-angle: 0deg;  /* Moon is at Zenith (top) */
           --rain-opacity: 1;
         }
 
         .full-spooky-bg.theme-day {
           --sky-color: #5b92e5;
           --window-color: #222;
-          --moon-y: 110vh;
-          --sun-y: 10vh;
+          --sun-angle: 0deg;     /* Sun is at Zenith (top) */
+          --moon-angle: -180deg; /* Moon sets to the left */
           --rain-opacity: 0;
         }
 
-        /* Celestial Bodies (Sun & Moon) */
+        /* ─── CINEMATIC ORBIT PIVOT SYSTEM ─── */
+        .celestial-pivot {
+          position: absolute;
+          top: 100vh; /* Invisible pivot point at the exact bottom center */
+          left: 50%;
+          width: 0;
+          height: 0;
+          z-index: 1;
+        }
+
+        .sun-pivot {
+          transition: transform 5s ease-in-out;
+          transform: rotate(var(--sun-angle));
+        }
+
+        .moon-pivot {
+          transition: transform 5s ease-in-out;
+          transform: rotate(var(--moon-angle));
+        }
+
         .celestial-body {
           position: absolute;
+          left: -100px; /* Center perfectly on pivot (half of 200px) */
+          top: calc(-1 * var(--arc-radius)); /* Pushes the body up to the sky */
           width: 200px;
           height: 200px;
           border-radius: 50%;
-          z-index: 1;
-          transition: top 5s ease-in-out;
+          transition: transform 5s ease-in-out;
         }
 
+        /* Moon Design */
         .moon {
           background-color: #95a5a6;
           box-shadow: inset 7px -7px 0 rgba(0, 0, 0, 0.09);
-          left: 15vw;
-          top: var(--moon-y);
+          /* Counter-rotate so the craters always stay upright! */
+          transform: scale(var(--celestial-scale)) rotate(calc(var(--moon-angle) * -1));
         }
         .moon:before, .moon:after {
           content: "";
@@ -67,12 +101,12 @@ const FullScreenSpooky = ({ phase }) => {
         .moon:before { width: 30px; height: 30px; top: 50px; left: 45px; }
         .moon:after { width: 40px; height: 40px; top: 100px; left: 30px; }
 
-        /* Sun styled identically to Moon for art consistency */
+        /* Sun Design (Identical stylistic structure to Moon) */
         .sun {
           background-color: #FFD700;
           box-shadow: inset 7px -7px 0 rgba(200, 100, 0, 0.2), 0 0 50px rgba(255, 215, 0, 0.6);
-          right: 15vw;
-          top: var(--sun-y);
+          /* Counter-rotate so the spots always stay upright! */
+          transform: scale(var(--celestial-scale)) rotate(calc(var(--sun-angle) * -1));
         }
         .sun:before, .sun:after {
           content: "";
@@ -84,7 +118,7 @@ const FullScreenSpooky = ({ phase }) => {
         .sun:before { width: 30px; height: 30px; top: 50px; left: 45px; }
         .sun:after { width: 40px; height: 40px; top: 100px; left: 30px; }
 
-        /* Full Screen Ground */
+        /* ─── FULL SCREEN GROUND & HOUSE ─── */
         .ground {
           position: absolute;
           bottom: 0;
@@ -96,7 +130,6 @@ const FullScreenSpooky = ({ phase }) => {
           border-radius: 50% 50% 0 0 / 30px 30px 0 0;
         }
 
-        /* House Centering Wrapper */
         .house-wrapper {
           position: absolute;
           bottom: 22vh;
@@ -106,20 +139,13 @@ const FullScreenSpooky = ({ phase }) => {
         }
         @media (max-width: 768px) {
           .house-wrapper { transform: translateX(-50%) scale(1.2); bottom: 23vh; }
-          .celestial-body { transform: scale(0.6); }
-          .moon { left: 5vw; }
-          .sun { right: 5vw; }
         }
 
         /* House Architecture */
         .house {
-          position: relative;
-          width: 120px;
-          height: 150px;
-          background-color: black;
-          transform: rotate(5deg);
+          position: relative; width: 120px; height: 150px;
+          background-color: black; transform: rotate(5deg);
         }
-
         .house:before {
           content: ""; position: absolute; width: 0; height: 0;
           border-bottom: 30px solid black; border-right: 50px solid transparent;
@@ -239,7 +265,7 @@ const FullScreenSpooky = ({ phase }) => {
           top: 17px; left: -10px; box-shadow: 10px 40px black, 5px 150px black;
         }
 
-        /* Rain System mapped across full width */
+        /* ─── FULL SCREEN RAIN SYSTEM ─── */
         .rain-container {
           position: absolute;
           inset: 0;
@@ -268,8 +294,15 @@ const FullScreenSpooky = ({ phase }) => {
         @keyframes rainAnim { 0% { transform: translateY(-200px); } 100% { transform: translateY(120vh); } }
       `}</style>
       
-      <div className="celestial-body moon"></div>
-      <div className="celestial-body sun"></div>
+      {/* Sun on its orbital pivot */}
+      <div className="celestial-pivot sun-pivot">
+        <div className="celestial-body sun"></div>
+      </div>
+
+      {/* Moon on its orbital pivot */}
+      <div className="celestial-pivot moon-pivot">
+        <div className="celestial-body moon"></div>
+      </div>
 
       <div className="house-wrapper">
         <div className="house">
