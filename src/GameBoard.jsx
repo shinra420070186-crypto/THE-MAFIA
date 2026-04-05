@@ -276,7 +276,8 @@ const CinematicSky = ({ gamePhase }) => {
     if (engine.rays.length === 0) engine.rays = generateLightRays();
     if (!engine.noiseCanvas) {
       const c = document.createElement('canvas');
-      c.width = 256; c.height = 256;
+      c.width = 256;
+      c.height = 256;
       c.getContext('2d').putImageData(createNoiseTexture(256), 0, 0);
       engine.noiseCanvas = c;
     }
@@ -624,6 +625,519 @@ const CinematicSky = ({ gamePhase }) => {
   return <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none" />;
 };
 
+// ─── SPOOKY HOUSE DAY/NIGHT COMPONENT ────────────────
+const SpookyHouse = ({ phase }) => {
+  const isNight = phase.startsWith('night');
+  const themeClass = isNight ? 'theme-night' : 'theme-day';
+
+  return (
+    <div className={`spooky-anim-wrapper ${themeClass}`}>
+      <style>{`
+        .spooky-anim-wrapper {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%) scale(0.8);
+          pointer-events: none;
+          transition: all 5s ease;
+          z-index: 1;
+        }
+        @media (max-width: 600px) {
+          .spooky-anim-wrapper {
+            transform: translate(-50%, -50%) scale(0.65);
+          }
+        }
+
+        .theme-night {
+          --sky-bg: #212f3c;
+          --window-light: #ffd166;
+          --celestial-bg: #95a5a6;
+          --celestial-shadow: inset 7px -7px 0 rgba(0, 0, 0, 0.09);
+          --crater-opacity: 1;
+          --rain-opacity: 1;
+        }
+
+        .theme-day {
+          --sky-bg: #87ceeb;
+          --window-light: #222;
+          --celestial-bg: #FFD700;
+          --celestial-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
+          --crater-opacity: 0;
+          --rain-opacity: 0;
+        }
+
+        .spooky-house {
+          position: relative;
+        }
+
+        .content-circle {
+          position: relative;
+          width: 450px;
+          height: 450px;
+          overflow: hidden;
+          background-color: var(--sky-bg);
+          transition: background-color 5s ease;
+          border-radius: 50%;
+          -webkit-backface-visibility: hidden;
+          -moz-backface-visibility: hidden;
+          -webkit-transform: translate3d(0, 0, 0);
+          -moz-transform: translate3d(0, 0, 0);
+          box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+
+        .content-circle:before {
+          content: "";
+          position: absolute;
+          width: 450px;
+          height: 200px;
+          top: 300px;
+          border-radius: 50% 50% 0 0;
+          background-color: #000;
+        }
+
+        .house {
+          position: absolute;
+          width: 120px;
+          height: 150px;
+          background-color: black;
+          left: 180px;
+          top: 160px;
+          transform: rotate(5deg);
+          z-index: 2;
+        }
+
+        .house:before {
+          content: "";
+          position: absolute;
+          width: 0;
+          height: 0;
+          border-bottom: 30px solid black;
+          border-right: 50px solid transparent;
+          left: 115px;
+          top: 70px;
+          transform: rotate(5deg);
+        }
+
+        .house:after {
+          content: "";
+          position: absolute;
+          width: 5px;
+          height: 65px;
+          background-color: black;
+          left: 145px;
+          top: 95px;
+        }
+
+        .porch {
+          position: absolute;
+          width: 30px;
+          height: 100px;
+          background-color: black;
+          left: -20px;
+          top: 55px;
+          transform: rotate(-10deg);
+        }
+        .porch:before {
+          content: "";
+          position: absolute;
+          width: 0;
+          height: 0;
+          border-bottom: 20px solid black;
+          border-left: 40px solid transparent;
+          left: -35px;
+          top: 45px;
+        }
+
+        .porch:after {
+          content: "";
+          position: absolute;
+          width: 0;
+          height: 0;
+          border-left: 20px solid transparent;
+          border-right: 20px solid transparent;
+          border-bottom: 30px solid black;
+          left: -5px;
+          top: -25px;
+        }
+
+        .first-floor {
+          position: absolute;
+          transform: rotate(-10deg);
+          background-color: black;
+          width: 5px;
+          height: 45px;
+          left: -37px;
+          top: 125px;
+        }
+
+        .first-floor:before {
+          content: "";
+          position: absolute;
+          background-color: #000;
+          width: 85px;
+          height: 90px;
+          top: -150px;
+          left: 50px;
+        }
+
+        .first-floor:after {
+          content: "";
+          position: absolute;
+          border-left: 52px solid transparent;
+          border-right: 52px solid transparent;
+          border-bottom: 50px solid black;
+          top: -199px;
+          left: 40px;
+        }
+
+        .second-floor {
+          position: absolute;
+          background-color: black;
+          width: 35px;
+          height: 100px;
+          transform: rotate(3deg);
+          top: -70px;
+          left: 70px;
+        }
+
+        .second-floor:before {
+          content: "";
+          position: absolute;
+          background-color: black;
+          width: 20px;
+          height: 100px;
+          left: 33px;
+          top: 40px;
+          transform: rotate(-3deg);
+        }
+
+        .second-floor:after {
+          content: "";
+          position: absolute;
+          width: 0;
+          height: 0;
+          border-left: 25px solid transparent;
+          border-right: 25px solid transparent;
+          border-bottom: 30px solid black;
+          top: 12px;
+          left: 15px;
+        }
+
+        .roof {
+          position: absolute;
+          width: 0;
+          height: 0;
+          border-left: 25px solid transparent;
+          border-right: 25px solid transparent;
+          border-bottom: 30px solid black;
+          left: 65px;
+          top: -95px;
+        }
+
+        .roof:before {
+          content: "";
+          position: absolute;
+          width: 6px;
+          height: 20px;
+          background-color: black;
+          top: 5px;
+          left: 10px;
+          box-shadow: 20px 35px black;
+        }
+
+        .roof:after {
+          content: "";
+          position: absolute;
+          width: 6px;
+          height: 20px;
+          background-color: black;
+          transform: rotate(-10deg);
+          left: -110px;
+          top: 35px;
+          box-shadow: -27px 97px black;
+        }
+
+        .door {
+          position: absolute;
+          background-color: var(--window-light);
+          transition: background-color 5s ease;
+          width: 30px;
+          height: 50px;
+          transform: rotate(-5deg);
+          border-radius: 30px 30px 0 0;
+          box-shadow: inset -10px 5px rgba(0, 0, 0, 0.5);
+          top: 90px;
+          left: 40px;
+        }
+
+        .door:before {
+          content: "";
+          position: absolute;
+          background-color: var(--window-light);
+          transition: background-color 5s ease;
+          border-radius: 30px 30px 0 0;
+          box-shadow: inset -5px 2px rgba(0, 0, 0, 0.5);
+          width: 20px;
+          height: 30px;
+          left: -40px;
+          transform: rotate(-3deg);
+        }
+
+        .door:after {
+          content: "";
+          position: absolute;
+          background-color: var(--window-light);
+          transition: background-color 5s ease;
+          box-shadow: inset -5px 2px rgba(0, 0, 0, 0.5);
+          border-radius: 30px 30px 0 0;
+          width: 20px;
+          height: 30px;
+          left: 45px;
+          transform: rotate(3deg);
+        }
+
+        .small-windows {
+          position: absolute;
+          background-color: var(--window-light);
+          transition: background-color 5s ease, box-shadow 5s ease;
+          border-radius: 30px 30px 0 0;
+          width: 13px;
+          height: 25px;
+          left: 100px;
+          top: -20px;
+          box-shadow: -19px -40px var(--window-light), inset -4px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .small-windows:before {
+          content: "";
+          position: absolute;
+          background-color: var(--window-light);
+          transition: background-color 5s ease, box-shadow 5s ease;
+          border-radius: 30px 30px 0 0;
+          width: 13px;
+          height: 25px;
+          transform: rotate(-7deg);
+          left: -60px;
+          top: 50px;
+          box-shadow: -60px 20px var(--window-light);
+        }
+
+        .big-window {
+          position: absolute;
+          background-color: var(--window-light);
+          transition: background-color 5s ease;
+          border-radius: 30px 30px 0 0;
+          transform: rotate(-7deg);
+          width: 30px;
+          height: 40px;
+          top: -35px;
+          left: 10px;
+        }
+
+        .big-window:before,
+        .big-window:after {
+          content: "";
+          position: absolute;
+          background-color: black;
+        }
+
+        .big-window:before {
+          height: 40px;
+          width: 2px;
+          left: 15px;
+          box-shadow: 13px 55px black, -47px 80px black, -32px 120px black;
+        }
+
+        .big-window:after {
+          height: 2px;
+          width: 40px;
+          top: 22px;
+          box-shadow: 10px 58px black, -45px 78px black, -30px 120px black;
+        }
+
+        .frames {
+          position: absolute;
+          width: 2px;
+          height: 40px;
+          background-color: black;
+          top: -65px;
+          left: 86.5px;
+          box-shadow: 19px 40px black, 7px 150px black;
+        }
+
+        .frames:before {
+          content: "";
+          position: absolute;
+          height: 2px;
+          width: 30px;
+          background-color: black;
+          top: 17px;
+          left: -10px;
+          box-shadow: 10px 40px black, 5px 150px black;
+        }
+
+        .moon {
+          position: absolute;
+          width: 200px;
+          height: 200px;
+          border-radius: 50%;
+          background-color: var(--celestial-bg);
+          z-index: 1;
+          left: 80px;
+          top: 40px;
+          box-shadow: var(--celestial-shadow);
+          transition: all 5s ease;
+        }
+
+        .moon:before,
+        .moon:after {
+          content: "";
+          position: absolute;
+          border-radius: 50%;
+          background-color: rgba(0, 0, 0, 0.09);
+          box-shadow: inset -5px 5px 0 rgba(0, 0, 0, 0.09);
+          opacity: var(--crater-opacity);
+          transition: opacity 5s ease;
+        }
+        .moon:before {
+          width: 30px;
+          height: 30px;
+          top: 50px;
+          left: 45px;
+        }
+
+        .moon:after {
+          width: 40px;
+          height: 40px;
+          top: 100px;
+          left: 30px;
+        }
+
+        .rain {
+          position: absolute;
+          z-index: 5;
+          opacity: var(--rain-opacity);
+          transition: opacity 5s ease;
+        }
+
+        .rain:before {
+          content: "";
+          position: absolute;
+          width: 450px;
+          height: 450px;
+          background: #fff;
+          opacity: 0;
+          animation: lighting 3s linear infinite;
+        }
+
+        .dropOne,
+        .dropTwo,
+        .dropThree,
+        .dropFour,
+        .dropFive {
+          position: absolute;
+          background-color: rgba(211, 211, 211, 0.3);
+          height: 10px;
+          width: 1px;
+          top: 0;
+          box-shadow: 0 -270px rgba(211, 211, 211, 0.3),
+            -50px -50px rgba(211, 211, 211, 0.3), -50px -150px rgba(211, 211, 211, 0.3),
+            50px -395px rgba(211, 211, 211, 0.3), 50px -200px rgba(211, 211, 211, 0.3),
+            50px -100px rgba(211, 211, 211, 0.3), 100px -400px rgba(211, 211, 211, 0.3),
+            100px -320px rgba(211, 211, 211, 0.3), 100px -150px rgba(211, 211, 211, 0.3),
+            150px -200px rgba(211, 211, 211, 0.3), 200px -100px rgba(211, 211, 211, 0.3),
+            200px -370px rgba(211, 211, 211, 0.3), 250px -330px rgba(211, 211, 211, 0.3),
+            250px -220px rgba(211, 211, 211, 0.3), 300px -70px rgba(211, 211, 211, 0.3),
+            300px -140px rgba(211, 211, 211, 0.3), 300px -300px rgba(211, 211, 211, 0.3);
+        }
+
+        .dropOne {
+          animation: rainAnim 1.5s linear infinite;
+          left: 100px;
+        }
+
+        .dropTwo {
+          left: -50px;
+          animation: rainAnim 1.2s linear infinite;
+        }
+
+        .dropThree {
+          left: 50px;
+          animation: rainAnim 1.7s linear infinite;
+        }
+
+        .dropFour {
+          left: 150px;
+          animation: rainAnim 1.4s linear infinite;
+        }
+
+        .dropFive {
+          left: 80px;
+          animation: rainAnim 1.3s linear infinite;
+        }
+
+        @keyframes rainAnim {
+          0% {
+            transform: translateY(0);
+          }
+          100% {
+            transform: translateY(1000px);
+          }
+        }
+
+        @keyframes lighting {
+          0% {
+            opacity: 0;
+          }
+          10% {
+            opacity: 0;
+          }
+          11% {
+            opacity: 1;
+          }
+          14% {
+            opacity: 0;
+          }
+          20% {
+            opacity: 0;
+          }
+          21% {
+            opacity: 1;
+          }
+          24% {
+            opacity: 0;
+          }
+          104% {
+            opacity: 0;
+          }
+        }
+      `}</style>
+      <div className="spooky-house">
+        <div className="content-circle">
+          <div className="house">
+            <div className="porch"></div>
+            <div className="first-floor"></div>
+            <div className="second-floor"></div>
+            <div className="roof"></div>
+            <div className="door"></div>
+            <div className="small-windows"></div>
+            <div className="big-window"></div>
+            <div className="frames"></div>
+          </div>
+          <div className="moon"></div>
+          <div className="rain">
+            <div className="dropOne"></div>
+            <div className="dropTwo"></div>
+            <div className="dropThree"></div>
+            <div className="dropFour"></div>
+            <div className="dropFive"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const roleImages = {
   'Mafia': '/mafia-card.jpg',
   'Doctor': '/doctor-card.jpg',
@@ -719,6 +1233,7 @@ export default function GameBoard() {
 
   const renderBackground = () => {
     if (state.phase === 'splash') return null; 
+    
     if (state.phase === 'lobby' || state.phase === 'role_reveal') {
       return (
         <div className="fixed inset-0 w-full h-full z-0 pointer-events-auto">
@@ -739,7 +1254,13 @@ export default function GameBoard() {
         </div>
       );
     }
-    return <CinematicSky gamePhase={state.phase} />;
+    
+    return (
+      <>
+        <CinematicSky gamePhase={state.phase} />
+        <SpookyHouse phase={state.phase} />
+      </>
+    );
   };
 
   const renderBackButton = () => {
@@ -825,7 +1346,7 @@ export default function GameBoard() {
             strokeLinejoin="round"
           >
             <circle cx="12" cy="12" r="3.2" />
-            <path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.9 1.9 0 0 1-2.7 2.7l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 0 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.9 1.9 0 0 1-2.7-2.7l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 0 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.9 1.9 0 0 1 2.7-2.7l.1.1a1 1 0 0 0 1.1.2h0a1 1 0 0 0 .6-.9V4a2 2 0 0 1 4 0v.2a1 1 0 0 0 .6.9h0a1 1 0 0 0 1.1-.2l.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0-.2 1.1v0a1 1 0 0 0 .9.6h.2a2 2 0 0 1 0 4h-.2a1 1 0 0 0-.9.6Z" />
+            <path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.9 1.9 0 0 1-2.7 2.7l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 0 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.9 1.9 0 0 1-2.7-2.7l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 0 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0 1.1.2h0a1 1 0 0 0 .6-.9V4a2 2 0 0 1 4 0v.2a1 1 0 0 0 .6.9h0a1 1 0 0 0 1.1-.2l.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0-.2 1.1v0a1 1 0 0 0 .9.6h.2a2 2 0 0 1 0 4h-.2a1 1 0 0 0-.9.6Z" />
           </svg>
         </button>
         
