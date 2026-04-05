@@ -9,10 +9,28 @@ const TAU = Math.PI * 2;
 // ─── FULL SCREEN SPOOKY HOUSE BACKGROUND ─────────────
 const FullScreenSpooky = ({ phase }) => {
   const isNight = phase.startsWith('night') || phase === 'night_transition';
+  
+  // Track continuous orbit to ensure Left-To-Right continuous sweeping
+  const [angles, setAngles] = useState({ sun: isNight ? 180 : 0, moon: isNight ? 0 : -180 });
+  const prevIsNight = useRef(isNight);
+
+  useEffect(() => {
+    if (isNight !== prevIsNight.current) {
+      setAngles(prev => ({
+        sun: prev.sun + 180,
+        moon: prev.moon + 180
+      }));
+      prevIsNight.current = isNight;
+    }
+  }, [isNight]);
+
   const themeClass = isNight ? 'theme-night' : 'theme-day';
 
   return (
-    <div className={`full-spooky-bg ${themeClass}`}>
+    <div className={`full-spooky-bg ${themeClass}`} style={{
+      '--sun-angle': angles.sun,
+      '--moon-angle': angles.moon
+    }}>
       <style>{`
         .full-spooky-bg {
           position: fixed;
@@ -27,7 +45,7 @@ const FullScreenSpooky = ({ phase }) => {
           
           /* Responsive Arc & Scale Settings */
           --celestial-scale: 1;
-          --arc-radius: 80vh;
+          --arc-radius: 85vh;
         }
 
         @media (max-width: 768px) {
@@ -41,16 +59,12 @@ const FullScreenSpooky = ({ phase }) => {
         .full-spooky-bg.theme-night {
           --sky-color: #212f3c;
           --window-color: #ffd166;
-          --sun-angle: 180deg; /* Sun sets to the right */
-          --moon-angle: 0deg;  /* Moon is at Zenith (top) */
           --rain-opacity: 1;
         }
 
         .full-spooky-bg.theme-day {
           --sky-color: #5b92e5;
           --window-color: #222;
-          --sun-angle: 0deg;     /* Sun is at Zenith (top) */
-          --moon-angle: -180deg; /* Moon sets to the left */
           --rain-opacity: 0;
         }
 
@@ -66,12 +80,12 @@ const FullScreenSpooky = ({ phase }) => {
 
         .sun-pivot {
           transition: transform 5s ease-in-out;
-          transform: rotate(var(--sun-angle));
+          transform: rotate(calc(var(--sun-angle) * 1deg));
         }
 
         .moon-pivot {
           transition: transform 5s ease-in-out;
-          transform: rotate(var(--moon-angle));
+          transform: rotate(calc(var(--moon-angle) * 1deg));
         }
 
         .celestial-body {
@@ -81,15 +95,15 @@ const FullScreenSpooky = ({ phase }) => {
           width: 200px;
           height: 200px;
           border-radius: 50%;
-          transition: transform 5s ease-in-out;
         }
 
         /* Moon Design */
         .moon {
           background-color: #95a5a6;
           box-shadow: inset 7px -7px 0 rgba(0, 0, 0, 0.09);
+          transition: transform 5s ease-in-out;
           /* Counter-rotate so the craters always stay upright! */
-          transform: scale(var(--celestial-scale)) rotate(calc(var(--moon-angle) * -1));
+          transform: scale(var(--celestial-scale)) rotate(calc(var(--moon-angle) * -1deg));
         }
         .moon:before, .moon:after {
           content: "";
@@ -105,8 +119,9 @@ const FullScreenSpooky = ({ phase }) => {
         .sun {
           background-color: #FFD700;
           box-shadow: inset 7px -7px 0 rgba(200, 100, 0, 0.2), 0 0 50px rgba(255, 215, 0, 0.6);
+          transition: transform 5s ease-in-out;
           /* Counter-rotate so the spots always stay upright! */
-          transform: scale(var(--celestial-scale)) rotate(calc(var(--sun-angle) * -1));
+          transform: scale(var(--celestial-scale)) rotate(calc(var(--sun-angle) * -1deg));
         }
         .sun:before, .sun:after {
           content: "";
