@@ -6,7 +6,7 @@ import Galaxy from './Galaxy';
 const TRANSITION_MS = 5000;
 const TAU = Math.PI * 2;
 
-// ─── FULL SCREEN SPOOKY HOUSE BACKGROUND ─────────────
+// ─── FULL SCREEN DYNAMIC DAY/NIGHT HOUSE ─────────────
 const FullScreenSpooky = ({ phase }) => {
   const isNight = phase.startsWith('night') || phase === 'night_transition';
   
@@ -55,23 +55,33 @@ const FullScreenSpooky = ({ phase }) => {
           }
         }
 
-        /* ─── DAY/NIGHT ANGLE TOGGLES ─── */
+        /* ─── DYNAMIC DAY/NIGHT ARCHITECTURAL MAPPING ─── */
         .full-spooky-bg.theme-night {
           --sky-color: #212f3c;
           --window-color: #ffd166;
+          --window-frame: #000;
+          --house-base: #000;
+          --ground-color: #000;
+          --sun-angle: 180deg;
+          --moon-angle: 0deg;
           --rain-opacity: 1;
         }
 
         .full-spooky-bg.theme-day {
           --sky-color: #5b92e5;
-          --window-color: #222;
+          --window-color: #4a6fa5; /* Glass reflection */
+          --window-frame: #2c1e16;
+          --house-base: #3e2723; /* Dark wood/brick */
+          --ground-color: #1b3310; /* Dark grass */
+          --sun-angle: 0deg;
+          --moon-angle: -180deg;
           --rain-opacity: 0;
         }
 
         /* ─── CINEMATIC ORBIT PIVOT SYSTEM ─── */
         .celestial-pivot {
           position: absolute;
-          top: 100vh; /* Invisible pivot point at the exact bottom center */
+          top: 100vh;
           left: 50%;
           width: 0;
           height: 0;
@@ -90,8 +100,8 @@ const FullScreenSpooky = ({ phase }) => {
 
         .celestial-body {
           position: absolute;
-          left: -100px; /* Center perfectly on pivot (half of 200px) */
-          top: calc(-1 * var(--arc-radius)); /* Pushes the body up to the sky */
+          left: -100px;
+          top: calc(-1 * var(--arc-radius));
           width: 200px;
           height: 200px;
           border-radius: 50%;
@@ -102,7 +112,6 @@ const FullScreenSpooky = ({ phase }) => {
           background-color: #95a5a6;
           box-shadow: inset 7px -7px 0 rgba(0, 0, 0, 0.09);
           transition: transform 5s ease-in-out;
-          /* Counter-rotate so the craters always stay upright! */
           transform: scale(var(--celestial-scale)) rotate(calc(var(--moon-angle) * -1deg));
         }
         .moon:before, .moon:after {
@@ -115,12 +124,11 @@ const FullScreenSpooky = ({ phase }) => {
         .moon:before { width: 30px; height: 30px; top: 50px; left: 45px; }
         .moon:after { width: 40px; height: 40px; top: 100px; left: 30px; }
 
-        /* Sun Design (Identical stylistic structure to Moon) */
+        /* Sun Design */
         .sun {
           background-color: #FFD700;
           box-shadow: inset 7px -7px 0 rgba(200, 100, 0, 0.2), 0 0 50px rgba(255, 215, 0, 0.6);
           transition: transform 5s ease-in-out;
-          /* Counter-rotate so the spots always stay upright! */
           transform: scale(var(--celestial-scale)) rotate(calc(var(--sun-angle) * -1deg));
         }
         .sun:before, .sun:after {
@@ -140,7 +148,8 @@ const FullScreenSpooky = ({ phase }) => {
           left: -10vw;
           width: 120vw;
           height: 25vh;
-          background-color: #000;
+          background-color: var(--ground-color);
+          transition: background-color 5s ease-in-out;
           z-index: 9;
           border-radius: 50% 50% 0 0 / 30px 30px 0 0;
         }
@@ -159,73 +168,88 @@ const FullScreenSpooky = ({ phase }) => {
         /* House Architecture */
         .house {
           position: relative; width: 120px; height: 150px;
-          background-color: black; transform: rotate(5deg);
+          background-color: var(--house-base); 
+          transition: background-color 5s ease-in-out;
+          transform: rotate(5deg);
         }
         .house:before {
           content: ""; position: absolute; width: 0; height: 0;
-          border-bottom: 30px solid black; border-right: 50px solid transparent;
+          border-bottom: 30px solid var(--house-base); border-right: 50px solid transparent;
+          transition: border-bottom-color 5s ease-in-out;
           left: 115px; top: 70px; transform: rotate(5deg);
         }
         .house:after {
           content: ""; position: absolute; width: 5px; height: 65px;
-          background-color: black; left: 145px; top: 95px;
+          background-color: var(--house-base); transition: background-color 5s ease-in-out;
+          left: 145px; top: 95px;
         }
 
         .porch {
           position: absolute; width: 30px; height: 100px;
-          background-color: black; left: -20px; top: 55px; transform: rotate(-10deg);
+          background-color: var(--house-base); transition: background-color 5s ease-in-out;
+          left: -20px; top: 55px; transform: rotate(-10deg);
         }
         .porch:before {
           content: ""; position: absolute; width: 0; height: 0;
-          border-bottom: 20px solid black; border-left: 40px solid transparent;
+          border-bottom: 20px solid var(--house-base); border-left: 40px solid transparent;
+          transition: border-bottom-color 5s ease-in-out;
           left: -35px; top: 45px;
         }
         .porch:after {
           content: ""; position: absolute; width: 0; height: 0;
-          border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 30px solid black;
+          border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 30px solid var(--house-base);
+          transition: border-bottom-color 5s ease-in-out;
           left: -5px; top: -25px;
         }
 
         .first-floor {
           position: absolute; transform: rotate(-10deg);
-          background-color: black; width: 5px; height: 45px; left: -37px; top: 125px;
+          background-color: var(--house-base); transition: background-color 5s ease-in-out;
+          width: 5px; height: 45px; left: -37px; top: 125px;
         }
         .first-floor:before {
-          content: ""; position: absolute; background-color: #000;
+          content: ""; position: absolute; background-color: var(--house-base);
+          transition: background-color 5s ease-in-out;
           width: 85px; height: 90px; top: -150px; left: 50px;
         }
         .first-floor:after {
           content: ""; position: absolute;
-          border-left: 52px solid transparent; border-right: 52px solid transparent; border-bottom: 50px solid black;
+          border-left: 52px solid transparent; border-right: 52px solid transparent; border-bottom: 50px solid var(--house-base);
+          transition: border-bottom-color 5s ease-in-out;
           top: -199px; left: 40px;
         }
 
         .second-floor {
-          position: absolute; background-color: black; width: 35px; height: 100px;
+          position: absolute; background-color: var(--house-base); transition: background-color 5s ease-in-out;
+          width: 35px; height: 100px;
           transform: rotate(3deg); top: -70px; left: 70px;
         }
         .second-floor:before {
-          content: ""; position: absolute; background-color: black;
+          content: ""; position: absolute; background-color: var(--house-base); transition: background-color 5s ease-in-out;
           width: 20px; height: 100px; left: 33px; top: 40px; transform: rotate(-3deg);
         }
         .second-floor:after {
           content: ""; position: absolute; width: 0; height: 0;
-          border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid black;
+          border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid var(--house-base);
+          transition: border-bottom-color 5s ease-in-out;
           top: 12px; left: 15px;
         }
 
         .roof {
           position: absolute; width: 0; height: 0;
-          border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid black;
+          border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid var(--house-base);
+          transition: border-bottom-color 5s ease-in-out;
           left: 65px; top: -95px;
         }
         .roof:before {
           content: ""; position: absolute; width: 6px; height: 20px;
-          background-color: black; top: 5px; left: 10px; box-shadow: 20px 35px black;
+          background-color: var(--house-base); transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out;
+          top: 5px; left: 10px; box-shadow: 20px 35px var(--house-base);
         }
         .roof:after {
           content: ""; position: absolute; width: 6px; height: 20px;
-          background-color: black; transform: rotate(-10deg); left: -110px; top: 35px; box-shadow: -27px 97px black;
+          background-color: var(--house-base); transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out;
+          transform: rotate(-10deg); left: -110px; top: 35px; box-shadow: -27px 97px var(--house-base);
         }
 
         .door {
@@ -266,18 +290,21 @@ const FullScreenSpooky = ({ phase }) => {
           border-radius: 30px 30px 0 0; transform: rotate(-7deg); width: 30px; height: 40px; top: -35px; left: 10px;
         }
         .big-window:before, .big-window:after {
-          content: ""; position: absolute; background-color: black;
+          content: ""; position: absolute; background-color: var(--window-frame);
+          transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out;
         }
-        .big-window:before { height: 40px; width: 2px; left: 15px; box-shadow: 13px 55px black, -47px 80px black, -32px 120px black; }
-        .big-window:after { height: 2px; width: 40px; top: 22px; box-shadow: 10px 58px black, -45px 78px black, -30px 120px black; }
+        .big-window:before { height: 40px; width: 2px; left: 15px; box-shadow: 13px 55px var(--window-frame), -47px 80px var(--window-frame), -32px 120px var(--window-frame); }
+        .big-window:after { height: 2px; width: 40px; top: 22px; box-shadow: 10px 58px var(--window-frame), -45px 78px var(--window-frame), -30px 120px var(--window-frame); }
 
         .frames {
-          position: absolute; width: 2px; height: 40px; background-color: black;
-          top: -65px; left: 86.5px; box-shadow: 19px 40px black, 7px 150px black;
+          position: absolute; width: 2px; height: 40px; background-color: var(--window-frame);
+          transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out;
+          top: -65px; left: 86.5px; box-shadow: 19px 40px var(--window-frame), 7px 150px var(--window-frame);
         }
         .frames:before {
-          content: ""; position: absolute; height: 2px; width: 30px; background-color: black;
-          top: 17px; left: -10px; box-shadow: 10px 40px black, 5px 150px black;
+          content: ""; position: absolute; height: 2px; width: 30px; background-color: var(--window-frame);
+          transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out;
+          top: 17px; left: -10px; box-shadow: 10px 40px var(--window-frame), 5px 150px var(--window-frame);
         }
 
         /* ─── FULL SCREEN RAIN SYSTEM ─── */
@@ -309,12 +336,10 @@ const FullScreenSpooky = ({ phase }) => {
         @keyframes rainAnim { 0% { transform: translateY(-200px); } 100% { transform: translateY(120vh); } }
       `}</style>
       
-      {/* Sun on its orbital pivot */}
       <div className="celestial-pivot sun-pivot">
         <div className="celestial-body sun"></div>
       </div>
 
-      {/* Moon on its orbital pivot */}
       <div className="celestial-pivot moon-pivot">
         <div className="celestial-body moon"></div>
       </div>
@@ -470,7 +495,7 @@ export default function GameBoard() {
       );
     }
     
-    // Day and Night uses the new Spooky House Engine
+    // Day and Night uses the updated Full Screen House Engine
     return <FullScreenSpooky phase={state.phase} />;
   };
 
@@ -516,487 +541,333 @@ export default function GameBoard() {
     </div>
   );
 
-  if (state.phase === 'splash') {
-    return (
-      <div className="relative min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden" style={{ backgroundColor: '#e5e5e5' }}>
-        <ImagePreloader />
-        <div className="relative z-10">
-          <button 
-            onClick={() => {
-              setTimeout(() => {
-                state.enterLobby();
-              }, 1500); 
-            }}
-            className="splash-batman-btn"
-          >
-            <span>PLAY GAME</span>
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Structural Refactor: Background is hoisted out of phase conditionals to prevent remounting flickers.
+  return (
+    <>
+      <style>{`
+        /* PERMANENT FIX: Stops the mobile browser from flashing white/gray when a button or card is tapped */
+        * {
+          -webkit-tap-highlight-color: transparent !important;
+        }
+        body {
+          background-color: #050505 !important;
+        }
+      `}</style>
+      
+      {/* Background Layer: Remains strictly mounted underneath all phases */}
+      {renderBackground()}
 
-  if (state.phase === 'lobby') {
-    return (
-      <div className="relative min-h-screen text-white flex flex-col items-center p-6 overflow-hidden pointer-events-none">
-        {renderBackground()}
-
-        <button
-          onClick={() => setShowSettings((prev) => !prev)}
-          aria-label="Toggle settings"
-          className="absolute top-4 left-4 z-50 w-12 h-12 rounded-xl border border-cyan-300/40 bg-[#02060a]/80 backdrop-blur-md flex items-center justify-center active:scale-95 transition-all hover:border-cyan-200/70 hover:bg-[#07111a]/85 pointer-events-auto"
-        >
-          <svg
-            className={`w-6 h-6 text-cyan-100 ${showSettings ? 'animate-spin' : ''}`}
-            style={{ animationDuration: '0.8s' }}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="12" cy="12" r="3.2" />
-            <path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.9 1.9 0 0 1-2.7 2.7l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 0 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.9 1.9 0 0 1-2.7-2.7l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 0 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0 1.1.2h0a1 1 0 0 0 .6-.9V4a2 2 0 0 1 4 0v.2a1 1 0 0 0 .6.9h0a1 1 0 0 0 1.1-.2l.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0-.2 1.1v0a1 1 0 0 0 .9.6h.2a2 2 0 0 1 0 4h-.2a1 1 0 0 0-.9.6Z" />
-          </svg>
-        </button>
-        
-        <h1 className="text-5xl md:text-6xl font-black uppercase mb-10 tracking-[0.2em] mt-14 relative z-10 shine-text text-center pointer-events-none">
-          THE MAFIA
-        </h1>
-
-        {showSettings && (
-          <div className="w-full max-w-sm mb-8 p-4 rounded-2xl border border-cyan-300/30 bg-[#02060a]/85 backdrop-blur-lg relative z-10 shadow-xl pointer-events-auto">
-            <p className="text-cyan-200 text-[11px] font-black uppercase tracking-[0.2em] mb-4">Game Settings</p>
-
-            <div className="mb-4">
-              <p className="text-slate-300 text-[10px] uppercase tracking-widest mb-2">Mafia Count</p>
-              <div className="grid grid-cols-3 gap-2">
-                {['auto', 1, 2].map((mode) => (
-                  <button
-                    key={String(mode)}
-                    onClick={() => state.setMafiaCount(mode)}
-                    className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${selectedMafiaCount === mode ? 'bg-rose-400/20 text-rose-200 border-rose-300/60' : 'bg-slate-900/70 text-slate-300 border-slate-700/70 hover:border-slate-500'}`}
-                  >
-                    {mode}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-1">
-              <p className="text-slate-300 text-[10px] uppercase tracking-widest mb-2">Sheriff Role</p>
-              <div className="grid grid-cols-3 gap-2">
-                {['auto', 'always', 'off'].map((mode) => (
-                  <button
-                    key={mode}
-                    onClick={() => state.setSheriffMode(mode)}
-                    className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${selectedSheriffMode === mode ? 'bg-violet-400/20 text-violet-200 border-violet-300/60' : 'bg-slate-900/70 text-slate-300 border-slate-700/70 hover:border-slate-500'}`}
-                  >
-                    {mode}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-4 p-3 rounded-xl bg-slate-900/70 border border-slate-700/70">
-              <p className="text-[10px] text-slate-300 uppercase tracking-widest font-bold mb-2">Current Match Setup</p>
-              <div className="text-xs text-slate-200 space-y-1">
-                <p>Mafia: <span className="text-rose-300 font-bold">{resolvedMafiaCount}</span></p>
-                <p>Doctor: <span className="text-emerald-300 font-bold">1</span></p>
-                <p>Detective: <span className="text-sky-300 font-bold">1</span></p>
-                <p>Sheriff: <span className="text-violet-300 font-bold">{hasSheriff ? 1 : 0}</span></p>
-                <p>Civilians: <span className="text-slate-100 font-bold">{civilians}</span></p>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        <div className="w-full mb-10 flex justify-center relative z-10 pointer-events-auto">
-          <div className="poda-wrapper">
-            <div className="poda-glow"></div>
-            <div className="poda-darkBorderBg"></div>
-            <div className="poda-darkBorderBg"></div>
-            <div className="poda-darkBorderBg"></div>
-            <div className="poda-white"></div>
-            <div className="poda-border"></div>
-            <div className="poda-main">
-              <input 
-                placeholder="Add Player..." 
-                type="text" 
-                value={newPlayerName}
-                onChange={(e) => setNewPlayerName(e.target.value)}
-                onKeyDown={(e) => { 
-                  if (e.key === 'Enter' && newPlayerName.trim()) { 
-                    state.addPlayer(newPlayerName.trim()); 
-                    setNewPlayerName(''); 
-                  } 
-                }}
-                className="poda-input" 
-              />
-              <div className="poda-input-mask"></div>
-              <div className="poda-pink-mask"></div>
-              <div className="poda-filterBorder"></div>
-              
-              <div 
-                className="poda-filter-icon" 
-                onClick={() => { 
-                  if(newPlayerName.trim()) { 
-                    state.addPlayer(newPlayerName.trim()); 
-                    setNewPlayerName(''); 
-                  } 
-                }}
-              >
-                <svg preserveAspectRatio="none" height="27" width="27" viewBox="4.8 4.56 14.832 15.408" fill="none">
-                  <path d="M8.16 6.65002H15.83C16.47 6.65002 16.99 7.17002 16.99 7.81002V9.09002C16.99 9.56002 16.7 10.14 16.41 10.43L13.91 12.64C13.56 12.93 13.33 13.51 13.33 13.98V16.48C13.33 16.83 13.1 17.29 12.81 17.47L12 17.98C11.24 18.45 10.2 17.92 10.2 16.99V13.91C10.2 13.5 9.97 12.98 9.73 12.69L7.52 10.36C7.23 10.08 7 9.55002 7 9.20002V7.87002C7 7.17002 7.52 6.65002 8.16 6.65002Z" stroke="#d6d6e6" strokeWidth="1" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"></path>
-                </svg>
-              </div>
-              
-              <div className="poda-search-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" viewBox="0 0 24 24" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" height="24" fill="none">
-                  <circle stroke="url(#search)" r="8" cy="11" cx="11"></circle>
-                  <line stroke="url(#searchl)" y2="16.65" y1="22" x2="16.65" x1="22"></line>
-                  <defs>
-                    <linearGradient gradientTransform="rotate(50)" id="search">
-                      <stop stopColor="#f8e7f8" offset="0%"></stop>
-                      <stop stopColor="#b6a9b7" offset="50%"></stop>
-                    </linearGradient>
-                    <linearGradient id="searchl">
-                      <stop stopColor="#b6a9b7" offset="0%"></stop>
-                      <stop stopColor="#837484" offset="50%"></stop>
-                    </linearGradient>
-                  </defs>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {availableRecentNames.length > 0 && (
-          <div className="w-full mb-6 relative z-10 pointer-events-auto">
-            <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-3 pl-2 text-center drop-shadow-md">Recent Players</p>
-            <div className="flex flex-wrap justify-center gap-2">
-              {availableRecentNames.slice(0, 6).map(name => (
-                <button 
-                  key={name} 
-                  onClick={() => state.addPlayer(name)} 
-                  className="px-4 py-2 bg-[#222] text-[#e81cff] border border-[#e81cff]/30 rounded-full text-xs font-bold tracking-wider active:scale-95 transition-all shadow-md"
-                >
-                  + {name}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="w-full space-y-2 mb-10 max-h-[300px] overflow-y-auto px-2 relative z-10 pointer-events-auto">
-          {state.players.map((p) => (
-            <div key={p.id} className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all">
-              <span className="font-bold tracking-widest text-white">{p.name}</span>
-              <button onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6">✕</button>
-            </div>
-          ))}
-        </div>
-
-        <div className="w-full max-w-sm flex items-center justify-between bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 p-4 rounded-xl mb-10 relative z-10 pointer-events-auto">
-          <span className="font-bold text-[10px] tracking-widest uppercase text-slate-400">Reveal Roles on Death?</span>
-          <button 
-            onClick={state.toggleRevealRoles} 
-            className={`px-4 py-2 rounded text-[10px] uppercase font-black tracking-widest transition-colors ${state.settings?.revealRoles ? 'bg-green-500/20 text-green-500 border border-green-500/50' : 'bg-[#222] text-slate-500 border border-slate-700'}`}
-          >
-            {state.settings?.revealRoles ? 'ON' : 'OFF'}
-          </button>
-        </div>
-
-        <div className="w-full flex justify-center relative z-10 mb-6 pointer-events-auto">
-          <button 
-            disabled={state.players.length < 4}
-            onClick={() => {
-              setTimeout(() => { state.startGame(); }, 250); 
-            }}
-            className="stealth-btn"
-          >
-            <strong className="stealth-strong">BEGIN GAME ({state.players.length})</strong>
-            <div className="stealth-container-stars">
-              <div className="stealth-stars"></div>
-            </div>
-            <div className="stealth-glow">
-              <div className="stealth-circle"></div>
-              <div className="stealth-circle"></div>
-            </div>
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (state.phase === 'role_reveal') {
-    const currentPlayer = state.players[state.revealIndex];
-    const isLastPlayer = state.revealIndex === state.players.length - 1;
-
-    return (
-      <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none">
-        {renderBackground()}
-        {renderBackButton()}
-        <p className="text-slate-300 font-bold uppercase tracking-widest text-[10px] mb-2 relative z-10 pointer-events-none">Pass phone to</p>
-        <h2 className="text-4xl font-black text-white uppercase mb-8 drop-shadow-md relative z-10 pointer-events-none">{currentPlayer.name}</h2>
-        
-        <div 
-          onMouseDown={() => setIsFlipped(true)}
-          onMouseUp={() => { setIsFlipped(false); setCardViewed(true); }}
-          onMouseLeave={() => setIsFlipped(false)}
-          onTouchStart={() => setIsFlipped(true)}
-          onTouchEnd={() => { setIsFlipped(false); setCardViewed(true); }}
-          className="cursor-pointer relative z-10 pointer-events-auto"
-        >
-          <RoleCard isFlipped={isFlipped} role={currentPlayer.role} />
-        </div>
-
-        {!cardViewed && (
-          <p className="mt-12 text-slate-400 font-bold text-sm relative z-10 animate-pulse pointer-events-none">👆 Tap the card to view your role</p>
-        )}
-
-        <button 
-          onClick={() => { setIsFlipped(false); setCardViewed(false); state.nextRoleReveal(); }}
-          disabled={!cardViewed} 
-          className={`mt-12 p-5 w-full max-w-sm rounded-xl font-black uppercase tracking-widest transition-all duration-300 relative z-10 ${!cardViewed ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0 bg-[#0a0a0a]/90 backdrop-blur-md text-white border border-slate-800 active:scale-95 pointer-events-auto'}`}
-        >
-          {isLastPlayer ? 'Give to Moderator' : 'Next Player'}
-        </button>
-      </div>
-    );
-  }
-
-  if (state.phase === 'night_transition') {
-    return (
-      <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none">
-        {renderBackground()}
-        {renderBackButton()}
-        <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none">
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-96 h-96 bg-black/30 rounded-full blur-3xl animate-pulse"></div>
-          </div>
-          <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] relative z-20 animate-in fade-in duration-1000">
-            EVERYONE
-          </h2>
-          <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] relative z-20 mt-4 animate-in fade-in duration-1000 delay-500">
-            CLOSE YOUR EYES
-          </h2>
-          <p className="text-slate-300 mt-8 text-lg tracking-widest font-bold relative z-20 animate-pulse">Get ready for the night...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (state.phase === 'night_mafia') {
-    const disableCondition = (p) => p.role === 'Mafia';
-    return (
-      <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none">
-        {renderBackground()}
-        {renderBackButton()}
-        <h2 className="text-3xl md:text-4xl font-black text-red-500 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
-        <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🌙 Moderator: Ask the Mafia to wake up and point.</p>
-        <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(220,38,38,0.4)] tracking-[0.1em] pointer-events-none">Who does the Mafia kill?</h3>
-        {renderPlayerList((id) => state.submitNightAction('Mafia', id), true, disableCondition)}
-      </div>
-    );
-  }
-
-  if (state.phase === 'night_doctor') {
-    const disableCondition = (p) => p.id === state.doctorLastSaved || (p.role === 'Doctor' && state.doctorHasSelfSaved);
-    return (
-      <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none">
-        {renderBackground()}
-        {renderBackButton()}
-        <h2 className="text-3xl md:text-4xl font-black text-green-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(34,197,94,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
-        <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🌙 Moderator: Ask the Doctor to wake up and point.</p>
-        <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(34,197,94,0.4)] tracking-[0.1em] pointer-events-none">Who does the Doctor save?</h3>
-        {renderPlayerList((id) => state.submitNightAction('Doctor', id), true, disableCondition)}
-      </div>
-    );
-  }
-
-  if (state.phase === 'night_detective') {
-    if (state.investigationResult) {
-      const isDeadRole = state.investigationResult === 'DEAD_ROLE';
-      const isMafia = state.investigationResult === 'MAFIA';
-      return (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center justify-center overflow-hidden pointer-events-none">
-          {renderBackground()}
-          {renderBackButton()}
-          <p className="text-slate-300 uppercase font-bold tracking-widest text-[11px] mb-6 relative z-10 pointer-events-none">
-            {isDeadRole ? "🔍 Moderator: Pretend to give an answer!" : "🔍 Moderator: Nod or shake your head."}
-          </p>
-          <h1 className={`text-6xl md:text-7xl font-black uppercase relative z-10 pointer-events-none ${isDeadRole ? 'text-slate-500 drop-shadow-[0_0_20px_rgba(107,114,128,0.5)]' : isMafia ? 'text-red-600 drop-shadow-[0_0_30px_rgba(220,38,38,0.7)]' : 'text-green-400 drop-shadow-[0_0_30px_rgba(34,197,94,0.7)]'}`}>
-            {isDeadRole ? 'ROLE DEAD' : state.investigationResult}
-          </h1>
-          <button 
-            onClick={state.advanceFromDetective}
-            className="mt-12 p-5 w-full max-w-sm bg-[#0a0a0a]/90 backdrop-blur-md rounded-xl font-black tracking-widest uppercase active:scale-95 relative z-10 border border-slate-700 hover:border-slate-500 transition-colors shadow-lg pointer-events-auto"
-          >
-            Continue →
-          </button>
-        </div>
-      );
-    }
-    return (
-      <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none">
-        {renderBackground()}
-        {renderBackButton()}
-        <h2 className="text-3xl md:text-4xl font-black text-blue-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(96,165,250,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
-        <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🔍 Moderator: Ask the Detective to wake up and point.</p>
-        <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(96,165,250,0.4)] tracking-[0.1em] pointer-events-none">Who is investigated?</h3>
-        {renderPlayerList((id) => state.submitNightAction('Detective', id), false)}
-      </div>
-    );
-  }
-
-  if (state.phase === 'night_sheriff') {
-    return (
-      <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none">
-        {renderBackground()}
-        {renderBackButton()}
-        <h2 className="text-3xl md:text-4xl font-black text-purple-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(168,85,247,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
-        <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">⚔️ Moderator: Ask the Sheriff to wake up and point.</p>
-        <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(168,85,247,0.4)] tracking-[0.1em] pointer-events-none">Who does the Sheriff execute?</h3>
-        {renderPlayerList((id) => state.submitNightAction('Sheriff', id), true)}
-      </div>
-    );
-  }
-
-  if (state.phase === 'day_transition') {
-    return (
-      <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none">
-        {renderBackground()}
-        {renderBackButton()}
-        <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none">
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-96 h-96 bg-yellow-300/20 rounded-full blur-3xl animate-pulse"></div>
-          </div>
-          <h2 className="text-5xl md:text-6xl font-black text-amber-50 uppercase tracking-[0.3em] drop-shadow-[0_0_40px_rgba(255,210,0,0.8)] relative z-20 animate-in fade-in duration-1000">
-            EVERYONE
-          </h2>
-          <h2 className="text-5xl md:text-6xl font-black text-amber-50 uppercase tracking-[0.3em] drop-shadow-[0_0_40px_rgba(255,210,0,0.8)] relative z-20 mt-4 animate-in fade-in duration-1000 delay-500">
-            OPEN YOUR EYES
-          </h2>
-          <p className="text-yellow-100 mt-8 text-lg tracking-widest font-bold relative z-20 animate-pulse">The sun is rising...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (state.phase === 'day_recap' || state.phase === 'day_recap_post_vote') {
-    return (
-      <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center justify-center overflow-hidden pointer-events-none">
-        {renderBackground()}
-        {renderBackButton()}
-        <h2 className="text-4xl md:text-5xl font-black uppercase mb-12 text-white tracking-[0.2em] drop-shadow-[0_0_20px_rgba(255,255,255,0.6)] mt-14 relative z-10 animate-in fade-in duration-1000 pointer-events-none">The Town Awakens</h2>
-        <div className="w-full max-w-2xl space-y-4 relative z-10 pointer-events-none">
-          {state.dayRecap.map((msg, i) => (
-            <div 
-              key={i} 
-              className="p-6 bg-slate-900/50 backdrop-blur-md rounded-xl text-lg font-bold border-l-4 border-amber-400 shadow-xl animate-in fade-in duration-1000 transition-colors pointer-events-auto hover:bg-slate-900/70"
-              style={{ animationDelay: `${i * 200}ms` }}
-            >
-              <span className="text-amber-300">▸ </span>{msg}
-            </div>
-          ))}
-        </div>
-        <button 
-          onClick={state.phase === 'day_recap' ? state.startVoting : state.advanceToNight}
-          className="mt-12 p-5 w-full max-w-sm bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 rounded-xl font-black tracking-widest uppercase active:scale-95 transition-transform shadow-xl relative z-10 hover:shadow-[0_0_30px_rgba(255,193,7,0.5)] pointer-events-auto"
-        >
-          {state.phase === 'day_recap' ? '→ Begin Voting' : '→ Go To Sleep (Next Night)'}
-        </button>
-      </div>
-    );
-  }
-
-  if (state.phase === 'day_voting') {
-    const currentVoter = alivePlayers[state.votingState.currentVoterIndex];
-    return (
-      <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none">
-        {renderBackground()}
-        {renderBackButton()}
-        <h2 className="text-slate-300 font-bold uppercase tracking-widest text-[12px] mt-14 mb-3 relative z-10 drop-shadow-md pointer-events-none">⚖️ Town Voting Phase</h2>
-        <h3 className="text-5xl md:text-6xl font-black text-amber-300 my-4 uppercase relative z-10 drop-shadow-[0_0_20px_rgba(255,193,7,0.5)] pointer-events-none">{currentVoter.name}</h3>
-        <p className="text-lg font-bold text-red-400 tracking-widest uppercase relative z-10 drop-shadow-md pointer-events-none">Who do you exile?</p>
-        
-        <div className="w-full max-w-sm mt-10 space-y-3 max-h-[50vh] overflow-y-auto pr-2 relative z-10 pointer-events-auto">
-          {alivePlayers.filter(p => p.id !== currentVoter.id).map(p => (
+      {/* ─── PHASE OVERLAYS ─── */}
+      {state.phase === 'splash' && (
+        <div className="relative min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden" style={{ backgroundColor: '#e5e5e5' }}>
+          <ImagePreloader />
+          <div className="relative z-10">
             <button 
-              key={p.id} 
-              onClick={() => { setVoteSelected(true); state.submitVote(p.id); }}
-              className="w-full p-4 bg-slate-900/70 backdrop-blur-md text-white border-2 border-slate-700/70 rounded-lg font-bold uppercase active:scale-95 transition-all hover:border-slate-500 hover:bg-slate-900"
+              onClick={() => {
+                setTimeout(() => {
+                  state.enterLobby();
+                }, 1500); 
+              }}
+              className="splash-batman-btn"
             >
-              → Vote {p.name}
+              <span>PLAY GAME</span>
             </button>
-          ))}
-          <button 
-            onClick={() => state.submitVote(null)}
-            disabled={!voteSelected}
-            className={`w-full p-4 border-2 rounded-lg font-bold uppercase mt-6 active:scale-95 transition-all ${
-              !voteSelected 
-                ? 'opacity-40 pointer-events-none border-slate-700/30 bg-transparent text-slate-500' 
-                : 'bg-transparent border-slate-600/50 backdrop-blur-sm text-slate-300 hover:border-slate-400 hover:text-slate-200'
-            }`}
-          >
-            ⊘ Pass / No Vote
-          </button>
+          </div>
         </div>
-        {!voteSelected && (
-          <p className="mt-8 text-slate-400 font-bold text-sm relative z-10 animate-pulse pointer-events-none">👉 Select a vote first, then you can pass</p>
-        )}
-        <p className="mt-10 text-slate-400 font-bold text-[11px] uppercase tracking-wider relative z-10 bg-slate-900/40 px-4 py-2 rounded-full backdrop-blur-md border border-slate-700/50 pointer-events-none">
-          Vote {state.votingState.currentVoterIndex + 1} of {alivePlayers.length}
-        </p>
-      </div>
-    );
-  }
+      )}
 
-  if (state.phase === 'gameover') {
-    const isMafiaWin = state.winner === 'Mafia';
-    return (
-      <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none">
-        {renderBackground()}
-        {renderBackButton()}
-        <div className="relative z-10 flex flex-col items-center pointer-events-none">
-          <h1 className={`text-6xl md:text-7xl font-black uppercase mb-2 mt-14 ${isMafiaWin ? 'text-red-600 drop-shadow-[0_0_40px_rgba(220,38,38,0.8)]' : 'text-blue-400 drop-shadow-[0_0_40px_rgba(96,165,250,0.8)]'}`}>
-            {state.winner} WIN!
+      {state.phase === 'lobby' && (
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 overflow-hidden pointer-events-none">
+          <button
+            onClick={() => setShowSettings((prev) => !prev)}
+            aria-label="Toggle settings"
+            className="absolute top-4 left-4 z-50 w-12 h-12 rounded-xl border border-cyan-300/40 bg-[#02060a]/80 backdrop-blur-md flex items-center justify-center active:scale-95 transition-all hover:border-cyan-200/70 hover:bg-[#07111a]/85 pointer-events-auto"
+          >
+            <svg className={`w-6 h-6 text-cyan-100 ${showSettings ? 'animate-spin' : ''}`} style={{ animationDuration: '0.8s' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3.2" />
+              <path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.9 1.9 0 0 1-2.7 2.7l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 0 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.9 1.9 0 0 1-2.7-2.7l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 0 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0-.2 1.1v0a1 1 0 0 0 .9.6h.2a2 2 0 0 1 0 4h-.2a1 1 0 0 0-.9.6Z" />
+            </svg>
+          </button>
+          
+          <h1 className="text-5xl md:text-6xl font-black uppercase mb-10 tracking-[0.2em] mt-14 relative z-10 shine-text text-center pointer-events-none">
+            THE MAFIA
           </h1>
-          <p className={`text-sm tracking-[0.2em] font-bold ${isMafiaWin ? 'text-red-400' : 'text-blue-300'}`}>
-            {isMafiaWin ? '🔴 THE MAFIA HAS TAKEN OVER THE TOWN' : '✓ THE TOWN HAS ELIMINATED THE THREAT'}
-          </p>
-        </div>
-        
-        <div className="w-full max-w-2xl mt-12 text-left bg-gradient-to-b from-slate-900/60 to-slate-950/60 backdrop-blur-md p-8 rounded-2xl border border-slate-700/50 relative z-10 shadow-2xl pointer-events-auto">
-          <p className="text-slate-300 uppercase text-[11px] tracking-[0.15em] font-bold mb-6 text-center">Final Standings</p>
-          <div className="space-y-3">
-            {state.players.map((p, idx) => (
-              <div key={p.id} className={`flex justify-between items-center py-3 px-4 rounded-lg border transition-all ${p.isAlive ? 'bg-slate-800/50 border-slate-600/50' : 'bg-slate-900/50 border-slate-700/50'}`}>
-                <div className="flex items-center gap-3">
-                  <span className="text-slate-500 font-bold">{idx + 1}.</span>
-                  <span className={`font-bold tracking-wide ${p.isAlive ? 'text-white' : 'text-slate-600 line-through'}`}>{p.name}</span>
+
+          {showSettings && (
+            <div className="w-full max-w-sm mb-8 p-4 rounded-2xl border border-cyan-300/30 bg-[#02060a]/85 backdrop-blur-lg relative z-10 shadow-xl pointer-events-auto">
+              <p className="text-cyan-200 text-[11px] font-black uppercase tracking-[0.2em] mb-4">Game Settings</p>
+              <div className="mb-4">
+                <p className="text-slate-300 text-[10px] uppercase tracking-widest mb-2">Mafia Count</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {['auto', 1, 2].map((mode) => (
+                    <button key={String(mode)} onClick={() => state.setMafiaCount(mode)} className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${selectedMafiaCount === mode ? 'bg-rose-400/20 text-rose-200 border-rose-300/60' : 'bg-slate-900/70 text-slate-300 border-slate-700/70 hover:border-slate-500'}`}>
+                      {mode}
+                    </button>
+                  ))}
                 </div>
-                <span className={`font-black text-xs px-3 py-1 rounded-full tracking-wider ${p.role === 'Mafia' ? 'bg-red-900/40 text-red-400' : p.role === 'Doctor' ? 'bg-green-900/40 text-green-400' : p.role === 'Detective' ? 'bg-blue-900/40 text-blue-400' : p.role === 'Sheriff' ? 'bg-purple-900/40 text-purple-400' : 'bg-slate-800/40 text-slate-400'}`}>{p.role}</span>
+              </div>
+              <div className="mb-1">
+                <p className="text-slate-300 text-[10px] uppercase tracking-widest mb-2">Sheriff Role</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {['auto', 'always', 'off'].map((mode) => (
+                    <button key={mode} onClick={() => state.setSheriffMode(mode)} className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${selectedSheriffMode === mode ? 'bg-violet-400/20 text-violet-200 border-violet-300/60' : 'bg-slate-900/70 text-slate-300 border-slate-700/70 hover:border-slate-500'}`}>
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-4 p-3 rounded-xl bg-slate-900/70 border border-slate-700/70">
+                <p className="text-[10px] text-slate-300 uppercase tracking-widest font-bold mb-2">Current Match Setup</p>
+                <div className="text-xs text-slate-200 space-y-1">
+                  <p>Mafia: <span className="text-rose-300 font-bold">{resolvedMafiaCount}</span></p>
+                  <p>Doctor: <span className="text-emerald-300 font-bold">1</span></p>
+                  <p>Detective: <span className="text-sky-300 font-bold">1</span></p>
+                  <p>Sheriff: <span className="text-violet-300 font-bold">{hasSheriff ? 1 : 0}</span></p>
+                  <p>Civilians: <span className="text-slate-100 font-bold">{civilians}</span></p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className="w-full mb-10 flex justify-center relative z-10 pointer-events-auto">
+            <div className="poda-wrapper">
+              <div className="poda-glow"></div><div className="poda-darkBorderBg"></div><div className="poda-darkBorderBg"></div><div className="poda-darkBorderBg"></div><div className="poda-white"></div><div className="poda-border"></div>
+              <div className="poda-main">
+                <input placeholder="Add Player..." type="text" value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && newPlayerName.trim()) { state.addPlayer(newPlayerName.trim()); setNewPlayerName(''); } }} className="poda-input" />
+                <div className="poda-input-mask"></div><div className="poda-pink-mask"></div><div className="poda-filterBorder"></div>
+                <div className="poda-filter-icon" onClick={() => { if(newPlayerName.trim()) { state.addPlayer(newPlayerName.trim()); setNewPlayerName(''); } }}>
+                  <svg preserveAspectRatio="none" height="27" width="27" viewBox="4.8 4.56 14.832 15.408" fill="none"><path d="M8.16 6.65002H15.83C16.47 6.65002 16.99 7.17002 16.99 7.81002V9.09002C16.99 9.56002 16.7 10.14 16.41 10.43L13.91 12.64C13.56 12.93 13.33 13.51 13.33 13.98V16.48C13.33 16.83 13.1 17.29 12.81 17.47L12 17.98C11.24 18.45 10.2 17.92 10.2 16.99V13.91C10.2 13.5 9.97 12.98 9.73 12.69L7.52 10.36C7.23 10.08 7 9.55002 7 9.20002V7.87002C7 7.17002 7.52 6.65002 8.16 6.65002Z" stroke="#d6d6e6" strokeWidth="1" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+                </div>
+                <div className="poda-search-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" viewBox="0 0 24 24" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" height="24" fill="none"><circle stroke="url(#search)" r="8" cy="11" cx="11"></circle><line stroke="url(#searchl)" y2="16.65" y1="22" x2="16.65" x1="22"></line><defs><linearGradient gradientTransform="rotate(50)" id="search"><stop stopColor="#f8e7f8" offset="0%"></stop><stop stopColor="#b6a9b7" offset="50%"></stop></linearGradient><linearGradient id="searchl"><stop stopColor="#b6a9b7" offset="0%"></stop><stop stopColor="#837484" offset="50%"></stop></linearGradient></defs></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {availableRecentNames.length > 0 && (
+            <div className="w-full mb-6 relative z-10 pointer-events-auto">
+              <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-3 pl-2 text-center drop-shadow-md">Recent Players</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {availableRecentNames.slice(0, 6).map(name => (
+                  <button key={name} onClick={() => state.addPlayer(name)} className="px-4 py-2 bg-[#222] text-[#e81cff] border border-[#e81cff]/30 rounded-full text-xs font-bold tracking-wider active:scale-95 transition-all shadow-md">
+                    + {name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="w-full space-y-2 mb-10 max-h-[300px] overflow-y-auto px-2 relative z-10 pointer-events-auto">
+            {state.players.map((p) => (
+              <div key={p.id} className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all">
+                <span className="font-bold tracking-widest text-white">{p.name}</span>
+                <button onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6">✕</button>
               </div>
             ))}
           </div>
-        </div>
 
-        <div className="w-full flex justify-center mt-14 mb-6 relative z-10 pointer-events-auto">
-          <button 
-            onClick={() => {
-              setTimeout(() => { state.playAgain(); }, 1500); 
-            }}
-            className="splash-batman-btn"
+          <div className="w-full max-w-sm flex items-center justify-between bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 p-4 rounded-xl mb-10 relative z-10 pointer-events-auto">
+            <span className="font-bold text-[10px] tracking-widest uppercase text-slate-400">Reveal Roles on Death?</span>
+            <button onClick={state.toggleRevealRoles} className={`px-4 py-2 rounded text-[10px] uppercase font-black tracking-widest transition-colors ${state.settings?.revealRoles ? 'bg-green-500/20 text-green-500 border border-green-500/50' : 'bg-[#222] text-slate-500 border border-slate-700'}`}>
+              {state.settings?.revealRoles ? 'ON' : 'OFF'}
+            </button>
+          </div>
+
+          <div className="w-full flex justify-center relative z-10 mb-6 pointer-events-auto">
+            <button disabled={state.players.length < 4} onClick={() => { setTimeout(() => { state.startGame(); }, 250); }} className="stealth-btn">
+              <strong className="stealth-strong">BEGIN GAME ({state.players.length})</strong>
+              <div className="stealth-container-stars"><div className="stealth-stars"></div></div>
+              <div className="stealth-glow"><div className="stealth-circle"></div><div className="stealth-circle"></div></div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {state.phase === 'role_reveal' && (
+        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none">
+          {renderBackButton()}
+          <p className="text-slate-300 font-bold uppercase tracking-widest text-[10px] mb-2 relative z-10 pointer-events-none">Pass phone to</p>
+          <h2 className="text-4xl font-black text-white uppercase mb-8 drop-shadow-md relative z-10 pointer-events-none">{state.players[state.revealIndex]?.name}</h2>
+          
+          <div 
+            onMouseDown={() => setIsFlipped(true)}
+            onMouseUp={() => { setIsFlipped(false); setCardViewed(true); }}
+            onMouseLeave={() => setIsFlipped(false)}
+            onTouchStart={() => setIsFlipped(true)}
+            onTouchEnd={() => { setIsFlipped(false); setCardViewed(true); }}
+            className="cursor-pointer relative z-10 pointer-events-auto"
           >
-            <span>PLAY AGAIN</span>
+            <RoleCard isFlipped={isFlipped} role={state.players[state.revealIndex]?.role} />
+          </div>
+
+          {!cardViewed && <p className="mt-12 text-slate-400 font-bold text-sm relative z-10 animate-pulse pointer-events-none">👆 Tap the card to view your role</p>}
+
+          <button onClick={() => { setIsFlipped(false); setCardViewed(false); state.nextRoleReveal(); }} disabled={!cardViewed} className={`mt-12 p-5 w-full max-w-sm rounded-xl font-black uppercase tracking-widest transition-all duration-300 relative z-10 ${!cardViewed ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0 bg-[#0a0a0a]/90 backdrop-blur-md text-white border border-slate-800 active:scale-95 pointer-events-auto'}`}>
+            {state.revealIndex === state.players.length - 1 ? 'Give to Moderator' : 'Next Player'}
           </button>
         </div>
-      </div>
-    );
-  }
+      )}
 
-  return null;
+      {state.phase === 'night_transition' && (
+        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none">
+          {renderBackButton()}
+          <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-96 h-96 bg-black/30 rounded-full blur-3xl animate-pulse"></div>
+            </div>
+            <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] relative z-20 animate-in fade-in duration-1000">EVERYONE</h2>
+            <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] relative z-20 mt-4 animate-in fade-in duration-1000 delay-500">CLOSE YOUR EYES</h2>
+            <p className="text-slate-300 mt-8 text-lg tracking-widest font-bold relative z-20 animate-pulse">Get ready for the night...</p>
+          </div>
+        </div>
+      )}
+
+      {state.phase === 'night_mafia' && (
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none">
+          {renderBackButton()}
+          <h2 className="text-3xl md:text-4xl font-black text-red-500 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
+          <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🌙 Moderator: Ask the Mafia to wake up and point.</p>
+          <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(220,38,38,0.4)] tracking-[0.1em] pointer-events-none">Who does the Mafia kill?</h3>
+          {renderPlayerList((id) => state.submitNightAction('Mafia', id), true, (p) => p.role === 'Mafia')}
+        </div>
+      )}
+
+      {state.phase === 'night_doctor' && (
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none">
+          {renderBackButton()}
+          <h2 className="text-3xl md:text-4xl font-black text-green-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(34,197,94,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
+          <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🌙 Moderator: Ask the Doctor to wake up and point.</p>
+          <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(34,197,94,0.4)] tracking-[0.1em] pointer-events-none">Who does the Doctor save?</h3>
+          {renderPlayerList((id) => state.submitNightAction('Doctor', id), true, (p) => p.id === state.doctorLastSaved || (p.role === 'Doctor' && state.doctorHasSelfSaved))}
+        </div>
+      )}
+
+      {state.phase === 'night_detective' && (
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center justify-center overflow-hidden pointer-events-none">
+          {renderBackButton()}
+          {state.investigationResult ? (
+            <>
+              <p className="text-slate-300 uppercase font-bold tracking-widest text-[11px] mb-6 relative z-10 pointer-events-none">
+                {state.investigationResult === 'DEAD_ROLE' ? "🔍 Moderator: Pretend to give an answer!" : "🔍 Moderator: Nod or shake your head."}
+              </p>
+              <h1 className={`text-6xl md:text-7xl font-black uppercase relative z-10 pointer-events-none ${state.investigationResult === 'DEAD_ROLE' ? 'text-slate-500 drop-shadow-[0_0_20px_rgba(107,114,128,0.5)]' : state.investigationResult === 'MAFIA' ? 'text-red-600 drop-shadow-[0_0_30px_rgba(220,38,38,0.7)]' : 'text-green-400 drop-shadow-[0_0_30px_rgba(34,197,94,0.7)]'}`}>
+                {state.investigationResult === 'DEAD_ROLE' ? 'ROLE DEAD' : state.investigationResult}
+              </h1>
+              <button onClick={state.advanceFromDetective} className="mt-12 p-5 w-full max-w-sm bg-[#0a0a0a]/90 backdrop-blur-md rounded-xl font-black tracking-widest uppercase active:scale-95 relative z-10 border border-slate-700 hover:border-slate-500 transition-colors shadow-lg pointer-events-auto">
+                Continue →
+              </button>
+            </>
+          ) : (
+            <>
+              <h2 className="text-3xl md:text-4xl font-black text-blue-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(96,165,250,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
+              <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🔍 Moderator: Ask the Detective to wake up and point.</p>
+              <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(96,165,250,0.4)] tracking-[0.1em] pointer-events-none">Who is investigated?</h3>
+              {renderPlayerList((id) => state.submitNightAction('Detective', id), false)}
+            </>
+          )}
+        </div>
+      )}
+
+      {state.phase === 'night_sheriff' && (
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none">
+          {renderBackButton()}
+          <h2 className="text-3xl md:text-4xl font-black text-purple-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(168,85,247,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
+          <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">⚔️ Moderator: Ask the Sheriff to wake up and point.</p>
+          <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(168,85,247,0.4)] tracking-[0.1em] pointer-events-none">Who does the Sheriff execute?</h3>
+          {renderPlayerList((id) => state.submitNightAction('Sheriff', id), true)}
+        </div>
+      )}
+
+      {state.phase === 'day_transition' && (
+        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none">
+          {renderBackButton()}
+          <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-96 h-96 bg-yellow-300/20 rounded-full blur-3xl animate-pulse"></div>
+            </div>
+            <h2 className="text-5xl md:text-6xl font-black text-amber-50 uppercase tracking-[0.3em] drop-shadow-[0_0_40px_rgba(255,210,0,0.8)] relative z-20 animate-in fade-in duration-1000">EVERYONE</h2>
+            <h2 className="text-5xl md:text-6xl font-black text-amber-50 uppercase tracking-[0.3em] drop-shadow-[0_0_40px_rgba(255,210,0,0.8)] relative z-20 mt-4 animate-in fade-in duration-1000 delay-500">OPEN YOUR EYES</h2>
+            <p className="text-yellow-100 mt-8 text-lg tracking-widest font-bold relative z-20 animate-pulse">The sun is rising...</p>
+          </div>
+        </div>
+      )}
+
+      {(state.phase === 'day_recap' || state.phase === 'day_recap_post_vote') && (
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center justify-center overflow-hidden pointer-events-none">
+          {renderBackButton()}
+          <h2 className="text-4xl md:text-5xl font-black uppercase mb-12 text-white tracking-[0.2em] drop-shadow-[0_0_20px_rgba(255,255,255,0.6)] mt-14 relative z-10 animate-in fade-in duration-1000 pointer-events-none">The Town Awakens</h2>
+          <div className="w-full max-w-2xl space-y-4 relative z-10 pointer-events-none">
+            {state.dayRecap.map((msg, i) => (
+              <div key={i} className="p-6 bg-slate-900/50 backdrop-blur-md rounded-xl text-lg font-bold border-l-4 border-amber-400 shadow-xl animate-in fade-in duration-1000 transition-colors pointer-events-auto hover:bg-slate-900/70" style={{ animationDelay: `${i * 200}ms` }}>
+                <span className="text-amber-300">▸ </span>{msg}
+              </div>
+            ))}
+          </div>
+          <button onClick={state.phase === 'day_recap' ? state.startVoting : state.advanceToNight} className="mt-12 p-5 w-full max-w-sm bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 rounded-xl font-black tracking-widest uppercase active:scale-95 transition-transform shadow-xl relative z-10 hover:shadow-[0_0_30px_rgba(255,193,7,0.5)] pointer-events-auto">
+            {state.phase === 'day_recap' ? '→ Begin Voting' : '→ Go To Sleep (Next Night)'}
+          </button>
+        </div>
+      )}
+
+      {state.phase === 'day_voting' && (
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none">
+          {renderBackButton()}
+          <h2 className="text-slate-300 font-bold uppercase tracking-widest text-[12px] mt-14 mb-3 relative z-10 drop-shadow-md pointer-events-none">⚖️ Town Voting Phase</h2>
+          <h3 className="text-5xl md:text-6xl font-black text-amber-300 my-4 uppercase relative z-10 drop-shadow-[0_0_20px_rgba(255,193,7,0.5)] pointer-events-none">{alivePlayers[state.votingState.currentVoterIndex]?.name}</h3>
+          <p className="text-lg font-bold text-red-400 tracking-widest uppercase relative z-10 drop-shadow-md pointer-events-none">Who do you exile?</p>
+          
+          <div className="w-full max-w-sm mt-10 space-y-3 max-h-[50vh] overflow-y-auto pr-2 relative z-10 pointer-events-auto">
+            {alivePlayers.filter(p => p.id !== alivePlayers[state.votingState.currentVoterIndex]?.id).map(p => (
+              <button key={p.id} onClick={() => { setVoteSelected(true); state.submitVote(p.id); }} className="w-full p-4 bg-slate-900/70 backdrop-blur-md text-white border-2 border-slate-700/70 rounded-lg font-bold uppercase active:scale-95 transition-all hover:border-slate-500 hover:bg-slate-900">
+                → Vote {p.name}
+              </button>
+            ))}
+            <button onClick={() => state.submitVote(null)} disabled={!voteSelected} className={`w-full p-4 border-2 rounded-lg font-bold uppercase mt-6 active:scale-95 transition-all ${!voteSelected ? 'opacity-40 pointer-events-none border-slate-700/30 bg-transparent text-slate-500' : 'bg-transparent border-slate-600/50 backdrop-blur-sm text-slate-300 hover:border-slate-400 hover:text-slate-200'}`}>
+              ⊘ Pass / No Vote
+            </button>
+          </div>
+          {!voteSelected && <p className="mt-8 text-slate-400 font-bold text-sm relative z-10 animate-pulse pointer-events-none">👉 Select a vote first, then you can pass</p>}
+          <p className="mt-10 text-slate-400 font-bold text-[11px] uppercase tracking-wider relative z-10 bg-slate-900/40 px-4 py-2 rounded-full backdrop-blur-md border border-slate-700/50 pointer-events-none">
+            Vote {state.votingState.currentVoterIndex + 1} of {alivePlayers.length}
+          </p>
+        </div>
+      )}
+
+      {state.phase === 'gameover' && (
+        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none">
+          {renderBackButton()}
+          <div className="relative z-10 flex flex-col items-center pointer-events-none">
+            <h1 className={`text-6xl md:text-7xl font-black uppercase mb-2 mt-14 ${state.winner === 'Mafia' ? 'text-red-600 drop-shadow-[0_0_40px_rgba(220,38,38,0.8)]' : 'text-blue-400 drop-shadow-[0_0_40px_rgba(96,165,250,0.8)]'}`}>
+              {state.winner} WIN!
+            </h1>
+            <p className={`text-sm tracking-[0.2em] font-bold ${state.winner === 'Mafia' ? 'text-red-400' : 'text-blue-300'}`}>
+              {state.winner === 'Mafia' ? '🔴 THE MAFIA HAS TAKEN OVER THE TOWN' : '✓ THE TOWN HAS ELIMINATED THE THREAT'}
+            </p>
+          </div>
+          
+          <div className="w-full max-w-2xl mt-12 text-left bg-gradient-to-b from-slate-900/60 to-slate-950/60 backdrop-blur-md p-8 rounded-2xl border border-slate-700/50 relative z-10 shadow-2xl pointer-events-auto">
+            <p className="text-slate-300 uppercase text-[11px] tracking-[0.15em] font-bold mb-6 text-center">Final Standings</p>
+            <div className="space-y-3">
+              {state.players.map((p, idx) => (
+                <div key={p.id} className={`flex justify-between items-center py-3 px-4 rounded-lg border transition-all ${p.isAlive ? 'bg-slate-800/50 border-slate-600/50' : 'bg-slate-900/50 border-slate-700/50'}`}>
+                  <div className="flex items-center gap-3">
+                    <span className="text-slate-500 font-bold">{idx + 1}.</span>
+                    <span className={`font-bold tracking-wide ${p.isAlive ? 'text-white' : 'text-slate-600 line-through'}`}>{p.name}</span>
+                  </div>
+                  <span className={`font-black text-xs px-3 py-1 rounded-full tracking-wider ${p.role === 'Mafia' ? 'bg-red-900/40 text-red-400' : p.role === 'Doctor' ? 'bg-green-900/40 text-green-400' : p.role === 'Detective' ? 'bg-blue-900/40 text-blue-400' : p.role === 'Sheriff' ? 'bg-purple-900/40 text-purple-400' : 'bg-slate-800/40 text-slate-400'}`}>{p.role}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="w-full flex justify-center mt-14 mb-6 relative z-10 pointer-events-auto">
+            <button onClick={() => { setTimeout(() => { state.playAgain(); }, 1500); }} className="splash-batman-btn">
+              <span>PLAY AGAIN</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
