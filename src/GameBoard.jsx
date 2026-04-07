@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useGameStore } from './store';
 import Galaxy from './Galaxy';
+import { motion, useInView } from 'motion/react';
 
 // ─── CONSTANTS ───────────────────────────────────────
 const TRANSITION_MS = 5000;
@@ -14,38 +15,21 @@ const tapSafeStyle = {
   outline: 'none' 
 };
 
-// ─── NATIVE ANIMATED SCROLL ITEM (ZERO DEPENDENCIES) ─
+// ─── ANIMATED SCROLL ITEM (FRAMER MOTION) ────────────
 const AnimatedItem = ({ children, delay = 0, index }) => {
   const ref = useRef(null);
-  const [inView, setInView] = useState(false);
-
-  useEffect(() => {
-    // Triggers when 20% of the item enters the view
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setInView(entry.isIntersecting);
-      },
-      { threshold: 0.2 } 
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => {
-      if (ref.current) observer.unobserve(ref.current);
-    };
-  }, []);
-
+  const inView = useInView(ref, { amount: 0.2, triggerOnce: false });
   return (
-    <div
+    <motion.div
       ref={ref}
       data-index={index}
-      style={{ 
-        width: '100%',
-        transition: `transform 0.2s ease-out ${delay}s, opacity 0.2s ease-out ${delay}s`,
-        transform: inView ? 'scale(1)' : 'scale(0.7)',
-        opacity: inView ? 1 : 0
-      }}
+      initial={{ scale: 0.7, opacity: 0 }}
+      animate={inView ? { scale: 1, opacity: 1 } : { scale: 0.7, opacity: 0 }}
+      transition={{ duration: 0.2, delay }}
+      style={{ width: '100%' }}
     >
       {children}
-    </div>
+    </motion.div>
   );
 };
 
@@ -199,7 +183,6 @@ export default function GameBoard() {
   const [newPlayerName, setNewPlayerName] = useState('');
   const [isFlipped, setIsFlipped] = useState(false);
   const [cardViewed, setCardViewed] = useState(false);
-  const [voteSelected, setVoteSelected] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
   const alivePlayers = state.players.filter(p => p.isAlive);
@@ -221,7 +204,7 @@ export default function GameBoard() {
     return () => clearTimeout(timer);
   }, [state.phase]);
 
-  useEffect(() => { setCardViewed(false); setVoteSelected(false); }, [state.phase]);
+  useEffect(() => { setCardViewed(false); }, [state.phase]);
 
   const isGalaxyPhase = state.phase === 'lobby' || state.phase === 'role_reveal';
   const isSpookyPhase = state.phase !== 'splash' && state.phase !== 'lobby' && state.phase !== 'role_reveal';
@@ -238,8 +221,10 @@ export default function GameBoard() {
     );
   };
 
-  const renderPlayerList = (onSelect, includeSkip = false, hideRole = null) => {
-    const visiblePlayers = hideRole ? alivePlayers.filter(p => p.role !== hideRole) : alivePlayers;
+  // ARCHITECT FIX: Advanced filter logic to strictly enforce Doctor and active player rules.
+  const renderPlayerList = (onSelect, includeSkip = false, excludeCondition = null) => {
+    const visiblePlayers = excludeCondition ? alivePlayers.filter(p => !excludeCondition(p)) : alivePlayers;
+
     return (
       <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={tapSafeStyle}>
         <div 
@@ -273,6 +258,14 @@ export default function GameBoard() {
 
   return (
     <>
+      <style>{`
+        * { -webkit-tap-highlight-color: transparent !important; outline: none !important; }
+        body { background-color: #050505 !important; -webkit-touch-callout: none; user-select: none; }
+        input { user-select: auto; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+      
       {/* ─── PERMANENT BACKGROUND MOUNTS (ZERO FLICKER) ─── */}
       <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out" style={{ backgroundColor: '#e5e5e5', opacity: state.phase === 'splash' ? 1 : 0, zIndex: state.phase === 'splash' ? 0 : -100, visibility: state.phase === 'splash' ? 'visible' : 'hidden' }} />
       <div className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out" style={{ opacity: isGalaxyPhase ? 1 : 0, zIndex: isGalaxyPhase ? 0 : -50, visibility: isGalaxyPhase ? 'visible' : 'hidden' }}>
@@ -407,7 +400,6 @@ export default function GameBoard() {
             <RoleCard isFlipped={isFlipped} role={state.players[state.revealIndex]?.role} />
           </div>
 
-          {/* ARCHITECT FIX: Fading the text instead of removing it prevents the layout jump! */}
           <div className="relative w-full max-w-sm flex justify-center mt-12 z-10 pointer-events-none">
             <p className={`absolute text-slate-400 font-bold text-sm transition-opacity duration-500 pointer-events-none ${cardViewed ? 'opacity-0' : 'opacity-100 animate-pulse'}`}>
               👆 Tap the card to view your role
@@ -444,7 +436,7 @@ export default function GameBoard() {
           <h2 className="text-3xl md:text-4xl font-black text-red-500 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
           <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🌙 Moderator: Ask the Mafia to wake up and point.</p>
           <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(220,38,38,0.4)] tracking-[0.1em] pointer-events-none">Who does the Mafia kill?</h3>
-          {renderPlayerList((id) => state.submitNightAction('Mafia', id), true, 'Mafia')}
+          {renderPlayerList((id) => state.submitNightAction('Mafia', id), true, (p) => p.role === 'Mafia')}
         </div>
       )}
 
@@ -454,12 +446,11 @@ export default function GameBoard() {
           <h2 className="text-3xl md:text-4xl font-black text-green-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(34,197,94,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
           <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🌙 Moderator: Ask the Doctor to wake up and point.</p>
           <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(34,197,94,0.4)] tracking-[0.1em] pointer-events-none">Who does the Doctor save?</h3>
-          {renderPlayerList((id) => state.submitNightAction('Doctor', id), true, 'Doctor')}
+          {renderPlayerList((id) => state.submitNightAction('Doctor', id), true, (p) => p.id === state.doctorLastSaved || (p.role === 'Doctor' && state.doctorHasSelfSaved))}
         </div>
       )}
 
       {state.phase === 'night_detective' && (
-        // ARCHITECT FIX: justify-center is only applied when investigationResult is shown, so the prompt aligns perfectly with Mafia/Doctor
         <div className={`relative h-[100dvh] w-full text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none ${state.investigationResult ? 'justify-center' : ''}`} style={tapSafeStyle}>
           {renderBackButton()}
           {state.investigationResult ? (
@@ -473,7 +464,7 @@ export default function GameBoard() {
               <h2 className="text-3xl md:text-4xl font-black text-blue-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(96,165,250,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
               <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🔍 Moderator: Ask the Detective to wake up and point.</p>
               <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(96,165,250,0.4)] tracking-[0.1em] pointer-events-none">Who is investigated?</h3>
-              {renderPlayerList((id) => state.submitNightAction('Detective', id), false, 'Detective')}
+              {renderPlayerList((id) => state.submitNightAction('Detective', id), false, (p) => p.role === 'Detective')}
             </>
           )}
         </div>
@@ -485,7 +476,7 @@ export default function GameBoard() {
           <h2 className="text-3xl md:text-4xl font-black text-purple-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(168,85,247,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
           <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">⚔️ Moderator: Ask the Sheriff to wake up and point.</p>
           <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(168,85,247,0.4)] tracking-[0.1em] pointer-events-none">Who does the Sheriff execute?</h3>
-          {renderPlayerList((id) => state.submitNightAction('Sheriff', id), true, 'Sheriff')}
+          {renderPlayerList((id) => state.submitNightAction('Sheriff', id), true, (p) => p.role === 'Sheriff')}
         </div>
       )}
 
@@ -522,7 +513,6 @@ export default function GameBoard() {
           <h3 className="text-5xl md:text-6xl font-black text-amber-300 my-4 uppercase relative z-10 drop-shadow-[0_0_20px_rgba(255,193,7,0.5)] pointer-events-none">{alivePlayers[state.votingState.currentVoterIndex]?.name}</h3>
           <p className="text-lg font-bold text-red-400 tracking-widest uppercase relative z-10 drop-shadow-md pointer-events-none">Who do you exile?</p>
           
-          {/* ─── DAY VOTING LIST (4 ITEMS + BLUR MASK) ─── */}
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-6 mb-6" style={tapSafeStyle}>
             <div 
               className="w-full space-y-3 max-h-[280px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
@@ -530,15 +520,15 @@ export default function GameBoard() {
             >
               {alivePlayers.filter(p => p.id !== alivePlayers[state.votingState.currentVoterIndex]?.id).map((p, index) => (
                 <AnimatedItem key={p.id} index={index} delay={0.05}>
-                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => { setVoteSelected(true); state.submitVote(p.id); }} className="w-full p-4 bg-slate-900/70 backdrop-blur-md text-white border-2 border-slate-700/70 rounded-lg font-bold uppercase active:scale-95 transition-all hover:border-slate-500 hover:bg-slate-900" style={tapSafeStyle}>→ Vote {p.name}</button>
+                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.submitVote(p.id)} className="w-full p-4 bg-slate-900/70 backdrop-blur-md text-white border-2 border-slate-700/70 rounded-lg font-bold uppercase active:scale-95 transition-all hover:border-slate-500 hover:bg-slate-900" style={tapSafeStyle}>→ Vote {p.name}</button>
                 </AnimatedItem>
               ))}
+              {/* ARCHITECT FIX: Unlocked Pass / Skip button so Player 1 can immediately skip */}
               <AnimatedItem index={999} delay={0.05}>
-                <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.submitVote(null)} disabled={!voteSelected} className={`w-full p-4 border-2 rounded-lg font-bold uppercase mt-2 active:scale-95 transition-all ${!voteSelected ? 'opacity-40 pointer-events-none border-slate-700/30 bg-transparent text-slate-500' : 'bg-transparent border-slate-600/50 backdrop-blur-sm text-slate-300 hover:border-slate-400 hover:text-slate-200'}`} style={tapSafeStyle}>⊘ Pass / No Vote</button>
+                <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.submitVote(null)} className="w-full p-4 border-2 rounded-lg font-bold uppercase mt-2 active:scale-95 transition-all bg-transparent border-slate-600/50 backdrop-blur-sm text-slate-300 hover:border-slate-400 hover:text-slate-200" style={tapSafeStyle}>⊘ Pass / No Vote</button>
               </AnimatedItem>
             </div>
           </div>
-          {!voteSelected && <p className="mt-8 text-slate-400 font-bold text-sm relative z-10 animate-pulse pointer-events-none">👉 Select a vote first, then you can pass</p>}
           <p className="mt-10 text-slate-400 font-bold text-[11px] uppercase tracking-wider relative z-10 bg-slate-900/40 px-4 py-2 rounded-full backdrop-blur-md border border-slate-700/50 pointer-events-none">Vote {state.votingState.currentVoterIndex + 1} of {alivePlayers.length}</p>
         </div>
       )}
