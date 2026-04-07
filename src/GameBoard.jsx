@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from './store';
 import Galaxy from './Galaxy';
-import { motion, useInView } from 'motion/react';
 
 // ─── CONSTANTS ───────────────────────────────────────
 const TRANSITION_MS = 5000;
@@ -15,21 +14,38 @@ const tapSafeStyle = {
   outline: 'none' 
 };
 
-// ─── ANIMATED SCROLL ITEM (FRAMER MOTION) ────────────
+// ─── NATIVE ANIMATED SCROLL ITEM (ZERO DEPENDENCIES) ─
 const AnimatedItem = ({ children, delay = 0, index }) => {
   const ref = useRef(null);
-  const inView = useInView(ref, { amount: 0.2, triggerOnce: false });
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    // Triggers scale/fade when 20% of the item enters the view
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setInView(entry.isIntersecting);
+      },
+      { threshold: 0.2 } 
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => {
+      if (ref.current) observer.unobserve(ref.current);
+    };
+  }, []);
+
   return (
-    <motion.div
+    <div
       ref={ref}
       data-index={index}
-      initial={{ scale: 0.7, opacity: 0 }}
-      animate={inView ? { scale: 1, opacity: 1 } : { scale: 0.7, opacity: 0 }}
-      transition={{ duration: 0.2, delay }}
-      style={{ width: '100%' }}
+      style={{ 
+        width: '100%',
+        transition: `transform 0.25s ease-out ${delay}s, opacity 0.25s ease-out ${delay}s`,
+        transform: inView ? 'scale(1)' : 'scale(0.8)',
+        opacity: inView ? 1 : 0
+      }}
     >
       {children}
-    </motion.div>
+    </div>
   );
 };
 
@@ -221,10 +237,10 @@ export default function GameBoard() {
     );
   };
 
-  // ARCHITECT FIX: Advanced filter logic to strictly enforce Doctor and active player rules.
-  const renderPlayerList = (onSelect, includeSkip = false, excludeCondition = null) => {
-    const visiblePlayers = excludeCondition ? alivePlayers.filter(p => !excludeCondition(p)) : alivePlayers;
-
+  // ARCHITECT FIX: Added strict hideCondition logic to permanently erase names from the list.
+  const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
+    const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
+    
     return (
       <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={tapSafeStyle}>
         <div 
@@ -259,8 +275,16 @@ export default function GameBoard() {
   return (
     <>
       <style>{`
+        /* PERMANENT FIX: Root level reset to kill tap highlights and stop whole-page scrolling */
+        html, body, #root { 
+          width: 100vw; height: 100vh; height: 100dvh; 
+          overflow: hidden; position: fixed; overscroll-behavior: none; 
+          background-color: #050505 !important; user-select: none; 
+          margin: 0; padding: 0; 
+          -webkit-tap-highlight-color: transparent !important; 
+          -webkit-touch-callout: none !important; 
+        }
         * { -webkit-tap-highlight-color: transparent !important; outline: none !important; }
-        body { background-color: #050505 !important; -webkit-touch-callout: none; user-select: none; }
         input { user-select: auto; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -400,15 +424,16 @@ export default function GameBoard() {
             <RoleCard isFlipped={isFlipped} role={state.players[state.revealIndex]?.role} />
           </div>
 
-          <div className="relative w-full max-w-sm flex justify-center mt-12 z-10 pointer-events-none">
-            <p className={`absolute text-slate-400 font-bold text-sm transition-opacity duration-500 pointer-events-none ${cardViewed ? 'opacity-0' : 'opacity-100 animate-pulse'}`}>
+          {/* ARCHITECT FIX: Fading the text instead of removing it prevents the layout jump! */}
+          <div className="relative w-full max-w-sm flex justify-center mt-12 z-10 pointer-events-none h-[80px]">
+            <p className={`absolute top-0 text-slate-400 font-bold text-sm transition-opacity duration-500 pointer-events-none ${cardViewed ? 'opacity-0' : 'opacity-100 animate-pulse'}`}>
               👆 Tap the card to view your role
             </p>
             <button 
               onPointerDown={(e) => e.stopPropagation()} 
               onClick={() => { setIsFlipped(false); setCardViewed(false); state.nextRoleReveal(); }} 
               disabled={!cardViewed} 
-              className={`p-5 w-full rounded-xl font-black uppercase tracking-widest transition-all duration-500 pointer-events-auto ${!cardViewed ? 'opacity-0 translate-y-4 scale-95' : 'opacity-100 translate-y-0 scale-100 bg-[#0a0a0a]/90 backdrop-blur-md text-white border border-slate-800 hover:border-slate-500 active:scale-95'}`} 
+              className={`absolute top-0 p-5 w-full rounded-xl font-black uppercase tracking-widest transition-all duration-500 pointer-events-auto ${!cardViewed ? 'opacity-0 translate-y-4 scale-95 pointer-events-none' : 'opacity-100 translate-y-0 scale-100 bg-[#0a0a0a]/90 backdrop-blur-md text-white border border-slate-800 hover:border-slate-500 active:scale-95'}`} 
               style={tapSafeStyle}
             >
               {state.revealIndex === state.players.length - 1 ? 'Give to Moderator' : 'Next Player'}
@@ -451,13 +476,19 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'night_detective' && (
-        <div className={`relative h-[100dvh] w-full text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none ${state.investigationResult ? 'justify-center' : ''}`} style={tapSafeStyle}>
+        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           {state.investigationResult ? (
             <>
-              <p className="text-slate-300 uppercase font-bold tracking-widest text-[11px] mb-6 relative z-10 pointer-events-none">{state.investigationResult === 'DEAD_ROLE' ? "🔍 Moderator: Pretend to give an answer!" : "🔍 Moderator: Nod or shake your head."}</p>
-              <h1 className={`text-6xl md:text-7xl font-black uppercase relative z-10 pointer-events-none ${state.investigationResult === 'DEAD_ROLE' ? 'text-slate-500 drop-shadow-[0_0_20px_rgba(107,114,128,0.5)]' : state.investigationResult === 'MAFIA' ? 'text-red-600 drop-shadow-[0_0_30px_rgba(220,38,38,0.7)]' : 'text-green-400 drop-shadow-[0_0_30px_rgba(34,197,94,0.7)]'}`}>{state.investigationResult === 'DEAD_ROLE' ? 'ROLE DEAD' : state.investigationResult}</h1>
-              <button onPointerDown={(e) => e.stopPropagation()} onClick={state.advanceFromDetective} className="mt-12 p-5 w-full max-w-sm bg-[#0a0a0a]/90 backdrop-blur-md rounded-xl font-black tracking-widest uppercase active:scale-95 relative z-10 border border-slate-700 hover:border-slate-500 transition-colors shadow-lg pointer-events-auto" style={tapSafeStyle}>Continue →</button>
+              {/* ARCHITECT FIX: Detective alignment perfectly matches other screens now */}
+              <h2 className="text-3xl md:text-4xl font-black text-blue-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(96,165,250,0.6)] tracking-[0.15em] pointer-events-none">Investigation</h2>
+              <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">{state.investigationResult === 'DEAD_ROLE' ? "🔍 Moderator: Pretend to give an answer!" : "🔍 Moderator: Nod or shake your head."}</p>
+              <h3 className={`text-5xl md:text-6xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(96,165,250,0.4)] tracking-[0.1em] pointer-events-none ${state.investigationResult === 'DEAD_ROLE' ? 'text-slate-500 drop-shadow-[0_0_20px_rgba(107,114,128,0.5)]' : state.investigationResult === 'MAFIA' ? 'text-red-600 drop-shadow-[0_0_30px_rgba(220,38,38,0.7)]' : 'text-green-400 drop-shadow-[0_0_30px_rgba(34,197,94,0.7)]'}`}>
+                {state.investigationResult === 'DEAD_ROLE' ? 'ROLE DEAD' : state.investigationResult}
+              </h3>
+              <div className="relative w-full max-w-sm flex justify-center mt-12 z-10 pointer-events-none">
+                <button onPointerDown={(e) => e.stopPropagation()} onClick={state.advanceFromDetective} className="p-5 w-full rounded-xl font-black tracking-widest uppercase active:scale-95 bg-[#0a0a0a]/90 backdrop-blur-md border border-slate-700 hover:border-slate-500 transition-colors shadow-lg pointer-events-auto" style={tapSafeStyle}>Continue →</button>
+              </div>
             </>
           ) : (
             <>
@@ -523,7 +554,7 @@ export default function GameBoard() {
                   <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.submitVote(p.id)} className="w-full p-4 bg-slate-900/70 backdrop-blur-md text-white border-2 border-slate-700/70 rounded-lg font-bold uppercase active:scale-95 transition-all hover:border-slate-500 hover:bg-slate-900" style={tapSafeStyle}>→ Vote {p.name}</button>
                 </AnimatedItem>
               ))}
-              {/* ARCHITECT FIX: Unlocked Pass / Skip button so Player 1 can immediately skip */}
+              {/* ARCHITECT FIX: Voting skip completely unlocked for everyone, including Player 1 */}
               <AnimatedItem index={999} delay={0.05}>
                 <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.submitVote(null)} className="w-full p-4 border-2 rounded-lg font-bold uppercase mt-2 active:scale-95 transition-all bg-transparent border-slate-600/50 backdrop-blur-sm text-slate-300 hover:border-slate-400 hover:text-slate-200" style={tapSafeStyle}>⊘ Pass / No Vote</button>
               </AnimatedItem>
