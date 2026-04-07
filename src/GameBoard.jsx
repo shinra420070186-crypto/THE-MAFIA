@@ -451,7 +451,6 @@ export default function GameBoard() {
     setVoteSelected(false);
   }, [state.phase]);
 
-  // ARCHITECT FIX: Only lobby and role_reveal use Galaxy background
   const isGalaxyPhase = state.phase === 'lobby' || state.phase === 'role_reveal';
   const isSpookyPhase = state.phase !== 'splash' && state.phase !== 'lobby' && state.phase !== 'role_reveal';
 
@@ -535,6 +534,17 @@ export default function GameBoard() {
       `}</style>
       
       {/* ─── PERMANENT BACKGROUND MOUNTS (ZERO FLICKER ARCHITECTURE) ─── */}
+      {/* The Splash Background is separated and kept behind everything during the splash phase */}
+      <div 
+        className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out"
+        style={{ 
+          backgroundColor: '#e5e5e5',
+          opacity: state.phase === 'splash' ? 1 : 0, 
+          zIndex: state.phase === 'splash' ? 0 : -100,
+          visibility: state.phase === 'splash' ? 'visible' : 'hidden' 
+        }}
+      />
+
       <div 
         className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out"
         style={{ 
@@ -572,13 +582,13 @@ export default function GameBoard() {
 
       {/* ─── PHASE OVERLAYS ─── */}
       {state.phase === 'splash' && (
-        <div className="relative min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden z-10 transition-opacity duration-1000" style={{ backgroundColor: '#e5e5e5', ...tapSafeStyle }}>
+        <div className="relative min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden z-10 transition-opacity duration-1000" style={tapSafeStyle}>
           <ImagePreloader />
           <button 
             onClick={() => {
               setTimeout(() => {
                 state.enterLobby();
-              }, 1200); 
+              }, 800); 
             }}
             className="splash-batman-btn"
             style={tapSafeStyle}
@@ -632,7 +642,6 @@ export default function GameBoard() {
                 </div>
               </div>
 
-              {/* ─── MOVED FROM LOBBY: REVEAL ROLES TOGGLE ─── */}
               <div className="mb-4">
                 <div className="flex items-center justify-between bg-[#010201]/50 border border-slate-700/50 p-3 rounded-xl">
                   <span className="font-bold text-[10px] tracking-widest uppercase text-slate-400">Reveal Roles on Death?</span>
@@ -912,9 +921,4 @@ export default function GameBoard() {
       )}
     </>
   );
-}
-}
-
-}
-
 }
