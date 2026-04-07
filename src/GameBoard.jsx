@@ -451,9 +451,9 @@ export default function GameBoard() {
     setVoteSelected(false);
   }, [state.phase]);
 
-  // ARCHITECT FIX: Included 'splash' in the Galaxy phase array!
-  const isGalaxyPhase = state.phase === 'splash' || state.phase === 'lobby' || state.phase === 'role_reveal';
-  const isSpookyPhase = !isGalaxyPhase;
+  // ARCHITECT FIX: Only lobby and role_reveal use Galaxy background
+  const isGalaxyPhase = state.phase === 'lobby' || state.phase === 'role_reveal';
+  const isSpookyPhase = state.phase !== 'splash' && state.phase !== 'lobby' && state.phase !== 'role_reveal';
 
   const renderBackButton = () => {
     if (state.phase === 'lobby' || state.phase === 'splash') return null;
@@ -572,7 +572,7 @@ export default function GameBoard() {
 
       {/* ─── PHASE OVERLAYS ─── */}
       {state.phase === 'splash' && (
-        <div className="relative min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden z-10 transition-opacity duration-1000" style={tapSafeStyle}>
+        <div className="relative min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden z-10 transition-opacity duration-1000" style={{ backgroundColor: '#e5e5e5', ...tapSafeStyle }}>
           <ImagePreloader />
           <button 
             onClick={() => {
@@ -632,6 +632,7 @@ export default function GameBoard() {
                 </div>
               </div>
 
+              {/* ─── MOVED FROM LOBBY: REVEAL ROLES TOGGLE ─── */}
               <div className="mb-4">
                 <div className="flex items-center justify-between bg-[#010201]/50 border border-slate-700/50 p-3 rounded-xl">
                   <span className="font-bold text-[10px] tracking-widest uppercase text-slate-400">Reveal Roles on Death?</span>
@@ -687,6 +688,7 @@ export default function GameBoard() {
             </div>
           )}
 
+          {/* ─── RESTRICTED GRADUAL BLUR SCROLL AREA FOR PLAYERS (LOBBY ONLY 2 ITEMS HEIGHT) ─── */}
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mb-10" style={tapSafeStyle}>
             <div 
               className="w-full space-y-2 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
@@ -848,6 +850,7 @@ export default function GameBoard() {
           <h3 className="text-5xl md:text-6xl font-black text-amber-300 my-4 uppercase relative z-10 drop-shadow-[0_0_20px_rgba(255,193,7,0.5)] pointer-events-none">{alivePlayers[state.votingState.currentVoterIndex]?.name}</h3>
           <p className="text-lg font-bold text-red-400 tracking-widest uppercase relative z-10 drop-shadow-md pointer-events-none">Who do you exile?</p>
           
+          {/* ─── DAY VOTING LIST (4 ITEMS + BLUR MASK) ─── */}
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-6 mb-6" style={tapSafeStyle}>
             <div 
               className="w-full space-y-3 max-h-[280px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
@@ -909,4 +912,9 @@ export default function GameBoard() {
       )}
     </>
   );
+}
+}
+
+}
+
 }
