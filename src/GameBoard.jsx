@@ -6,7 +6,7 @@ import Galaxy from './Galaxy';
 const TRANSITION_MS = 5000;
 const TAU = Math.PI * 2;
 
-// ─── FULL SCREEN SPOOKY HOUSE BACKGROUND ─────────────
+// ─── FULL SCREEN DYNAMIC DAY/NIGHT HOUSE ─────────────
 const FullScreenSpooky = ({ phase }) => {
   const isNight = phase.startsWith('night') || phase === 'night_transition';
   
@@ -55,23 +55,33 @@ const FullScreenSpooky = ({ phase }) => {
           }
         }
 
-        /* ─── DAY/NIGHT ANGLE TOGGLES ─── */
+        /* ─── DYNAMIC DAY/NIGHT ARCHITECTURAL MAPPING ─── */
         .full-spooky-bg.theme-night {
           --sky-color: #212f3c;
           --window-color: #ffd166;
+          --window-frame: #000;
+          --house-base: #000;
+          --ground-color: #000;
+          --sun-angle: 180deg;
+          --moon-angle: 0deg;
           --rain-opacity: 1;
         }
 
         .full-spooky-bg.theme-day {
           --sky-color: #5b92e5;
-          --window-color: #222;
+          --window-color: #4a6fa5; /* Glass reflection */
+          --window-frame: #2c1e16;
+          --house-base: #3e2723; /* Dark wood/brick */
+          --ground-color: #1b3310; /* Dark grass */
+          --sun-angle: 0deg;
+          --moon-angle: -180deg;
           --rain-opacity: 0;
         }
 
         /* ─── CINEMATIC ORBIT PIVOT SYSTEM ─── */
         .celestial-pivot {
           position: absolute;
-          top: 100vh; /* Invisible pivot point at the exact bottom center */
+          top: 100vh;
           left: 50%;
           width: 0;
           height: 0;
@@ -90,8 +100,8 @@ const FullScreenSpooky = ({ phase }) => {
 
         .celestial-body {
           position: absolute;
-          left: -100px; /* Center perfectly on pivot (half of 200px) */
-          top: calc(-1 * var(--arc-radius)); /* Pushes the body up to the sky */
+          left: -100px;
+          top: calc(-1 * var(--arc-radius));
           width: 200px;
           height: 200px;
           border-radius: 50%;
@@ -102,7 +112,6 @@ const FullScreenSpooky = ({ phase }) => {
           background-color: #95a5a6;
           box-shadow: inset 7px -7px 0 rgba(0, 0, 0, 0.09);
           transition: transform 5s ease-in-out;
-          /* Counter-rotate so the craters always stay upright! */
           transform: scale(var(--celestial-scale)) rotate(calc(var(--moon-angle) * -1deg));
         }
         .moon:before, .moon:after {
@@ -115,12 +124,11 @@ const FullScreenSpooky = ({ phase }) => {
         .moon:before { width: 30px; height: 30px; top: 50px; left: 45px; }
         .moon:after { width: 40px; height: 40px; top: 100px; left: 30px; }
 
-        /* Sun Design (Identical stylistic structure to Moon) */
+        /* Sun Design */
         .sun {
           background-color: #FFD700;
           box-shadow: inset 7px -7px 0 rgba(200, 100, 0, 0.2), 0 0 50px rgba(255, 215, 0, 0.6);
           transition: transform 5s ease-in-out;
-          /* Counter-rotate so the spots always stay upright! */
           transform: scale(var(--celestial-scale)) rotate(calc(var(--sun-angle) * -1deg));
         }
         .sun:before, .sun:after {
@@ -140,7 +148,8 @@ const FullScreenSpooky = ({ phase }) => {
           left: -10vw;
           width: 120vw;
           height: 25vh;
-          background-color: #000;
+          background-color: var(--ground-color);
+          transition: background-color 5s ease-in-out;
           z-index: 9;
           border-radius: 50% 50% 0 0 / 30px 30px 0 0;
         }
@@ -156,76 +165,91 @@ const FullScreenSpooky = ({ phase }) => {
           .house-wrapper { transform: translateX(-50%) scale(1.2); bottom: 23vh; }
         }
 
-        /* House Architecture */
+        /* House Architecture - Colors mapped to CSS Variables */
         .house {
           position: relative; width: 120px; height: 150px;
-          background-color: black; transform: rotate(5deg);
+          background-color: var(--house-base); 
+          transition: background-color 5s ease-in-out;
+          transform: rotate(5deg);
         }
         .house:before {
           content: ""; position: absolute; width: 0; height: 0;
-          border-bottom: 30px solid black; border-right: 50px solid transparent;
+          border-bottom: 30px solid var(--house-base); border-right: 50px solid transparent;
+          transition: border-bottom-color 5s ease-in-out;
           left: 115px; top: 70px; transform: rotate(5deg);
         }
         .house:after {
           content: ""; position: absolute; width: 5px; height: 65px;
-          background-color: black; left: 145px; top: 95px;
+          background-color: var(--house-base); transition: background-color 5s ease-in-out;
+          left: 145px; top: 95px;
         }
 
         .porch {
           position: absolute; width: 30px; height: 100px;
-          background-color: black; left: -20px; top: 55px; transform: rotate(-10deg);
+          background-color: var(--house-base); transition: background-color 5s ease-in-out;
+          left: -20px; top: 55px; transform: rotate(-10deg);
         }
         .porch:before {
           content: ""; position: absolute; width: 0; height: 0;
-          border-bottom: 20px solid black; border-left: 40px solid transparent;
+          border-bottom: 20px solid var(--house-base); border-left: 40px solid transparent;
+          transition: border-bottom-color 5s ease-in-out;
           left: -35px; top: 45px;
         }
         .porch:after {
           content: ""; position: absolute; width: 0; height: 0;
-          border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 30px solid black;
+          border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 30px solid var(--house-base);
+          transition: border-bottom-color 5s ease-in-out;
           left: -5px; top: -25px;
         }
 
         .first-floor {
           position: absolute; transform: rotate(-10deg);
-          background-color: black; width: 5px; height: 45px; left: -37px; top: 125px;
+          background-color: var(--house-base); transition: background-color 5s ease-in-out;
+          width: 5px; height: 45px; left: -37px; top: 125px;
         }
         .first-floor:before {
-          content: ""; position: absolute; background-color: #000;
+          content: ""; position: absolute; background-color: var(--house-base);
+          transition: background-color 5s ease-in-out;
           width: 85px; height: 90px; top: -150px; left: 50px;
         }
         .first-floor:after {
           content: ""; position: absolute;
-          border-left: 52px solid transparent; border-right: 52px solid transparent; border-bottom: 50px solid black;
+          border-left: 52px solid transparent; border-right: 52px solid transparent; border-bottom: 50px solid var(--house-base);
+          transition: border-bottom-color 5s ease-in-out;
           top: -199px; left: 40px;
         }
 
         .second-floor {
-          position: absolute; background-color: black; width: 35px; height: 100px;
+          position: absolute; background-color: var(--house-base); transition: background-color 5s ease-in-out;
+          width: 35px; height: 100px;
           transform: rotate(3deg); top: -70px; left: 70px;
         }
         .second-floor:before {
-          content: ""; position: absolute; background-color: black;
+          content: ""; position: absolute; background-color: var(--house-base); transition: background-color 5s ease-in-out;
           width: 20px; height: 100px; left: 33px; top: 40px; transform: rotate(-3deg);
         }
         .second-floor:after {
           content: ""; position: absolute; width: 0; height: 0;
-          border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid black;
+          border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid var(--house-base);
+          transition: border-bottom-color 5s ease-in-out;
           top: 12px; left: 15px;
         }
 
         .roof {
           position: absolute; width: 0; height: 0;
-          border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid black;
+          border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid var(--house-base);
+          transition: border-bottom-color 5s ease-in-out;
           left: 65px; top: -95px;
         }
         .roof:before {
           content: ""; position: absolute; width: 6px; height: 20px;
-          background-color: black; top: 5px; left: 10px; box-shadow: 20px 35px black;
+          background-color: var(--house-base); transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out;
+          top: 5px; left: 10px; box-shadow: 20px 35px var(--house-base);
         }
         .roof:after {
           content: ""; position: absolute; width: 6px; height: 20px;
-          background-color: black; transform: rotate(-10deg); left: -110px; top: 35px; box-shadow: -27px 97px black;
+          background-color: var(--house-base); transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out;
+          transform: rotate(-10deg); left: -110px; top: 35px; box-shadow: -27px 97px var(--house-base);
         }
 
         .door {
@@ -266,18 +290,21 @@ const FullScreenSpooky = ({ phase }) => {
           border-radius: 30px 30px 0 0; transform: rotate(-7deg); width: 30px; height: 40px; top: -35px; left: 10px;
         }
         .big-window:before, .big-window:after {
-          content: ""; position: absolute; background-color: black;
+          content: ""; position: absolute; background-color: var(--window-frame);
+          transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out;
         }
-        .big-window:before { height: 40px; width: 2px; left: 15px; box-shadow: 13px 55px black, -47px 80px black, -32px 120px black; }
-        .big-window:after { height: 2px; width: 40px; top: 22px; box-shadow: 10px 58px black, -45px 78px black, -30px 120px black; }
+        .big-window:before { height: 40px; width: 2px; left: 15px; box-shadow: 13px 55px var(--window-frame), -47px 80px var(--window-frame), -32px 120px var(--window-frame); }
+        .big-window:after { height: 2px; width: 40px; top: 22px; box-shadow: 10px 58px var(--window-frame), -45px 78px var(--window-frame), -30px 120px var(--window-frame); }
 
         .frames {
-          position: absolute; width: 2px; height: 40px; background-color: black;
-          top: -65px; left: 86.5px; box-shadow: 19px 40px black, 7px 150px black;
+          position: absolute; width: 2px; height: 40px; background-color: var(--window-frame);
+          transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out;
+          top: -65px; left: 86.5px; box-shadow: 19px 40px var(--window-frame), 7px 150px var(--window-frame);
         }
         .frames:before {
-          content: ""; position: absolute; height: 2px; width: 30px; background-color: black;
-          top: 17px; left: -10px; box-shadow: 10px 40px black, 5px 150px black;
+          content: ""; position: absolute; height: 2px; width: 30px; background-color: var(--window-frame);
+          transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out;
+          top: 17px; left: -10px; box-shadow: 10px 40px var(--window-frame), 5px 150px var(--window-frame);
         }
 
         /* ─── FULL SCREEN RAIN SYSTEM ─── */
@@ -309,12 +336,10 @@ const FullScreenSpooky = ({ phase }) => {
         @keyframes rainAnim { 0% { transform: translateY(-200px); } 100% { transform: translateY(120vh); } }
       `}</style>
       
-      {/* Sun on its orbital pivot */}
       <div className="celestial-pivot sun-pivot">
         <div className="celestial-body sun"></div>
       </div>
 
-      {/* Moon on its orbital pivot */}
       <div className="celestial-pivot moon-pivot">
         <div className="celestial-body moon"></div>
       </div>
@@ -470,7 +495,7 @@ export default function GameBoard() {
       );
     }
     
-    // Day and Night uses the new Spooky House Engine
+    // Day and Night uses the updated Dynamic House Engine
     return <FullScreenSpooky phase={state.phase} />;
   };
 
