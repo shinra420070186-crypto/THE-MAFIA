@@ -2,9 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==============================================
+   MOBILE GLITCH FIXES (Tap Highlights & Selection)
+   ============================================== */
+* {
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none;
+  outline: none !important;
+}
+
 html, body {
   overscroll-behavior-y: none;
-  background-color: #050505;
+  background-color: #050505 !important;
+  user-select: none;
+}
+
+input, textarea {
+  user-select: auto;
 }
 
 /* ==============================================
@@ -320,4 +334,5 @@ html, body {
 .splash-batman-btn:hover:before,
 .splash-batman-btn:active:before {
   width: 100%;
+}
 }
