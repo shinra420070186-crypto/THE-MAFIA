@@ -443,15 +443,15 @@ export default function GameBoard() {
     setVoteSelected(false);
   }, [state.phase]);
 
-  // ARCHITECT FIX: useMemo prevents the background canvas from unmounting and causing flashes
-  // when the UI state updates (e.g. typing names or clicking remove player).
+  // ARCHITECT FIX: pointer-events-auto allows touches on empty background space 
+  // to pass through to the Galaxy canvas to trigger repulsion.
   const memoizedBackground = useMemo(() => {
     if (state.phase === 'splash') return null; 
     
     // Lobby & Role Reveal uses Galaxy
     if (state.phase === 'lobby' || state.phase === 'role_reveal') {
       return (
-        <div className="fixed inset-0 w-full h-full z-0 pointer-events-none">
+        <div className="fixed inset-0 w-full h-full z-0 pointer-events-auto">
           <Galaxy 
             mouseRepulsion={true}
             mouseInteraction={true}
@@ -518,7 +518,17 @@ export default function GameBoard() {
 
   return (
     <>
-      {/* Background Layer: Hooked perfectly to state to kill the flash */}
+      <style>{`
+        /* PERMANENT FIX: Stops the mobile browser from flashing white/gray when a button or card is tapped */
+        * {
+          -webkit-tap-highlight-color: transparent !important;
+        }
+        body {
+          background-color: #050505 !important;
+        }
+      `}</style>
+      
+      {/* Background Layer: Hoisted to the top so it never unmounts/remounts during phase changes */}
       {memoizedBackground}
 
       {/* ─── PHASE OVERLAYS ─── */}
@@ -750,8 +760,8 @@ export default function GameBoard() {
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="w-96 h-96 bg-yellow-300/20 rounded-full blur-3xl animate-pulse"></div>
             </div>
-            <h2 className="text-5xl md:text-6xl font-black text-amber-50 uppercase tracking-[0.3em] drop-shadow-[0_0_40px_rgba(255,210,0,0.8)] relative z-20 animate-in fade-in duration-1000">EVERYONE</h2>
-            <h2 className="text-5xl md:text-6xl font-black text-amber-50 uppercase tracking-[0.3em] drop-shadow-[0_0_40px_rgba(255,210,0,0.8)] relative z-20 mt-4 animate-in fade-in duration-1000 delay-500">OPEN YOUR EYES</h2>
+            <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_40px_rgba(255,210,0,0.8)] relative z-20 animate-in fade-in duration-1000">EVERYONE</h2>
+            <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_40px_rgba(255,210,0,0.8)] relative z-20 mt-4 animate-in fade-in duration-1000 delay-500">OPEN YOUR EYES</h2>
             <p className="text-yellow-100 mt-8 text-lg tracking-widest font-bold relative z-20 animate-pulse">The sun is rising...</p>
           </div>
         </div>
