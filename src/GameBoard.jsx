@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from './store';
 import Galaxy from './Galaxy';
 
@@ -33,7 +33,7 @@ const FullScreenSpooky = ({ phase }) => {
     }}>
       <style>{`
         .full-spooky-bg {
-          position: fixed;
+          position: absolute;
           inset: 0;
           width: 100vw;
           height: 100vh;
@@ -443,36 +443,9 @@ export default function GameBoard() {
     setVoteSelected(false);
   }, [state.phase]);
 
-  // ARCHITECT FIX: pointer-events-auto allows touches on empty background space 
-  // to pass through to the Galaxy canvas to trigger repulsion.
-  const memoizedBackground = useMemo(() => {
-    if (state.phase === 'splash') return null; 
-    
-    // Lobby & Role Reveal uses Galaxy
-    if (state.phase === 'lobby' || state.phase === 'role_reveal') {
-      return (
-        <div className="fixed inset-0 w-full h-full z-0 pointer-events-auto">
-          <Galaxy 
-            mouseRepulsion={true}
-            mouseInteraction={true}
-            density={1}
-            glowIntensity={0.3}
-            saturation={0}
-            hueShift={140}
-            twinkleIntensity={0.3}
-            rotationSpeed={0.1}
-            repulsionStrength={2}
-            autoCenterRepulsion={0}
-            starSpeed={0.5}
-            speed={1}
-          />
-        </div>
-      );
-    }
-    
-    // Day and Night uses the updated Full Screen House Engine
-    return <FullScreenSpooky phase={state.phase} />;
-  }, [state.phase]);
+  // Derive which background should be visible based on phase
+  const isGalaxyPhase = state.phase === 'lobby' || state.phase === 'role_reveal';
+  const isSpookyPhase = state.phase !== 'splash' && state.phase !== 'lobby' && state.phase !== 'role_reveal';
 
   const renderBackButton = () => {
     if (state.phase === 'lobby' || state.phase === 'splash') return null;
@@ -490,8 +463,6 @@ export default function GameBoard() {
     );
   };
 
-  // ARCHITECT FIX: Added hideRole parameter to completely erase the active picking role from the array.
-  // The height is now safely set to 280px (perfect for 4 tiles) with the gradual blur effect.
   const renderPlayerList = (onSelect, includeSkip = false, hideRole = null) => {
     const visiblePlayers = hideRole ? alivePlayers.filter(p => p.role !== hideRole) : alivePlayers;
 
@@ -546,8 +517,45 @@ export default function GameBoard() {
         }
       `}</style>
       
-      {/* Background Layer: Hoisted to the top so it never unmounts/remounts during phase changes */}
-      {memoizedBackground}
+      {/* ─── PERMANENT BACKGROUND MOUNTS (ZERO FLICKER ARCHITECTURE) ─── */}
+      {/* Both canvases are permanently mounted to the DOM. 
+        They never unmount, which guarantees zero React re-render flashing.
+        Visibility is controlled exclusively through CSS opacity and z-index. 
+      */}
+      <div 
+        className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out"
+        style={{ 
+          opacity: isGalaxyPhase ? 1 : 0, 
+          zIndex: isGalaxyPhase ? 0 : -50,
+          visibility: isGalaxyPhase ? 'visible' : 'hidden' 
+        }}
+      >
+        <Galaxy 
+          mouseRepulsion={true}
+          mouseInteraction={true}
+          density={1}
+          glowIntensity={0.3}
+          saturation={0}
+          hueShift={140}
+          twinkleIntensity={0.3}
+          rotationSpeed={0.1}
+          repulsionStrength={2}
+          autoCenterRepulsion={0}
+          starSpeed={0.5}
+          speed={1}
+        />
+      </div>
+
+      <div 
+        className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-700 ease-in-out"
+        style={{ 
+          opacity: isSpookyPhase ? 1 : 0, 
+          zIndex: isSpookyPhase ? 0 : -50,
+          visibility: isSpookyPhase ? 'visible' : 'hidden'
+        }}
+      >
+        <FullScreenSpooky phase={state.phase} />
+      </div>
 
       {/* ─── PHASE OVERLAYS ─── */}
       {state.phase === 'splash' && (
