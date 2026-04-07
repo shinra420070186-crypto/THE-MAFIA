@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useGameStore } from './store';
 import Galaxy from './Galaxy';
+import { motion, useInView } from 'motion/react';
 
 // ─── CONSTANTS ───────────────────────────────────────
 const TRANSITION_MS = 5000;
@@ -14,8 +15,26 @@ const tapSafeStyle = {
   outline: 'none' 
 };
 
+// ─── ANIMATED SCROLL ITEM (FRAMER MOTION) ────────────
+const AnimatedItem = ({ children, delay = 0, index }) => {
+  const ref = useRef(null);
+  // amount: 0.2 ensures the animation triggers smoothly as soon as 20% of the tile enters the box
+  const inView = useInView(ref, { amount: 0.2, triggerOnce: false });
+  return (
+    <motion.div
+      ref={ref}
+      data-index={index}
+      initial={{ scale: 0.7, opacity: 0 }}
+      animate={inView ? { scale: 1, opacity: 1 } : { scale: 0.7, opacity: 0 }}
+      transition={{ duration: 0.2, delay }}
+      style={{ width: '100%' }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
 // ─── PURE ISOLATED BACKGROUND LAYER (ZERO FLICKER) ───
-// React.memo ensures this heavy canvas NEVER re-renders when UI state changes
 const MemoizedGalaxy = React.memo(() => (
   <Galaxy 
     mouseRepulsion={true}
@@ -37,7 +56,6 @@ const MemoizedGalaxy = React.memo(() => (
 const FullScreenSpooky = ({ phase }) => {
   const isNight = phase.startsWith('night') || phase === 'night_transition';
   
-  // Track continuous orbit to ensure Left-To-Right continuous sweeping
   const [angles, setAngles] = useState({ sun: isNight ? 180 : 0, moon: isNight ? 0 : -180 });
   const prevIsNight = useRef(isNight);
 
@@ -69,362 +87,92 @@ const FullScreenSpooky = ({ phase }) => {
           transition: background-color 5s ease-in-out;
           background-color: var(--sky-color);
           overflow: hidden;
-          
-          /* Responsive Arc & Scale Settings */
           --celestial-scale: 1;
           --arc-radius: 85vh;
         }
-
         @media (max-width: 768px) {
-          .full-spooky-bg {
-            --celestial-scale: 0.6;
-            --arc-radius: 75vh;
-          }
+          .full-spooky-bg { --celestial-scale: 0.6; --arc-radius: 75vh; }
         }
+        .full-spooky-bg.theme-night { --sky-color: #212f3c; --window-color: #ffd166; --rain-opacity: 1; }
+        .full-spooky-bg.theme-day { --sky-color: #5b92e5; --window-color: #111; --rain-opacity: 0; }
 
-        /* ─── DAY/NIGHT PURE SILHOUETTE TOGGLES ─── */
-        .full-spooky-bg.theme-night {
-          --sky-color: #212f3c;
-          --window-color: #ffd166; /* Glowing windows */
-          --rain-opacity: 1;
-        }
+        .celestial-pivot { position: absolute; top: 100vh; left: 50%; width: 0; height: 0; z-index: 1; }
+        .sun-pivot { transition: transform 5s ease-in-out; transform: rotate(calc(var(--sun-angle) * 1deg)); }
+        .moon-pivot { transition: transform 5s ease-in-out; transform: rotate(calc(var(--moon-angle) * 1deg)); }
 
-        .full-spooky-bg.theme-day {
-          --sky-color: #5b92e5; /* Blue sky */
-          --window-color: #111;    /* Dark unlit windows */
-          --rain-opacity: 0;
-        }
-
-        /* ─── CINEMATIC ORBIT PIVOT SYSTEM ─── */
-        .celestial-pivot {
-          position: absolute;
-          top: 100vh; /* Invisible pivot point at the exact bottom center */
-          left: 50%;
-          width: 0;
-          height: 0;
-          z-index: 1;
-        }
-
-        .sun-pivot {
-          transition: transform 5s ease-in-out;
-          transform: rotate(calc(var(--sun-angle) * 1deg));
-        }
-
-        .moon-pivot {
-          transition: transform 5s ease-in-out;
-          transform: rotate(calc(var(--moon-angle) * 1deg));
-        }
-
-        .celestial-body {
-          position: absolute;
-          left: -100px; /* Center perfectly on pivot (half of 200px) */
-          top: calc(-1 * var(--arc-radius)); /* Pushes the body up to the sky */
-          width: 200px;
-          height: 200px;
-          border-radius: 50%;
-        }
-
-        /* Moon Design */
-        .moon {
-          background-color: #95a5a6;
-          box-shadow: inset 7px -7px 0 rgba(0, 0, 0, 0.09);
-          transition: transform 5s ease-in-out;
-          /* Counter-rotate so the craters always stay upright */
-          transform: scale(var(--celestial-scale)) rotate(calc(var(--moon-angle) * -1deg));
-        }
-        .moon:before, .moon:after {
-          content: "";
-          position: absolute;
-          border-radius: 50%;
-          background-color: rgba(0, 0, 0, 0.09);
-          box-shadow: inset -5px 5px 0 rgba(0, 0, 0, 0.09);
-        }
+        .celestial-body { position: absolute; left: -100px; top: calc(-1 * var(--arc-radius)); width: 200px; height: 200px; border-radius: 50%; }
+        
+        .moon { background-color: #95a5a6; box-shadow: inset 7px -7px 0 rgba(0, 0, 0, 0.09); transition: transform 5s ease-in-out; transform: scale(var(--celestial-scale)) rotate(calc(var(--moon-angle) * -1deg)); }
+        .moon:before, .moon:after { content: ""; position: absolute; border-radius: 50%; background-color: rgba(0, 0, 0, 0.09); box-shadow: inset -5px 5px 0 rgba(0, 0, 0, 0.09); }
         .moon:before { width: 30px; height: 30px; top: 50px; left: 45px; }
         .moon:after { width: 40px; height: 40px; top: 100px; left: 30px; }
 
-        /* Sun Design */
-        .sun {
-          background-color: #FFD700;
-          box-shadow: inset 7px -7px 0 rgba(200, 100, 0, 0.2), 0 0 50px rgba(255, 215, 0, 0.6);
-          transition: transform 5s ease-in-out;
-          /* Counter-rotate so the spots always stay upright */
-          transform: scale(var(--celestial-scale)) rotate(calc(var(--sun-angle) * -1deg));
-        }
-        .sun:before, .sun:after {
-          content: "";
-          position: absolute;
-          border-radius: 50%;
-          background-color: rgba(255, 255, 255, 0.25);
-          box-shadow: inset -5px 5px 0 rgba(255, 255, 255, 0.1);
-        }
+        .sun { background-color: #FFD700; box-shadow: inset 7px -7px 0 rgba(200, 100, 0, 0.2), 0 0 50px rgba(255, 215, 0, 0.6); transition: transform 5s ease-in-out; transform: scale(var(--celestial-scale)) rotate(calc(var(--sun-angle) * -1deg)); }
+        .sun:before, .sun:after { content: ""; position: absolute; border-radius: 50%; background-color: rgba(255, 255, 255, 0.25); box-shadow: inset -5px 5px 0 rgba(255, 255, 255, 0.1); }
         .sun:before { width: 30px; height: 30px; top: 50px; left: 45px; }
         .sun:after { width: 40px; height: 40px; top: 100px; left: 30px; }
 
-        /* ─── FULL SCREEN GROUND & HOUSE (PURE BLACK SILHOUETTE) ─── */
-        .ground {
-          position: absolute;
-          bottom: 0;
-          left: -10vw;
-          width: 120vw;
-          height: 25vh;
-          background-color: #000;
-          z-index: 9;
-          border-radius: 50% 50% 0 0 / 30px 30px 0 0;
-        }
+        .ground { position: absolute; bottom: 0; left: -10vw; width: 120vw; height: 25vh; background-color: #000; z-index: 9; border-radius: 50% 50% 0 0 / 30px 30px 0 0; }
+        .house-wrapper { position: absolute; bottom: 22vh; left: 50%; transform: translateX(-50%) scale(1.6); z-index: 10; }
+        @media (max-width: 768px) { .house-wrapper { transform: translateX(-50%) scale(1.2); bottom: 23vh; } }
 
-        .house-wrapper {
-          position: absolute;
-          bottom: 22vh;
-          left: 50%;
-          transform: translateX(-50%) scale(1.6);
-          z-index: 10;
-        }
-        @media (max-width: 768px) {
-          .house-wrapper { transform: translateX(-50%) scale(1.2); bottom: 23vh; }
-        }
-
-        /* House Architecture - Strict Silhouette */
-        .house {
-          position: relative; width: 120px; height: 150px;
-          background-color: black; transform: rotate(5deg);
-        }
-        .house:before {
-          content: ""; position: absolute; width: 0; height: 0;
-          border-bottom: 30px solid black; border-right: 50px solid transparent;
-          left: 115px; top: 70px; transform: rotate(5deg);
-        }
-        .house:after {
-          content: ""; position: absolute; width: 5px; height: 65px;
-          background-color: black; left: 145px; top: 95px;
-        }
-
-        .porch {
-          position: absolute; width: 30px; height: 100px;
-          background-color: black; left: -20px; top: 55px; transform: rotate(-10deg);
-        }
-        .porch:before {
-          content: ""; position: absolute; width: 0; height: 0;
-          border-bottom: 20px solid black; border-left: 40px solid transparent;
-          left: -35px; top: 45px;
-        }
-        .porch:after {
-          content: ""; position: absolute; width: 0; height: 0;
-          border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 30px solid black;
-          left: -5px; top: -25px;
-        }
-
-        .first-floor {
-          position: absolute; transform: rotate(-10deg);
-          background-color: black; width: 5px; height: 45px; left: -37px; top: 125px;
-        }
-        .first-floor:before {
-          content: ""; position: absolute; background-color: #000;
-          width: 85px; height: 90px; top: -150px; left: 50px;
-        }
-        .first-floor:after {
-          content: ""; position: absolute;
-          border-left: 52px solid transparent; border-right: 52px solid transparent; border-bottom: 50px solid black;
-          top: -199px; left: 40px;
-        }
-
-        .second-floor {
-          position: absolute; background-color: black; width: 35px; height: 100px;
-          transform: rotate(3deg); top: -70px; left: 70px;
-        }
-        .second-floor:before {
-          content: ""; position: absolute; background-color: black;
-          width: 20px; height: 100px; left: 33px; top: 40px; transform: rotate(-3deg);
-        }
-        .second-floor:after {
-          content: ""; position: absolute; width: 0; height: 0;
-          border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid black;
-          top: 12px; left: 15px;
-        }
-
-        .roof {
-          position: absolute; width: 0; height: 0;
-          border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid black;
-          left: 65px; top: -95px;
-        }
-        .roof:before {
-          content: ""; position: absolute; width: 6px; height: 20px;
-          background-color: black; top: 5px; left: 10px; box-shadow: 20px 35px black;
-        }
-        .roof:after {
-          content: ""; position: absolute; width: 6px; height: 20px;
-          background-color: black; transform: rotate(-10deg); left: -110px; top: 35px; box-shadow: -27px 97px black;
-        }
-
-        .door {
-          position: absolute; background-color: var(--window-color);
-          transition: background-color 5s ease-in-out;
-          width: 30px; height: 50px; transform: rotate(-5deg); border-radius: 30px 30px 0 0;
-          box-shadow: inset -10px 5px rgba(0, 0, 0, 0.5); top: 90px; left: 40px;
-        }
-        .door:before {
-          content: ""; position: absolute; background-color: var(--window-color);
-          transition: background-color 5s ease-in-out;
-          border-radius: 30px 30px 0 0; box-shadow: inset -5px 2px rgba(0, 0, 0, 0.5);
-          width: 20px; height: 30px; left: -40px; transform: rotate(-3deg);
-        }
-        .door:after {
-          content: ""; position: absolute; background-color: var(--window-color);
-          transition: background-color 5s ease-in-out;
-          box-shadow: inset -5px 2px rgba(0, 0, 0, 0.5); border-radius: 30px 30px 0 0;
-          width: 20px; height: 30px; left: 45px; transform: rotate(3deg);
-        }
-
-        .small-windows {
-          position: absolute; background-color: var(--window-color);
-          transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out;
-          border-radius: 30px 30px 0 0; width: 13px; height: 25px; left: 100px; top: -20px;
-          box-shadow: -19px -40px var(--window-color), inset -4px 2px rgba(0, 0, 0, 0.5);
-        }
-        .small-windows:before {
-          content: ""; position: absolute; background-color: var(--window-color);
-          transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out;
-          border-radius: 30px 30px 0 0; width: 13px; height: 25px; transform: rotate(-7deg);
-          left: -60px; top: 50px; box-shadow: -60px 20px var(--window-color);
-        }
-
-        .big-window {
-          position: absolute; background-color: var(--window-color);
-          transition: background-color 5s ease-in-out;
-          border-radius: 30px 30px 0 0; transform: rotate(-7deg); width: 30px; height: 40px; top: -35px; left: 10px;
-        }
-        .big-window:before, .big-window:after {
-          content: ""; position: absolute; background-color: black;
-        }
+        .house { position: relative; width: 120px; height: 150px; background-color: black; transform: rotate(5deg); }
+        .house:before { content: ""; position: absolute; width: 0; height: 0; border-bottom: 30px solid black; border-right: 50px solid transparent; left: 115px; top: 70px; transform: rotate(5deg); }
+        .house:after { content: ""; position: absolute; width: 5px; height: 65px; background-color: black; left: 145px; top: 95px; }
+        .porch { position: absolute; width: 30px; height: 100px; background-color: black; left: -20px; top: 55px; transform: rotate(-10deg); }
+        .porch:before { content: ""; position: absolute; width: 0; height: 0; border-bottom: 20px solid black; border-left: 40px solid transparent; left: -35px; top: 45px; }
+        .porch:after { content: ""; position: absolute; width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 30px solid black; left: -5px; top: -25px; }
+        .first-floor { position: absolute; transform: rotate(-10deg); background-color: black; width: 5px; height: 45px; left: -37px; top: 125px; }
+        .first-floor:before { content: ""; position: absolute; background-color: #000; width: 85px; height: 90px; top: -150px; left: 50px; }
+        .first-floor:after { content: ""; position: absolute; border-left: 52px solid transparent; border-right: 52px solid transparent; border-bottom: 50px solid black; top: -199px; left: 40px; }
+        .second-floor { position: absolute; background-color: black; width: 35px; height: 100px; transform: rotate(3deg); top: -70px; left: 70px; }
+        .second-floor:before { content: ""; position: absolute; background-color: black; width: 20px; height: 100px; left: 33px; top: 40px; transform: rotate(-3deg); }
+        .second-floor:after { content: ""; position: absolute; width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid black; top: 12px; left: 15px; }
+        .roof { position: absolute; width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid black; left: 65px; top: -95px; }
+        .roof:before { content: ""; position: absolute; width: 6px; height: 20px; background-color: black; top: 5px; left: 10px; box-shadow: 20px 35px black; }
+        .roof:after { content: ""; position: absolute; width: 6px; height: 20px; background-color: black; transform: rotate(-10deg); left: -110px; top: 35px; box-shadow: -27px 97px black; }
+        .door { position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out; width: 30px; height: 50px; transform: rotate(-5deg); border-radius: 30px 30px 0 0; box-shadow: inset -10px 5px rgba(0, 0, 0, 0.5); top: 90px; left: 40px; }
+        .door:before { content: ""; position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out; border-radius: 30px 30px 0 0; box-shadow: inset -5px 2px rgba(0, 0, 0, 0.5); width: 20px; height: 30px; left: -40px; transform: rotate(-3deg); }
+        .door:after { content: ""; position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out; box-shadow: inset -5px 2px rgba(0, 0, 0, 0.5); border-radius: 30px 30px 0 0; width: 20px; height: 30px; left: 45px; transform: rotate(3deg); }
+        .small-windows { position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out; border-radius: 30px 30px 0 0; width: 13px; height: 25px; left: 100px; top: -20px; box-shadow: -19px -40px var(--window-color), inset -4px 2px rgba(0, 0, 0, 0.5); }
+        .small-windows:before { content: ""; position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out; border-radius: 30px 30px 0 0; width: 13px; height: 25px; transform: rotate(-7deg); left: -60px; top: 50px; box-shadow: -60px 20px var(--window-color); }
+        .big-window { position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out; border-radius: 30px 30px 0 0; transform: rotate(-7deg); width: 30px; height: 40px; top: -35px; left: 10px; }
+        .big-window:before, .big-window:after { content: ""; position: absolute; background-color: black; }
         .big-window:before { height: 40px; width: 2px; left: 15px; box-shadow: 13px 55px black, -47px 80px black, -32px 120px black; }
         .big-window:after { height: 2px; width: 40px; top: 22px; box-shadow: 10px 58px black, -45px 78px black, -30px 120px black; }
-
-        .frames {
-          position: absolute; width: 2px; height: 40px; background-color: black;
-          top: -65px; left: 86.5px; box-shadow: 19px 40px black, 7px 150px black;
-        }
-        .frames:before {
-          content: ""; position: absolute; height: 2px; width: 30px; background-color: black;
-          top: 17px; left: -10px; box-shadow: 10px 40px black, 5px 150px black;
-        }
-
-        /* ─── FULL SCREEN RAIN SYSTEM ─── */
-        .rain-container {
-          position: absolute;
-          inset: 0;
-          z-index: 5;
-          opacity: var(--rain-opacity);
-          transition: opacity 5s ease-in-out;
-          overflow: hidden;
-        }
-
-        .dropOne, .dropTwo, .dropThree, .dropFour, .dropFive, 
-        .dropSix, .dropSeven, .dropEight, .dropNine, .dropTen {
-          position: absolute; background-color: rgba(211, 211, 211, 0.3); height: 10px; width: 1px; top: 0;
-          box-shadow: 0 -270px rgba(211, 211, 211, 0.3), -50px -50px rgba(211, 211, 211, 0.3), -50px -150px rgba(211, 211, 211, 0.3), 50px -395px rgba(211, 211, 211, 0.3), 50px -200px rgba(211, 211, 211, 0.3), 50px -100px rgba(211, 211, 211, 0.3), 100px -400px rgba(211, 211, 211, 0.3), 100px -320px rgba(211, 211, 211, 0.3), 100px -150px rgba(211, 211, 211, 0.3), 150px -200px rgba(211, 211, 211, 0.3), 200px -100px rgba(211, 211, 211, 0.3), 200px -370px rgba(211, 211, 211, 0.3), 250px -330px rgba(211, 211, 211, 0.3), 250px -220px rgba(211, 211, 211, 0.3), 300px -70px rgba(211, 211, 211, 0.3), 300px -140px rgba(211, 211, 211, 0.3), 300px -300px rgba(211, 211, 211, 0.3);
-        }
-        .dropOne { left: 10%; animation: rainAnim 1.5s linear infinite; }
-        .dropTwo { left: 20%; animation: rainAnim 1.2s linear infinite; }
-        .dropThree { left: 30%; animation: rainAnim 1.7s linear infinite; }
-        .dropFour { left: 40%; animation: rainAnim 1.4s linear infinite; }
-        .dropFive { left: 50%; animation: rainAnim 1.3s linear infinite; }
-        .dropSix { left: 60%; animation: rainAnim 1.6s linear infinite; }
-        .dropSeven { left: 70%; animation: rainAnim 1.1s linear infinite; }
-        .dropEight { left: 80%; animation: rainAnim 1.8s linear infinite; }
-        .dropNine { left: 90%; animation: rainAnim 1.4s linear infinite; }
-        .dropTen { left: 95%; animation: rainAnim 1.5s linear infinite; }
-
+        .frames { position: absolute; width: 2px; height: 40px; background-color: black; top: -65px; left: 86.5px; box-shadow: 19px 40px black, 7px 150px black; }
+        .frames:before { content: ""; position: absolute; height: 2px; width: 30px; background-color: black; top: 17px; left: -10px; box-shadow: 10px 40px black, 5px 150px black; }
+        .rain-container { position: absolute; inset: 0; z-index: 5; opacity: var(--rain-opacity); transition: opacity 5s ease-in-out; overflow: hidden; }
+        .dropOne, .dropTwo, .dropThree, .dropFour, .dropFive, .dropSix, .dropSeven, .dropEight, .dropNine, .dropTen { position: absolute; background-color: rgba(211, 211, 211, 0.3); height: 10px; width: 1px; top: 0; box-shadow: 0 -270px rgba(211, 211, 211, 0.3), -50px -50px rgba(211, 211, 211, 0.3), -50px -150px rgba(211, 211, 211, 0.3), 50px -395px rgba(211, 211, 211, 0.3), 50px -200px rgba(211, 211, 211, 0.3), 50px -100px rgba(211, 211, 211, 0.3), 100px -400px rgba(211, 211, 211, 0.3), 100px -320px rgba(211, 211, 211, 0.3), 100px -150px rgba(211, 211, 211, 0.3), 150px -200px rgba(211, 211, 211, 0.3), 200px -100px rgba(211, 211, 211, 0.3), 200px -370px rgba(211, 211, 211, 0.3), 250px -330px rgba(211, 211, 211, 0.3), 250px -220px rgba(211, 211, 211, 0.3), 300px -70px rgba(211, 211, 211, 0.3), 300px -140px rgba(211, 211, 211, 0.3), 300px -300px rgba(211, 211, 211, 0.3); }
+        .dropOne { left: 10%; animation: rainAnim 1.5s linear infinite; } .dropTwo { left: 20%; animation: rainAnim 1.2s linear infinite; } .dropThree { left: 30%; animation: rainAnim 1.7s linear infinite; } .dropFour { left: 40%; animation: rainAnim 1.4s linear infinite; } .dropFive { left: 50%; animation: rainAnim 1.3s linear infinite; } .dropSix { left: 60%; animation: rainAnim 1.6s linear infinite; } .dropSeven { left: 70%; animation: rainAnim 1.1s linear infinite; } .dropEight { left: 80%; animation: rainAnim 1.8s linear infinite; } .dropNine { left: 90%; animation: rainAnim 1.4s linear infinite; } .dropTen { left: 95%; animation: rainAnim 1.5s linear infinite; }
         @keyframes rainAnim { 0% { transform: translateY(-200px); } 100% { transform: translateY(120vh); } }
       `}</style>
-      
-      <div className="celestial-pivot sun-pivot">
-        <div className="celestial-body sun"></div>
-      </div>
-
-      <div className="celestial-pivot moon-pivot">
-        <div className="celestial-body moon"></div>
-      </div>
-
-      <div className="house-wrapper">
-        <div className="house">
-          <div className="porch"></div>
-          <div className="first-floor"></div>
-          <div className="second-floor"></div>
-          <div className="roof"></div>
-          <div className="door"></div>
-          <div className="small-windows"></div>
-          <div className="big-window"></div>
-          <div className="frames"></div>
-        </div>
-      </div>
-
+      <div className="celestial-pivot sun-pivot"><div className="celestial-body sun"></div></div>
+      <div className="celestial-pivot moon-pivot"><div className="celestial-body moon"></div></div>
+      <div className="house-wrapper"><div className="house"><div className="porch"></div><div className="first-floor"></div><div className="second-floor"></div><div className="roof"></div><div className="door"></div><div className="small-windows"></div><div className="big-window"></div><div className="frames"></div></div></div>
       <div className="ground"></div>
-
-      <div className="rain-container">
-        <div className="dropOne"></div>
-        <div className="dropTwo"></div>
-        <div className="dropThree"></div>
-        <div className="dropFour"></div>
-        <div className="dropFive"></div>
-        <div className="dropSix"></div>
-        <div className="dropSeven"></div>
-        <div className="dropEight"></div>
-        <div className="dropNine"></div>
-        <div className="dropTen"></div>
-      </div>
+      <div className="rain-container"><div className="dropOne"></div><div className="dropTwo"></div><div className="dropThree"></div><div className="dropFour"></div><div className="dropFive"></div><div className="dropSix"></div><div className="dropSeven"></div><div className="dropEight"></div><div className="dropNine"></div><div className="dropTen"></div></div>
     </div>
   );
 };
 
 // ─── IMAGE PRELOADER & CARD COMPONENTS ───────────────
-const roleImages = {
-  'Mafia': '/mafia-card.jpg',
-  'Doctor': '/doctor-card.jpg',
-  'Detective': '/detective-card.jpg',
-  'Sheriff': '/sheriff-card.jpg',
-  'Civilian': '/civilian-card.jpg'
-};
-
-const glowColors = { 
-  'Mafia': '#ff003c',      
-  'Doctor': '#00ff75',     
-  'Detective': '#00d2ff',  
-  'Sheriff': '#f2994a',    
-  'Civilian': '#8e44ad'    
-};
+const roleImages = { 'Mafia': '/mafia-card.jpg', 'Doctor': '/doctor-card.jpg', 'Detective': '/detective-card.jpg', 'Sheriff': '/sheriff-card.jpg', 'Civilian': '/civilian-card.jpg' };
+const glowColors = { 'Mafia': '#ff003c', 'Doctor': '#00ff75', 'Detective': '#00d2ff', 'Sheriff': '#f2994a', 'Civilian': '#8e44ad' };
 
 const ImagePreloader = () => (
-  <div className="hidden">
-    {Object.values(roleImages).map((src, index) => (
-      <img key={index} src={src} alt="preload" fetchpriority="high" />
-    ))}
-  </div>
+  <div className="hidden">{Object.values(roleImages).map((src, index) => <img key={index} src={src} alt="preload" fetchpriority="high" />)}</div>
 );
 
 const RoleCard = ({ isFlipped, role }) => {
   return (
     <div className="my-6 relative w-[240px] h-[360px] [perspective:1000px] select-none touch-none" style={tapSafeStyle}>
-      {/* ARCHITECT FIX: Combine translateZ and rotateY in the SAME inline style to prevent overriding */}
-      <div 
-        className="relative w-full h-full transition-transform duration-[600ms] [transform-style:preserve-3d]"
-        style={{ transform: isFlipped ? 'rotateY(180deg) translateZ(0)' : 'rotateY(0deg) translateZ(0)' }}
-      >
+      <div className="relative w-full h-full transition-transform duration-[600ms] [transform-style:preserve-3d]" style={{ transform: isFlipped ? 'rotateY(180deg) translateZ(0)' : 'rotateY(0deg) translateZ(0)' }}>
         <div className="absolute inset-0 [backface-visibility:hidden] rounded-[2rem] bg-[#0a0a0a] border border-slate-800 flex flex-col items-center justify-center p-4 shadow-xl">
            <p className="text-slate-500 font-black tracking-widest uppercase text-center text-xl">Secret Role</p>
            <p className="text-[10px] text-slate-600 mt-4 tracking-widest uppercase font-bold animate-pulse">Tap & Hold to Reveal</p>
         </div>
-        
-        <div 
-          className="absolute inset-0 [backface-visibility:hidden] rounded-[2rem] bg-black" 
-          style={{ 
-            transform: 'rotateY(180deg)',
-            backgroundImage: `url(${roleImages[role] || roleImages.Civilian})`,
-            backgroundPosition: 'center',
-            backgroundSize: '105%',
-            backgroundRepeat: 'no-repeat',
-            boxShadow: isFlipped ? `0px 0px 50px 10px ${glowColors[role] || glowColors.Civilian}40` : 'none' 
-          }}
-        >
-        </div>
+        <div className="absolute inset-0 [backface-visibility:hidden] rounded-[2rem] bg-black" style={{ transform: 'rotateY(180deg)', backgroundImage: `url(${roleImages[role] || roleImages.Civilian})`, backgroundPosition: 'center', backgroundSize: '105%', backgroundRepeat: 'no-repeat', boxShadow: isFlipped ? `0px 0px 50px 10px ${glowColors[role] || glowColors.Civilian}40` : 'none' }}></div>
       </div>
     </div>
   );
@@ -444,37 +192,22 @@ export default function GameBoard() {
   
   const selectedMafiaCount = state.settings?.mafiaCount || 'auto';
   const selectedSheriffMode = state.settings?.sheriffMode || 'auto';
-
-  const requestedMafiaCount = selectedMafiaCount === 'auto'
-    ? (state.players.length >= 8 ? 2 : 1)
-    : Number(selectedMafiaCount) || 1;
+  const requestedMafiaCount = selectedMafiaCount === 'auto' ? (state.players.length >= 8 ? 2 : 1) : Number(selectedMafiaCount) || 1;
   const resolvedMafiaCount = Math.max(1, Math.min(requestedMafiaCount, Math.max(1, state.players.length - 2 || 1)));
-  const sheriffWanted = selectedSheriffMode === 'always'
-    || (selectedSheriffMode === 'auto' && state.players.length >= 8);
+  const sheriffWanted = selectedSheriffMode === 'always' || (selectedSheriffMode === 'auto' && state.players.length >= 8);
   const hasSheriff = sheriffWanted && (2 + resolvedMafiaCount < state.players.length);
   const baseRoles = 2 + resolvedMafiaCount + (hasSheriff ? 1 : 0);
   const civilians = Math.max(state.players.length - baseRoles, 0);
 
   useEffect(() => {
     let timer;
-    if (state.phase === 'night_transition') {
-      timer = setTimeout(() => {
-        state.startNightRoles();
-      }, TRANSITION_MS);
-    } else if (state.phase === 'day_transition') {
-      timer = setTimeout(() => {
-        state.startDayRecap();
-      }, TRANSITION_MS);
-    }
+    if (state.phase === 'night_transition') { timer = setTimeout(() => { state.startNightRoles(); }, TRANSITION_MS); } 
+    else if (state.phase === 'day_transition') { timer = setTimeout(() => { state.startDayRecap(); }, TRANSITION_MS); }
     return () => clearTimeout(timer);
   }, [state.phase]);
 
-  useEffect(() => {
-    setCardViewed(false);
-    setVoteSelected(false);
-  }, [state.phase]);
+  useEffect(() => { setCardViewed(false); setVoteSelected(false); }, [state.phase]);
 
-  // Derived Background States
   const isGalaxyPhase = state.phase === 'lobby' || state.phase === 'role_reveal';
   const isSpookyPhase = state.phase !== 'splash' && state.phase !== 'lobby' && state.phase !== 'role_reveal';
 
@@ -483,51 +216,41 @@ export default function GameBoard() {
     return (
       <button 
         onPointerDown={(e) => e.stopPropagation()}
-        onClick={() => {
-          if (window.confirm("Abort current game and go back to Lobby?")) {
-            state.resetToLobby();
-          }
-        }}
+        onClick={() => { if (window.confirm("Abort current game and go back to Lobby?")) { state.resetToLobby(); } }}
         className="absolute top-4 left-4 text-slate-400 font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 active:scale-90 z-50 p-3 bg-[#0a0a0a]/80 backdrop-blur-md rounded-lg border border-slate-800 shadow-xl pointer-events-auto"
         style={tapSafeStyle}
-      >
-        <span>◀</span> LOBBY
-      </button>
+      ><span>◀</span> LOBBY</button>
     );
   };
 
+  // ARCHITECT FIX: Added Framer Motion wrapper to lists. In-Game height expanded to 280px (4 items).
   const renderPlayerList = (onSelect, includeSkip = false, hideRole = null) => {
     const visiblePlayers = hideRole ? alivePlayers.filter(p => p.role !== hideRole) : alivePlayers;
-
     return (
       <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={tapSafeStyle}>
         <div 
-          className="w-full space-y-2 max-h-[280px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
-          style={{
-            maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)'
-          }}
+          className="w-full space-y-3 max-h-[280px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
+          style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}
         >
-          {visiblePlayers.map(p => (
-            <button 
-              key={p.id} 
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => onSelect(p.id)}
-              className="w-full p-4 bg-[#111] text-white active:scale-95 border border-slate-700 rounded-xl font-bold uppercase transition-all"
-              style={tapSafeStyle}
-            >
-              {p.name}
-            </button>
+          {visiblePlayers.map((p, index) => (
+            <AnimatedItem key={p.id} index={index} delay={0.05}>
+              <button 
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => onSelect(p.id)}
+                className="w-full p-4 bg-[#111] text-white active:scale-95 border border-slate-700 rounded-xl font-bold uppercase transition-all hover:border-slate-500"
+                style={tapSafeStyle}
+              >{p.name}</button>
+            </AnimatedItem>
           ))}
           {includeSkip && (
-            <button 
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => onSelect(null)}
-              className="w-full p-4 bg-transparent border border-slate-700/80 text-slate-400 rounded-xl font-bold uppercase mt-4 active:scale-95"
-              style={tapSafeStyle}
-            >
-              Skip / Nobody
-            </button>
+            <AnimatedItem index={visiblePlayers.length} delay={0.05}>
+              <button 
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => onSelect(null)}
+                className="w-full p-4 bg-transparent border border-slate-700/80 text-slate-400 rounded-xl font-bold uppercase mt-2 active:scale-95 transition-all hover:border-slate-500 hover:text-slate-300"
+                style={tapSafeStyle}
+              >Skip / Nobody</button>
+            </AnimatedItem>
           )}
         </div>
       </div>
@@ -537,99 +260,40 @@ export default function GameBoard() {
   return (
     <>
       <style>{`
-        /* PERMANENT FIX: Root level reset to kill tap highlights */
-        * {
-          -webkit-tap-highlight-color: transparent !important;
-          outline: none !important;
-        }
-        body {
-          background-color: #050505 !important;
-          -webkit-touch-callout: none;
-          user-select: none;
-        }
-        input {
-          user-select: auto;
-        }
-        /* Hides scrollbar on the Gradual Blur lists to keep it cinematic */
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
+        * { -webkit-tap-highlight-color: transparent !important; outline: none !important; }
+        body { background-color: #050505 !important; -webkit-touch-callout: none; user-select: none; }
+        input { user-select: auto; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
       
-      {/* ─── PERMANENT BACKGROUND MOUNTS (ZERO FLICKER ARCHITECTURE) ─── */}
-      <div 
-        className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out"
-        style={{ 
-          backgroundColor: '#e5e5e5',
-          opacity: state.phase === 'splash' ? 1 : 0, 
-          zIndex: state.phase === 'splash' ? 0 : -100,
-          visibility: state.phase === 'splash' ? 'visible' : 'hidden' 
-        }}
-      />
-
-      <div 
-        className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out"
-        style={{ 
-          opacity: isGalaxyPhase ? 1 : 0, 
-          zIndex: isGalaxyPhase ? 0 : -50,
-          visibility: isGalaxyPhase ? 'visible' : 'hidden' 
-        }}
-      >
+      {/* ─── PERMANENT BACKGROUND MOUNTS (ZERO FLICKER) ─── */}
+      <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out" style={{ backgroundColor: '#e5e5e5', opacity: state.phase === 'splash' ? 1 : 0, zIndex: state.phase === 'splash' ? 0 : -100, visibility: state.phase === 'splash' ? 'visible' : 'hidden' }} />
+      <div className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out" style={{ opacity: isGalaxyPhase ? 1 : 0, zIndex: isGalaxyPhase ? 0 : -50, visibility: isGalaxyPhase ? 'visible' : 'hidden' }}>
         <MemoizedGalaxy />
       </div>
-
-      <div 
-        className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-700 ease-in-out"
-        style={{ 
-          opacity: isSpookyPhase ? 1 : 0, 
-          zIndex: isSpookyPhase ? 0 : -50,
-          visibility: isSpookyPhase ? 'visible' : 'hidden'
-        }}
-      >
+      <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-700 ease-in-out" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
         <FullScreenSpooky phase={state.phase} />
       </div>
 
-      {/* ─── PHASE OVERLAYS ─── */}
+      {/* ─── SPLASH PHASE ─── */}
       {state.phase === 'splash' && (
         <div className="relative min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden z-10 transition-opacity duration-1000" style={tapSafeStyle}>
           <ImagePreloader />
-          <button 
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={() => {
-              setTimeout(() => {
-                state.enterLobby();
-              }, 800); 
-            }}
-            className="splash-batman-btn"
-            style={tapSafeStyle}
-          >
+          <button onPointerDown={(e) => e.stopPropagation()} onClick={() => { setTimeout(() => { state.enterLobby(); }, 800); }} className="splash-batman-btn" style={tapSafeStyle}>
             <span>PLAY GAME</span>
           </button>
         </div>
       )}
 
+      {/* ─── LOBBY PHASE ─── */}
       {state.phase === 'lobby' && (
         <div className="relative min-h-screen text-white flex flex-col items-center p-6 overflow-hidden pointer-events-none z-10" style={tapSafeStyle}>
-          <button
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={() => setShowSettings((prev) => !prev)}
-            aria-label="Toggle settings"
-            className="absolute top-4 left-4 z-50 w-12 h-12 rounded-xl border border-cyan-300/40 bg-[#02060a]/80 backdrop-blur-md flex items-center justify-center active:scale-95 transition-all hover:border-cyan-200/70 hover:bg-[#07111a]/85 pointer-events-auto"
-            style={tapSafeStyle}
-          >
-            <svg className={`w-6 h-6 text-cyan-100 ${showSettings ? 'animate-spin' : ''}`} style={{ animationDuration: '0.8s' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3.2" />
-              <path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.9 1.9 0 0 1-2.7 2.7l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 0 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.9 1.9 0 0 1-2.7-2.7l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 0 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0 1.1.2h0a1 1 0 0 0 .6-.9V4a2 2 0 0 1 4 0v.2a1 1 0 0 0 .6.9h0a1 1 0 0 0 1.1-.2l.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0-.2 1.1v0a1 1 0 0 0 .9.6h.2a2 2 0 0 1 0 4h-.2a1 1 0 0 0-.9.6Z" />
-            </svg>
+          <button onPointerDown={(e) => e.stopPropagation()} onClick={() => setShowSettings((prev) => !prev)} className="absolute top-4 left-4 z-50 w-12 h-12 rounded-xl border border-cyan-300/40 bg-[#02060a]/80 backdrop-blur-md flex items-center justify-center active:scale-95 transition-all hover:border-cyan-200/70 hover:bg-[#07111a]/85 pointer-events-auto" style={tapSafeStyle}>
+            <svg className={`w-6 h-6 text-cyan-100 ${showSettings ? 'animate-spin' : ''}`} style={{ animationDuration: '0.8s' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3.2" /><path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.9 1.9 0 0 1-2.7 2.7l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 0 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.9 1.9 0 0 1-2.7-2.7l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 0 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0 1.1.2h0a1 1 0 0 0 .6-.9V4a2 2 0 0 1 4 0v.2a1 1 0 0 0 .6.9h0a1 1 0 0 0 1.1-.2l.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0-.2 1.1v0a1 1 0 0 0 .9.6h.2a2 2 0 0 1 0 4h-.2a1 1 0 0 0-.9.6Z" /></svg>
           </button>
           
-          <h1 className="text-5xl md:text-6xl font-black uppercase mb-10 tracking-[0.2em] mt-14 relative z-10 shine-text text-center pointer-events-none">
-            THE MAFIA
-          </h1>
+          <h1 className="text-5xl md:text-6xl font-black uppercase mb-10 tracking-[0.2em] mt-14 relative z-10 shine-text text-center pointer-events-none">THE MAFIA</h1>
 
           {showSettings && (
             <div className="w-full max-w-sm mb-8 p-4 rounded-2xl border border-cyan-300/30 bg-[#02060a]/85 backdrop-blur-lg relative z-10 shadow-xl pointer-events-auto">
@@ -637,34 +301,19 @@ export default function GameBoard() {
               <div className="mb-4">
                 <p className="text-slate-300 text-[10px] uppercase tracking-widest mb-2">Mafia Count</p>
                 <div className="grid grid-cols-3 gap-2">
-                  {['auto', 1, 2].map((mode) => (
-                    <button key={String(mode)} onPointerDown={(e) => e.stopPropagation()} onClick={() => state.setMafiaCount(mode)} className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${selectedMafiaCount === mode ? 'bg-rose-400/20 text-rose-200 border-rose-300/60' : 'bg-slate-900/70 text-slate-300 border-slate-700/70 hover:border-slate-500'}`} style={tapSafeStyle}>
-                      {mode}
-                    </button>
-                  ))}
+                  {['auto', 1, 2].map((mode) => <button key={String(mode)} onPointerDown={(e) => e.stopPropagation()} onClick={() => state.setMafiaCount(mode)} className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${selectedMafiaCount === mode ? 'bg-rose-400/20 text-rose-200 border-rose-300/60' : 'bg-slate-900/70 text-slate-300 border-slate-700/70 hover:border-slate-500'}`} style={tapSafeStyle}>{mode}</button>)}
                 </div>
               </div>
-              <div className="mb-1">
+              <div className="mb-4">
                 <p className="text-slate-300 text-[10px] uppercase tracking-widest mb-2">Sheriff Role</p>
                 <div className="grid grid-cols-3 gap-2">
-                  {['auto', 'always', 'off'].map((mode) => (
-                    <button key={mode} onPointerDown={(e) => e.stopPropagation()} onClick={() => state.setSheriffMode(mode)} className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${selectedSheriffMode === mode ? 'bg-violet-400/20 text-violet-200 border-violet-300/60' : 'bg-slate-900/70 text-slate-300 border-slate-700/70 hover:border-slate-500'}`} style={tapSafeStyle}>
-                      {mode}
-                    </button>
-                  ))}
+                  {['auto', 'always', 'off'].map((mode) => <button key={mode} onPointerDown={(e) => e.stopPropagation()} onClick={() => state.setSheriffMode(mode)} className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${selectedSheriffMode === mode ? 'bg-violet-400/20 text-violet-200 border-violet-300/60' : 'bg-slate-900/70 text-slate-300 border-slate-700/70 hover:border-slate-500'}`} style={tapSafeStyle}>{mode}</button>)}
                 </div>
               </div>
               <div className="mb-4">
                 <div className="flex items-center justify-between bg-[#010201]/50 border border-slate-700/50 p-3 rounded-xl">
                   <span className="font-bold text-[10px] tracking-widest uppercase text-slate-400">Reveal Roles on Death?</span>
-                  <button 
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={state.toggleRevealRoles} 
-                    className={`px-3 py-1 rounded text-[10px] uppercase font-black tracking-widest transition-colors ${state.settings?.revealRoles ? 'bg-green-500/20 text-green-500 border border-green-500/50' : 'bg-[#222] text-slate-500 border border-slate-700'}`}
-                    style={tapSafeStyle}
-                  >
-                    {state.settings?.revealRoles ? 'ON' : 'OFF'}
-                  </button>
+                  <button onPointerDown={(e) => e.stopPropagation()} onClick={state.toggleRevealRoles} className={`px-3 py-1 rounded text-[10px] uppercase font-black tracking-widest transition-colors ${state.settings?.revealRoles ? 'bg-green-500/20 text-green-500 border border-green-500/50' : 'bg-[#222] text-slate-500 border border-slate-700'}`} style={tapSafeStyle}>{state.settings?.revealRoles ? 'ON' : 'OFF'}</button>
                 </div>
               </div>
               <div className="mt-4 p-3 rounded-xl bg-slate-900/70 border border-slate-700/70">
@@ -689,9 +338,6 @@ export default function GameBoard() {
                 <div className="poda-filter-icon" onPointerDown={(e) => e.stopPropagation()} onClick={() => { if(newPlayerName.trim()) { state.addPlayer(newPlayerName.trim()); setNewPlayerName(''); } }} style={tapSafeStyle}>
                   <svg preserveAspectRatio="none" height="27" width="27" viewBox="4.8 4.56 14.832 15.408" fill="none"><path d="M8.16 6.65002H15.83C16.47 6.65002 16.99 7.17002 16.99 7.81002V9.09002C16.99 9.56002 16.7 10.14 16.41 10.43L13.91 12.64C13.56 12.93 13.33 13.51 13.33 13.98V16.48C13.33 16.83 13.1 17.29 12.81 17.47L12 17.98C11.24 18.45 10.2 17.92 10.2 16.99V13.91C10.2 13.5 9.97 12.98 9.73 12.69L7.52 10.36C7.23 10.08 7 9.55002 7 9.20002V7.87002C7 7.17002 7.52 6.65002 8.16 6.65002Z" stroke="#d6d6e6" strokeWidth="1" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"></path></svg>
                 </div>
-                <div className="poda-search-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" viewBox="0 0 24 24" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" height="24" fill="none"><circle stroke="url(#search)" r="8" cy="11" cx="11"></circle><line stroke="url(#searchl)" y2="16.65" y1="22" x2="16.65" x1="22"></line><defs><linearGradient gradientTransform="rotate(50)" id="search"><stop stopColor="#f8e7f8" offset="0%"></stop><stop stopColor="#b6a9b7" offset="50%"></stop></linearGradient><linearGradient id="searchl"><stop stopColor="#b6a9b7" offset="0%"></stop><stop stopColor="#837484" offset="50%"></stop></linearGradient></defs></svg>
-                </div>
               </div>
             </div>
           </div>
@@ -709,20 +355,19 @@ export default function GameBoard() {
             </div>
           )}
 
-          {/* ─── RESTRICTED GRADUAL BLUR SCROLL AREA FOR PLAYERS (LOBBY ONLY 2 ITEMS HEIGHT) ─── */}
+          {/* ─── FRAMER SCROLL AREA FOR PLAYERS (LOBBY STRICTLY 2 ITEMS = 135px) ─── */}
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mb-10" style={tapSafeStyle}>
             <div 
-              className="w-full space-y-2 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
-              style={{
-                maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)',
-                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)'
-              }}
+              className="w-full space-y-3 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
+              style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)' }}
             >
-              {state.players.map((p) => (
-                <div key={p.id} className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all">
-                  <span className="font-bold tracking-widest text-white">{p.name}</span>
-                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6" style={tapSafeStyle}>✕</button>
-                </div>
+              {state.players.map((p, index) => (
+                <AnimatedItem key={p.id} index={index} delay={0.05}>
+                  <div className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all">
+                    <span className="font-bold tracking-widest text-white">{p.name}</span>
+                    <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6" style={tapSafeStyle}>✕</button>
+                  </div>
+                </AnimatedItem>
               ))}
             </div>
           </div>
@@ -737,6 +382,7 @@ export default function GameBoard() {
         </div>
       )}
 
+      {/* ─── ROLE REVEAL ─── */}
       {state.phase === 'role_reveal' && (
         <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
@@ -764,13 +410,12 @@ export default function GameBoard() {
         </div>
       )}
 
+      {/* ─── NIGHT PHASES ─── */}
       {state.phase === 'night_transition' && (
         <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none">
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-96 h-96 bg-black/30 rounded-full blur-3xl animate-pulse"></div>
-            </div>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="w-96 h-96 bg-black/30 rounded-full blur-3xl animate-pulse"></div></div>
             <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] relative z-20 animate-in fade-in duration-1000">EVERYONE</h2>
             <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] relative z-20 mt-4 animate-in fade-in duration-1000 delay-500">CLOSE YOUR EYES</h2>
             <p className="text-slate-300 mt-8 text-lg tracking-widest font-bold relative z-20 animate-pulse">Get ready for the night...</p>
@@ -803,15 +448,9 @@ export default function GameBoard() {
           {renderBackButton()}
           {state.investigationResult ? (
             <>
-              <p className="text-slate-300 uppercase font-bold tracking-widest text-[11px] mb-6 relative z-10 pointer-events-none">
-                {state.investigationResult === 'DEAD_ROLE' ? "🔍 Moderator: Pretend to give an answer!" : "🔍 Moderator: Nod or shake your head."}
-              </p>
-              <h1 className={`text-6xl md:text-7xl font-black uppercase relative z-10 pointer-events-none ${state.investigationResult === 'DEAD_ROLE' ? 'text-slate-500 drop-shadow-[0_0_20px_rgba(107,114,128,0.5)]' : state.investigationResult === 'MAFIA' ? 'text-red-600 drop-shadow-[0_0_30px_rgba(220,38,38,0.7)]' : 'text-green-400 drop-shadow-[0_0_30px_rgba(34,197,94,0.7)]'}`}>
-                {state.investigationResult === 'DEAD_ROLE' ? 'ROLE DEAD' : state.investigationResult}
-              </h1>
-              <button onPointerDown={(e) => e.stopPropagation()} onClick={state.advanceFromDetective} className="mt-12 p-5 w-full max-w-sm bg-[#0a0a0a]/90 backdrop-blur-md rounded-xl font-black tracking-widest uppercase active:scale-95 relative z-10 border border-slate-700 hover:border-slate-500 transition-colors shadow-lg pointer-events-auto" style={tapSafeStyle}>
-                Continue →
-              </button>
+              <p className="text-slate-300 uppercase font-bold tracking-widest text-[11px] mb-6 relative z-10 pointer-events-none">{state.investigationResult === 'DEAD_ROLE' ? "🔍 Moderator: Pretend to give an answer!" : "🔍 Moderator: Nod or shake your head."}</p>
+              <h1 className={`text-6xl md:text-7xl font-black uppercase relative z-10 pointer-events-none ${state.investigationResult === 'DEAD_ROLE' ? 'text-slate-500 drop-shadow-[0_0_20px_rgba(107,114,128,0.5)]' : state.investigationResult === 'MAFIA' ? 'text-red-600 drop-shadow-[0_0_30px_rgba(220,38,38,0.7)]' : 'text-green-400 drop-shadow-[0_0_30px_rgba(34,197,94,0.7)]'}`}>{state.investigationResult === 'DEAD_ROLE' ? 'ROLE DEAD' : state.investigationResult}</h1>
+              <button onPointerDown={(e) => e.stopPropagation()} onClick={state.advanceFromDetective} className="mt-12 p-5 w-full max-w-sm bg-[#0a0a0a]/90 backdrop-blur-md rounded-xl font-black tracking-widest uppercase active:scale-95 relative z-10 border border-slate-700 hover:border-slate-500 transition-colors shadow-lg pointer-events-auto" style={tapSafeStyle}>Continue →</button>
             </>
           ) : (
             <>
@@ -834,13 +473,12 @@ export default function GameBoard() {
         </div>
       )}
 
+      {/* ─── DAY PHASES ─── */}
       {state.phase === 'day_transition' && (
         <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none">
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-96 h-96 bg-yellow-300/20 rounded-full blur-3xl animate-pulse"></div>
-            </div>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="w-96 h-96 bg-yellow-300/20 rounded-full blur-3xl animate-pulse"></div></div>
             <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_40px_rgba(255,210,0,0.8)] relative z-20 animate-in fade-in duration-1000">EVERYONE</h2>
             <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_40px_rgba(255,210,0,0.8)] relative z-20 mt-4 animate-in fade-in duration-1000 delay-500">OPEN YOUR EYES</h2>
             <p className="text-yellow-100 mt-8 text-lg tracking-widest font-bold relative z-20 animate-pulse">The sun is rising...</p>
@@ -854,14 +492,10 @@ export default function GameBoard() {
           <h2 className="text-4xl md:text-5xl font-black uppercase mb-12 text-white tracking-[0.2em] drop-shadow-[0_0_20px_rgba(255,255,255,0.6)] mt-14 relative z-10 animate-in fade-in duration-1000 pointer-events-none">The Town Awakens</h2>
           <div className="w-full max-w-2xl space-y-4 relative z-10 pointer-events-none">
             {state.dayRecap.map((msg, i) => (
-              <div key={i} className="p-6 bg-slate-900/50 backdrop-blur-md rounded-xl text-lg font-bold border-l-4 border-amber-400 shadow-xl animate-in fade-in duration-1000 transition-colors pointer-events-auto hover:bg-slate-900/70" style={{ animationDelay: `${i * 200}ms` }}>
-                <span className="text-amber-300">▸ </span>{msg}
-              </div>
+              <div key={i} className="p-6 bg-slate-900/50 backdrop-blur-md rounded-xl text-lg font-bold border-l-4 border-amber-400 shadow-xl animate-in fade-in duration-1000 transition-colors pointer-events-auto hover:bg-slate-900/70" style={{ animationDelay: `${i * 200}ms` }}><span className="text-amber-300">▸ </span>{msg}</div>
             ))}
           </div>
-          <button onPointerDown={(e) => e.stopPropagation()} onClick={state.phase === 'day_recap' ? state.startVoting : state.advanceToNight} className="mt-12 p-5 w-full max-w-sm bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 rounded-xl font-black tracking-widest uppercase active:scale-95 transition-transform shadow-xl relative z-10 hover:shadow-[0_0_30px_rgba(255,193,7,0.5)] pointer-events-auto" style={tapSafeStyle}>
-            {state.phase === 'day_recap' ? '→ Begin Voting' : '→ Go To Sleep (Next Night)'}
-          </button>
+          <button onPointerDown={(e) => e.stopPropagation()} onClick={state.phase === 'day_recap' ? state.startVoting : state.advanceToNight} className="mt-12 p-5 w-full max-w-sm bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 rounded-xl font-black tracking-widest uppercase active:scale-95 transition-transform shadow-xl relative z-10 hover:shadow-[0_0_30px_rgba(255,193,7,0.5)] pointer-events-auto" style={tapSafeStyle}>{state.phase === 'day_recap' ? '→ Begin Voting' : '→ Go To Sleep (Next Night)'}</button>
         </div>
       )}
 
@@ -872,42 +506,34 @@ export default function GameBoard() {
           <h3 className="text-5xl md:text-6xl font-black text-amber-300 my-4 uppercase relative z-10 drop-shadow-[0_0_20px_rgba(255,193,7,0.5)] pointer-events-none">{alivePlayers[state.votingState.currentVoterIndex]?.name}</h3>
           <p className="text-lg font-bold text-red-400 tracking-widest uppercase relative z-10 drop-shadow-md pointer-events-none">Who do you exile?</p>
           
-          {/* ─── DAY VOTING LIST (4 ITEMS + BLUR MASK) ─── */}
+          {/* ─── DAY VOTING FRAMER SCROLL LIST ─── */}
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-6 mb-6" style={tapSafeStyle}>
             <div 
               className="w-full space-y-3 max-h-[280px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
-              style={{
-                maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)',
-                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)'
-              }}
+              style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}
             >
-              {alivePlayers.filter(p => p.id !== alivePlayers[state.votingState.currentVoterIndex]?.id).map(p => (
-                <button key={p.id} onPointerDown={(e) => e.stopPropagation()} onClick={() => { setVoteSelected(true); state.submitVote(p.id); }} className="w-full p-4 bg-slate-900/70 backdrop-blur-md text-white border-2 border-slate-700/70 rounded-lg font-bold uppercase active:scale-95 transition-all hover:border-slate-500 hover:bg-slate-900" style={tapSafeStyle}>
-                  → Vote {p.name}
-                </button>
+              {alivePlayers.filter(p => p.id !== alivePlayers[state.votingState.currentVoterIndex]?.id).map((p, index) => (
+                <AnimatedItem key={p.id} index={index} delay={0.05}>
+                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => { setVoteSelected(true); state.submitVote(p.id); }} className="w-full p-4 bg-slate-900/70 backdrop-blur-md text-white border-2 border-slate-700/70 rounded-lg font-bold uppercase active:scale-95 transition-all hover:border-slate-500 hover:bg-slate-900" style={tapSafeStyle}>→ Vote {p.name}</button>
+                </AnimatedItem>
               ))}
-              <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.submitVote(null)} disabled={!voteSelected} className={`w-full p-4 border-2 rounded-lg font-bold uppercase mt-6 active:scale-95 transition-all ${!voteSelected ? 'opacity-40 pointer-events-none border-slate-700/30 bg-transparent text-slate-500' : 'bg-transparent border-slate-600/50 backdrop-blur-sm text-slate-300 hover:border-slate-400 hover:text-slate-200'}`} style={tapSafeStyle}>
-                ⊘ Pass / No Vote
-              </button>
+              <AnimatedItem index={999} delay={0.05}>
+                <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.submitVote(null)} disabled={!voteSelected} className={`w-full p-4 border-2 rounded-lg font-bold uppercase mt-2 active:scale-95 transition-all ${!voteSelected ? 'opacity-40 pointer-events-none border-slate-700/30 bg-transparent text-slate-500' : 'bg-transparent border-slate-600/50 backdrop-blur-sm text-slate-300 hover:border-slate-400 hover:text-slate-200'}`} style={tapSafeStyle}>⊘ Pass / No Vote</button>
+              </AnimatedItem>
             </div>
           </div>
           {!voteSelected && <p className="mt-8 text-slate-400 font-bold text-sm relative z-10 animate-pulse pointer-events-none">👉 Select a vote first, then you can pass</p>}
-          <p className="mt-10 text-slate-400 font-bold text-[11px] uppercase tracking-wider relative z-10 bg-slate-900/40 px-4 py-2 rounded-full backdrop-blur-md border border-slate-700/50 pointer-events-none">
-            Vote {state.votingState.currentVoterIndex + 1} of {alivePlayers.length}
-          </p>
+          <p className="mt-10 text-slate-400 font-bold text-[11px] uppercase tracking-wider relative z-10 bg-slate-900/40 px-4 py-2 rounded-full backdrop-blur-md border border-slate-700/50 pointer-events-none">Vote {state.votingState.currentVoterIndex + 1} of {alivePlayers.length}</p>
         </div>
       )}
 
+      {/* ─── GAME OVER PHASE ─── */}
       {state.phase === 'gameover' && (
         <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <div className="relative z-10 flex flex-col items-center pointer-events-none">
-            <h1 className={`text-6xl md:text-7xl font-black uppercase mb-2 mt-14 ${state.winner === 'Mafia' ? 'text-red-600 drop-shadow-[0_0_40px_rgba(220,38,38,0.8)]' : 'text-blue-400 drop-shadow-[0_0_40px_rgba(96,165,250,0.8)]'}`}>
-              {state.winner} WIN!
-            </h1>
-            <p className={`text-sm tracking-[0.2em] font-bold ${state.winner === 'Mafia' ? 'text-red-400' : 'text-blue-300'}`}>
-              {state.winner === 'Mafia' ? '🔴 THE MAFIA HAS TAKEN OVER THE TOWN' : '✓ THE TOWN HAS ELIMINATED THE THREAT'}
-            </p>
+            <h1 className={`text-6xl md:text-7xl font-black uppercase mb-2 mt-14 ${state.winner === 'Mafia' ? 'text-red-600 drop-shadow-[0_0_40px_rgba(220,38,38,0.8)]' : 'text-blue-400 drop-shadow-[0_0_40px_rgba(96,165,250,0.8)]'}`}>{state.winner} WIN!</h1>
+            <p className={`text-sm tracking-[0.2em] font-bold ${state.winner === 'Mafia' ? 'text-red-400' : 'text-blue-300'}`}>{state.winner === 'Mafia' ? '🔴 THE MAFIA HAS TAKEN OVER THE TOWN' : '✓ THE TOWN HAS ELIMINATED THE THREAT'}</p>
           </div>
           
           <div className="w-full max-w-2xl mt-12 text-left bg-gradient-to-b from-slate-900/60 to-slate-950/60 backdrop-blur-md p-8 rounded-2xl border border-slate-700/50 relative z-10 shadow-2xl pointer-events-auto">
