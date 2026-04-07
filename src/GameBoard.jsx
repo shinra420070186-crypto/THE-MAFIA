@@ -451,9 +451,9 @@ export default function GameBoard() {
     setVoteSelected(false);
   }, [state.phase]);
 
-  // Derive which background should be visible based on phase
-  const isGalaxyPhase = state.phase === 'lobby' || state.phase === 'role_reveal';
-  const isSpookyPhase = state.phase !== 'splash' && state.phase !== 'lobby' && state.phase !== 'role_reveal';
+  // ARCHITECT FIX: Included 'splash' in the Galaxy phase array!
+  const isGalaxyPhase = state.phase === 'splash' || state.phase === 'lobby' || state.phase === 'role_reveal';
+  const isSpookyPhase = !isGalaxyPhase;
 
   const renderBackButton = () => {
     if (state.phase === 'lobby' || state.phase === 'splash') return null;
@@ -572,26 +572,24 @@ export default function GameBoard() {
 
       {/* ─── PHASE OVERLAYS ─── */}
       {state.phase === 'splash' && (
-        <div className="relative min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden" style={{ backgroundColor: '#e5e5e5', ...tapSafeStyle }}>
+        <div className="relative min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden z-10 transition-opacity duration-1000" style={tapSafeStyle}>
           <ImagePreloader />
-          <div className="relative z-10">
-            <button 
-              onClick={() => {
-                setTimeout(() => {
-                  state.enterLobby();
-                }, 1500); 
-              }}
-              className="splash-batman-btn"
-              style={tapSafeStyle}
-            >
-              <span>PLAY GAME</span>
-            </button>
-          </div>
+          <button 
+            onClick={() => {
+              setTimeout(() => {
+                state.enterLobby();
+              }, 1200); 
+            }}
+            className="splash-batman-btn"
+            style={tapSafeStyle}
+          >
+            <span>PLAY GAME</span>
+          </button>
         </div>
       )}
 
       {state.phase === 'lobby' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 overflow-hidden pointer-events-none" style={tapSafeStyle}>
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 overflow-hidden pointer-events-none z-10" style={tapSafeStyle}>
           <button
             onClick={() => setShowSettings((prev) => !prev)}
             aria-label="Toggle settings"
@@ -634,7 +632,6 @@ export default function GameBoard() {
                 </div>
               </div>
 
-              {/* ─── MOVED FROM LOBBY: REVEAL ROLES TOGGLE ─── */}
               <div className="mb-4">
                 <div className="flex items-center justify-between bg-[#010201]/50 border border-slate-700/50 p-3 rounded-xl">
                   <span className="font-bold text-[10px] tracking-widest uppercase text-slate-400">Reveal Roles on Death?</span>
@@ -690,7 +687,6 @@ export default function GameBoard() {
             </div>
           )}
 
-          {/* ─── RESTRICTED GRADUAL BLUR SCROLL AREA FOR PLAYERS (LOBBY ONLY 2 ITEMS HEIGHT) ─── */}
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mb-10" style={tapSafeStyle}>
             <div 
               className="w-full space-y-2 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
@@ -719,7 +715,7 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'role_reveal' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
+        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <p className="text-slate-300 font-bold uppercase tracking-widest text-[10px] mb-2 relative z-10 pointer-events-none">Pass phone to</p>
           <h2 className="text-4xl font-black text-white uppercase mb-8 drop-shadow-md relative z-10 pointer-events-none">{state.players[state.revealIndex]?.name}</h2>
@@ -745,7 +741,7 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'night_transition' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
+        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none">
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -759,7 +755,7 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'night_mafia' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <h2 className="text-3xl md:text-4xl font-black text-red-500 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
           <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🌙 Moderator: Ask the Mafia to wake up and point.</p>
@@ -769,7 +765,7 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'night_doctor' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <h2 className="text-3xl md:text-4xl font-black text-green-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(34,197,94,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
           <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🌙 Moderator: Ask the Doctor to wake up and point.</p>
@@ -779,7 +775,7 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'night_detective' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center justify-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center justify-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           {state.investigationResult ? (
             <>
@@ -805,7 +801,7 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'night_sheriff' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <h2 className="text-3xl md:text-4xl font-black text-purple-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(168,85,247,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
           <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">⚔️ Moderator: Ask the Sheriff to wake up and point.</p>
@@ -815,7 +811,7 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'day_transition' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
+        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none">
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -829,7 +825,7 @@ export default function GameBoard() {
       )}
 
       {(state.phase === 'day_recap' || state.phase === 'day_recap_post_vote') && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center justify-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center justify-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <h2 className="text-4xl md:text-5xl font-black uppercase mb-12 text-white tracking-[0.2em] drop-shadow-[0_0_20px_rgba(255,255,255,0.6)] mt-14 relative z-10 animate-in fade-in duration-1000 pointer-events-none">The Town Awakens</h2>
           <div className="w-full max-w-2xl space-y-4 relative z-10 pointer-events-none">
@@ -846,13 +842,12 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'day_voting' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <h2 className="text-slate-300 font-bold uppercase tracking-widest text-[12px] mt-14 mb-3 relative z-10 drop-shadow-md pointer-events-none">⚖️ Town Voting Phase</h2>
           <h3 className="text-5xl md:text-6xl font-black text-amber-300 my-4 uppercase relative z-10 drop-shadow-[0_0_20px_rgba(255,193,7,0.5)] pointer-events-none">{alivePlayers[state.votingState.currentVoterIndex]?.name}</h3>
           <p className="text-lg font-bold text-red-400 tracking-widest uppercase relative z-10 drop-shadow-md pointer-events-none">Who do you exile?</p>
           
-          {/* ─── DAY VOTING LIST (4 ITEMS + BLUR MASK) ─── */}
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-6 mb-6" style={tapSafeStyle}>
             <div 
               className="w-full space-y-3 max-h-[280px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
@@ -879,7 +874,7 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'gameover' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
+        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <div className="relative z-10 flex flex-col items-center pointer-events-none">
             <h1 className={`text-6xl md:text-7xl font-black uppercase mb-2 mt-14 ${state.winner === 'Mafia' ? 'text-red-600 drop-shadow-[0_0_40px_rgba(220,38,38,0.8)]' : 'text-blue-400 drop-shadow-[0_0_40px_rgba(96,165,250,0.8)]'}`}>
