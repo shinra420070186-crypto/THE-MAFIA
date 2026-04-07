@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useGameStore } from './store';
 import Galaxy from './Galaxy';
-import { motion, useInView } from 'motion/react';
 
 // ─── CONSTANTS ───────────────────────────────────────
 const TRANSITION_MS = 5000;
@@ -15,22 +14,38 @@ const tapSafeStyle = {
   outline: 'none' 
 };
 
-// ─── ANIMATED SCROLL ITEM (FRAMER MOTION) ────────────
+// ─── NATIVE ANIMATED SCROLL ITEM (ZERO DEPENDENCIES) ─
 const AnimatedItem = ({ children, delay = 0, index }) => {
   const ref = useRef(null);
-  // amount: 0.2 ensures the animation triggers smoothly as soon as 20% of the tile enters the box
-  const inView = useInView(ref, { amount: 0.2, triggerOnce: false });
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    // Triggers when 20% of the item enters the view
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setInView(entry.isIntersecting);
+      },
+      { threshold: 0.2 } 
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => {
+      if (ref.current) observer.unobserve(ref.current);
+    };
+  }, []);
+
   return (
-    <motion.div
+    <div
       ref={ref}
       data-index={index}
-      initial={{ scale: 0.7, opacity: 0 }}
-      animate={inView ? { scale: 1, opacity: 1 } : { scale: 0.7, opacity: 0 }}
-      transition={{ duration: 0.2, delay }}
-      style={{ width: '100%' }}
+      style={{ 
+        width: '100%',
+        transition: `transform 0.2s ease-out ${delay}s, opacity 0.2s ease-out ${delay}s`,
+        transform: inView ? 'scale(1)' : 'scale(0.7)',
+        opacity: inView ? 1 : 0
+      }}
     >
       {children}
-    </motion.div>
+    </div>
   );
 };
 
@@ -223,7 +238,7 @@ export default function GameBoard() {
     );
   };
 
-  // ARCHITECT FIX: Added Framer Motion wrapper to lists. In-Game height expanded to 280px (4 items).
+  // ARCHITECT FIX: Added Native AnimatedItem wrapper to lists
   const renderPlayerList = (onSelect, includeSkip = false, hideRole = null) => {
     const visiblePlayers = hideRole ? alivePlayers.filter(p => p.role !== hideRole) : alivePlayers;
     return (
@@ -355,10 +370,10 @@ export default function GameBoard() {
             </div>
           )}
 
-          {/* ─── FRAMER SCROLL AREA FOR PLAYERS (LOBBY STRICTLY 2 ITEMS = 135px) ─── */}
+          {/* ─── LOBBY PLAYER LIST (NATIVE ANIMATION + 2 MAX HEIGHT) ─── */}
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mb-10" style={tapSafeStyle}>
             <div 
-              className="w-full space-y-3 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
+              className="w-full space-y-2 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
               style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)' }}
             >
               {state.players.map((p, index) => (
@@ -382,7 +397,6 @@ export default function GameBoard() {
         </div>
       )}
 
-      {/* ─── ROLE REVEAL ─── */}
       {state.phase === 'role_reveal' && (
         <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
@@ -410,7 +424,6 @@ export default function GameBoard() {
         </div>
       )}
 
-      {/* ─── NIGHT PHASES ─── */}
       {state.phase === 'night_transition' && (
         <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
@@ -473,7 +486,6 @@ export default function GameBoard() {
         </div>
       )}
 
-      {/* ─── DAY PHASES ─── */}
       {state.phase === 'day_transition' && (
         <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
@@ -506,7 +518,6 @@ export default function GameBoard() {
           <h3 className="text-5xl md:text-6xl font-black text-amber-300 my-4 uppercase relative z-10 drop-shadow-[0_0_20px_rgba(255,193,7,0.5)] pointer-events-none">{alivePlayers[state.votingState.currentVoterIndex]?.name}</h3>
           <p className="text-lg font-bold text-red-400 tracking-widest uppercase relative z-10 drop-shadow-md pointer-events-none">Who do you exile?</p>
           
-          {/* ─── DAY VOTING FRAMER SCROLL LIST ─── */}
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-6 mb-6" style={tapSafeStyle}>
             <div 
               className="w-full space-y-3 max-h-[280px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
@@ -527,7 +538,6 @@ export default function GameBoard() {
         </div>
       )}
 
-      {/* ─── GAME OVER PHASE ─── */}
       {state.phase === 'gameover' && (
         <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
