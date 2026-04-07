@@ -1,10 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useGameStore } from './store';
 import Galaxy from './Galaxy';
 
 // ─── CONSTANTS ───────────────────────────────────────
 const TRANSITION_MS = 5000;
 const TAU = Math.PI * 2;
+
+// Anti-Glitch Helper for Mobile Taps
+const tapSafeStyle = { 
+  WebkitTapHighlightColor: 'transparent', 
+  WebkitTouchCallout: 'none', 
+  userSelect: 'none', 
+  outline: 'none' 
+};
 
 // ─── FULL SCREEN SPOOKY HOUSE BACKGROUND ─────────────
 const FullScreenSpooky = ({ phase }) => {
@@ -33,7 +41,7 @@ const FullScreenSpooky = ({ phase }) => {
     }}>
       <style>{`
         .full-spooky-bg {
-          position: absolute;
+          position: fixed;
           inset: 0;
           width: 100vw;
           height: 100vh;
@@ -375,7 +383,7 @@ const ImagePreloader = () => (
 
 const RoleCard = ({ isFlipped, role }) => {
   return (
-    <div className="my-6 relative w-[240px] h-[360px] [perspective:1000px] select-none touch-none">
+    <div className="my-6 relative w-[240px] h-[360px] [perspective:1000px] select-none touch-none" style={tapSafeStyle}>
       <div className={`relative w-full h-full transition-transform duration-[600ms] [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}>
         
         <div className="absolute inset-0 [backface-visibility:hidden] rounded-[2rem] bg-[#0a0a0a] border border-slate-800 flex flex-col items-center justify-center p-4 shadow-xl">
@@ -457,6 +465,7 @@ export default function GameBoard() {
           }
         }}
         className="absolute top-4 left-4 text-slate-400 font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 active:scale-90 z-50 p-3 bg-[#0a0a0a]/80 backdrop-blur-md rounded-lg border border-slate-800 shadow-xl pointer-events-auto"
+        style={tapSafeStyle}
       >
         <span>◀</span> LOBBY
       </button>
@@ -467,7 +476,7 @@ export default function GameBoard() {
     const visiblePlayers = hideRole ? alivePlayers.filter(p => p.role !== hideRole) : alivePlayers;
 
     return (
-      <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6">
+      <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={tapSafeStyle}>
         <div 
           className="w-full space-y-2 max-h-[280px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
           style={{
@@ -480,6 +489,7 @@ export default function GameBoard() {
               key={p.id} 
               onClick={() => onSelect(p.id)}
               className="w-full p-4 bg-[#111] text-white active:scale-95 border border-slate-700 rounded-xl font-bold uppercase transition-all"
+              style={tapSafeStyle}
             >
               {p.name}
             </button>
@@ -488,6 +498,7 @@ export default function GameBoard() {
             <button 
               onClick={() => onSelect(null)}
               className="w-full p-4 bg-transparent border border-slate-700/80 text-slate-400 rounded-xl font-bold uppercase mt-4 active:scale-95"
+              style={tapSafeStyle}
             >
               Skip / Nobody
             </button>
@@ -500,12 +511,18 @@ export default function GameBoard() {
   return (
     <>
       <style>{`
-        /* PERMANENT FIX: Stops the mobile browser from flashing white/gray when a button or card is tapped */
+        /* PERMANENT FIX: Root level reset to kill tap highlights */
         * {
           -webkit-tap-highlight-color: transparent !important;
+          outline: none !important;
         }
         body {
           background-color: #050505 !important;
+          -webkit-touch-callout: none;
+          user-select: none;
+        }
+        input {
+          user-select: auto;
         }
         /* Hides scrollbar on the Gradual Blur lists to keep it cinematic */
         .hide-scrollbar::-webkit-scrollbar {
@@ -518,10 +535,6 @@ export default function GameBoard() {
       `}</style>
       
       {/* ─── PERMANENT BACKGROUND MOUNTS (ZERO FLICKER ARCHITECTURE) ─── */}
-      {/* Both canvases are permanently mounted to the DOM. 
-        They never unmount, which guarantees zero React re-render flashing.
-        Visibility is controlled exclusively through CSS opacity and z-index. 
-      */}
       <div 
         className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out"
         style={{ 
@@ -559,7 +572,7 @@ export default function GameBoard() {
 
       {/* ─── PHASE OVERLAYS ─── */}
       {state.phase === 'splash' && (
-        <div className="relative min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden" style={{ backgroundColor: '#e5e5e5' }}>
+        <div className="relative min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden" style={{ backgroundColor: '#e5e5e5', ...tapSafeStyle }}>
           <ImagePreloader />
           <div className="relative z-10">
             <button 
@@ -569,6 +582,7 @@ export default function GameBoard() {
                 }, 1500); 
               }}
               className="splash-batman-btn"
+              style={tapSafeStyle}
             >
               <span>PLAY GAME</span>
             </button>
@@ -577,11 +591,12 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'lobby' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 overflow-hidden pointer-events-none">
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 overflow-hidden pointer-events-none" style={tapSafeStyle}>
           <button
             onClick={() => setShowSettings((prev) => !prev)}
             aria-label="Toggle settings"
             className="absolute top-4 left-4 z-50 w-12 h-12 rounded-xl border border-cyan-300/40 bg-[#02060a]/80 backdrop-blur-md flex items-center justify-center active:scale-95 transition-all hover:border-cyan-200/70 hover:bg-[#07111a]/85 pointer-events-auto"
+            style={tapSafeStyle}
           >
             <svg className={`w-6 h-6 text-cyan-100 ${showSettings ? 'animate-spin' : ''}`} style={{ animationDuration: '0.8s' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3.2" />
@@ -601,7 +616,7 @@ export default function GameBoard() {
                 <p className="text-slate-300 text-[10px] uppercase tracking-widest mb-2">Mafia Count</p>
                 <div className="grid grid-cols-3 gap-2">
                   {['auto', 1, 2].map((mode) => (
-                    <button key={String(mode)} onClick={() => state.setMafiaCount(mode)} className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${selectedMafiaCount === mode ? 'bg-rose-400/20 text-rose-200 border-rose-300/60' : 'bg-slate-900/70 text-slate-300 border-slate-700/70 hover:border-slate-500'}`}>
+                    <button key={String(mode)} onClick={() => state.setMafiaCount(mode)} className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${selectedMafiaCount === mode ? 'bg-rose-400/20 text-rose-200 border-rose-300/60' : 'bg-slate-900/70 text-slate-300 border-slate-700/70 hover:border-slate-500'}`} style={tapSafeStyle}>
                       {mode}
                     </button>
                   ))}
@@ -612,7 +627,7 @@ export default function GameBoard() {
                 <p className="text-slate-300 text-[10px] uppercase tracking-widest mb-2">Sheriff Role</p>
                 <div className="grid grid-cols-3 gap-2">
                   {['auto', 'always', 'off'].map((mode) => (
-                    <button key={mode} onClick={() => state.setSheriffMode(mode)} className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${selectedSheriffMode === mode ? 'bg-violet-400/20 text-violet-200 border-violet-300/60' : 'bg-slate-900/70 text-slate-300 border-slate-700/70 hover:border-slate-500'}`}>
+                    <button key={mode} onClick={() => state.setSheriffMode(mode)} className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${selectedSheriffMode === mode ? 'bg-violet-400/20 text-violet-200 border-violet-300/60' : 'bg-slate-900/70 text-slate-300 border-slate-700/70 hover:border-slate-500'}`} style={tapSafeStyle}>
                       {mode}
                     </button>
                   ))}
@@ -626,6 +641,7 @@ export default function GameBoard() {
                   <button 
                     onClick={state.toggleRevealRoles} 
                     className={`px-3 py-1 rounded text-[10px] uppercase font-black tracking-widest transition-colors ${state.settings?.revealRoles ? 'bg-green-500/20 text-green-500 border border-green-500/50' : 'bg-[#222] text-slate-500 border border-slate-700'}`}
+                    style={tapSafeStyle}
                   >
                     {state.settings?.revealRoles ? 'ON' : 'OFF'}
                   </button>
@@ -651,7 +667,7 @@ export default function GameBoard() {
               <div className="poda-main">
                 <input placeholder="Add Player..." type="text" value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && newPlayerName.trim()) { state.addPlayer(newPlayerName.trim()); setNewPlayerName(''); } }} className="poda-input" />
                 <div className="poda-input-mask"></div><div className="poda-pink-mask"></div><div className="poda-filterBorder"></div>
-                <div className="poda-filter-icon" onClick={() => { if(newPlayerName.trim()) { state.addPlayer(newPlayerName.trim()); setNewPlayerName(''); } }}>
+                <div className="poda-filter-icon" onClick={() => { if(newPlayerName.trim()) { state.addPlayer(newPlayerName.trim()); setNewPlayerName(''); } }} style={tapSafeStyle}>
                   <svg preserveAspectRatio="none" height="27" width="27" viewBox="4.8 4.56 14.832 15.408" fill="none"><path d="M8.16 6.65002H15.83C16.47 6.65002 16.99 7.17002 16.99 7.81002V9.09002C16.99 9.56002 16.7 10.14 16.41 10.43L13.91 12.64C13.56 12.93 13.33 13.51 13.33 13.98V16.48C13.33 16.83 13.1 17.29 12.81 17.47L12 17.98C11.24 18.45 10.2 17.92 10.2 16.99V13.91C10.2 13.5 9.97 12.98 9.73 12.69L7.52 10.36C7.23 10.08 7 9.55002 7 9.20002V7.87002C7 7.17002 7.52 6.65002 8.16 6.65002Z" stroke="#d6d6e6" strokeWidth="1" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"></path></svg>
                 </div>
                 <div className="poda-search-icon">
@@ -662,11 +678,11 @@ export default function GameBoard() {
           </div>
 
           {availableRecentNames.length > 0 && (
-            <div className="w-full mb-6 relative z-10 pointer-events-auto">
+            <div className="w-full mb-6 relative z-10 pointer-events-auto" style={tapSafeStyle}>
               <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-3 pl-2 text-center drop-shadow-md">Recent Players</p>
               <div className="flex flex-wrap justify-center gap-2">
                 {availableRecentNames.slice(0, 6).map(name => (
-                  <button key={name} onClick={() => state.addPlayer(name)} className="px-4 py-2 bg-[#222] text-[#e81cff] border border-[#e81cff]/30 rounded-full text-xs font-bold tracking-wider active:scale-95 transition-all shadow-md">
+                  <button key={name} onClick={() => state.addPlayer(name)} className="px-4 py-2 bg-[#222] text-[#e81cff] border border-[#e81cff]/30 rounded-full text-xs font-bold tracking-wider active:scale-95 transition-all shadow-md" style={tapSafeStyle}>
                     + {name}
                   </button>
                 ))}
@@ -675,7 +691,7 @@ export default function GameBoard() {
           )}
 
           {/* ─── RESTRICTED GRADUAL BLUR SCROLL AREA FOR PLAYERS (LOBBY ONLY 2 ITEMS HEIGHT) ─── */}
-          <div className="w-full max-w-sm relative z-10 pointer-events-auto mb-10">
+          <div className="w-full max-w-sm relative z-10 pointer-events-auto mb-10" style={tapSafeStyle}>
             <div 
               className="w-full space-y-2 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
               style={{
@@ -686,14 +702,14 @@ export default function GameBoard() {
               {state.players.map((p) => (
                 <div key={p.id} className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all">
                   <span className="font-bold tracking-widest text-white">{p.name}</span>
-                  <button onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6">✕</button>
+                  <button onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6" style={tapSafeStyle}>✕</button>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="w-full flex justify-center relative z-10 mb-6 pointer-events-auto">
-            <button disabled={state.players.length < 4} onClick={() => { setTimeout(() => { state.startGame(); }, 250); }} className="stealth-btn">
+            <button disabled={state.players.length < 4} onClick={() => { setTimeout(() => { state.startGame(); }, 250); }} className="stealth-btn" style={tapSafeStyle}>
               <strong className="stealth-strong">BEGIN GAME ({state.players.length})</strong>
               <div className="stealth-container-stars"><div className="stealth-stars"></div></div>
               <div className="stealth-glow"><div className="stealth-circle"></div><div className="stealth-circle"></div></div>
@@ -703,7 +719,7 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'role_reveal' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none">
+        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <p className="text-slate-300 font-bold uppercase tracking-widest text-[10px] mb-2 relative z-10 pointer-events-none">Pass phone to</p>
           <h2 className="text-4xl font-black text-white uppercase mb-8 drop-shadow-md relative z-10 pointer-events-none">{state.players[state.revealIndex]?.name}</h2>
@@ -715,20 +731,21 @@ export default function GameBoard() {
             onTouchStart={() => setIsFlipped(true)}
             onTouchEnd={() => { setIsFlipped(false); setCardViewed(true); }}
             className="cursor-pointer relative z-10 pointer-events-auto"
+            style={tapSafeStyle}
           >
             <RoleCard isFlipped={isFlipped} role={state.players[state.revealIndex]?.role} />
           </div>
 
           {!cardViewed && <p className="mt-12 text-slate-400 font-bold text-sm relative z-10 animate-pulse pointer-events-none">👆 Tap the card to view your role</p>}
 
-          <button onClick={() => { setIsFlipped(false); setCardViewed(false); state.nextRoleReveal(); }} disabled={!cardViewed} className={`mt-12 p-5 w-full max-w-sm rounded-xl font-black uppercase tracking-widest transition-all duration-300 relative z-10 ${!cardViewed ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0 bg-[#0a0a0a]/90 backdrop-blur-md text-white border border-slate-800 active:scale-95 pointer-events-auto'}`}>
+          <button onClick={() => { setIsFlipped(false); setCardViewed(false); state.nextRoleReveal(); }} disabled={!cardViewed} className={`mt-12 p-5 w-full max-w-sm rounded-xl font-black uppercase tracking-widest transition-all duration-300 relative z-10 ${!cardViewed ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0 bg-[#0a0a0a]/90 backdrop-blur-md text-white border border-slate-800 active:scale-95 pointer-events-auto'}`} style={tapSafeStyle}>
             {state.revealIndex === state.players.length - 1 ? 'Give to Moderator' : 'Next Player'}
           </button>
         </div>
       )}
 
       {state.phase === 'night_transition' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none">
+        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none">
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -742,7 +759,7 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'night_mafia' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none">
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <h2 className="text-3xl md:text-4xl font-black text-red-500 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
           <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🌙 Moderator: Ask the Mafia to wake up and point.</p>
@@ -752,7 +769,7 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'night_doctor' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none">
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <h2 className="text-3xl md:text-4xl font-black text-green-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(34,197,94,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
           <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🌙 Moderator: Ask the Doctor to wake up and point.</p>
@@ -762,7 +779,7 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'night_detective' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center justify-center overflow-hidden pointer-events-none">
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center justify-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           {state.investigationResult ? (
             <>
@@ -772,7 +789,7 @@ export default function GameBoard() {
               <h1 className={`text-6xl md:text-7xl font-black uppercase relative z-10 pointer-events-none ${state.investigationResult === 'DEAD_ROLE' ? 'text-slate-500 drop-shadow-[0_0_20px_rgba(107,114,128,0.5)]' : state.investigationResult === 'MAFIA' ? 'text-red-600 drop-shadow-[0_0_30px_rgba(220,38,38,0.7)]' : 'text-green-400 drop-shadow-[0_0_30px_rgba(34,197,94,0.7)]'}`}>
                 {state.investigationResult === 'DEAD_ROLE' ? 'ROLE DEAD' : state.investigationResult}
               </h1>
-              <button onClick={state.advanceFromDetective} className="mt-12 p-5 w-full max-w-sm bg-[#0a0a0a]/90 backdrop-blur-md rounded-xl font-black tracking-widest uppercase active:scale-95 relative z-10 border border-slate-700 hover:border-slate-500 transition-colors shadow-lg pointer-events-auto">
+              <button onClick={state.advanceFromDetective} className="mt-12 p-5 w-full max-w-sm bg-[#0a0a0a]/90 backdrop-blur-md rounded-xl font-black tracking-widest uppercase active:scale-95 relative z-10 border border-slate-700 hover:border-slate-500 transition-colors shadow-lg pointer-events-auto" style={tapSafeStyle}>
                 Continue →
               </button>
             </>
@@ -788,7 +805,7 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'night_sheriff' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none">
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <h2 className="text-3xl md:text-4xl font-black text-purple-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(168,85,247,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
           <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">⚔️ Moderator: Ask the Sheriff to wake up and point.</p>
@@ -798,7 +815,7 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'day_transition' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none">
+        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none">
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -812,7 +829,7 @@ export default function GameBoard() {
       )}
 
       {(state.phase === 'day_recap' || state.phase === 'day_recap_post_vote') && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center justify-center overflow-hidden pointer-events-none">
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center justify-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <h2 className="text-4xl md:text-5xl font-black uppercase mb-12 text-white tracking-[0.2em] drop-shadow-[0_0_20px_rgba(255,255,255,0.6)] mt-14 relative z-10 animate-in fade-in duration-1000 pointer-events-none">The Town Awakens</h2>
           <div className="w-full max-w-2xl space-y-4 relative z-10 pointer-events-none">
@@ -822,21 +839,21 @@ export default function GameBoard() {
               </div>
             ))}
           </div>
-          <button onClick={state.phase === 'day_recap' ? state.startVoting : state.advanceToNight} className="mt-12 p-5 w-full max-w-sm bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 rounded-xl font-black tracking-widest uppercase active:scale-95 transition-transform shadow-xl relative z-10 hover:shadow-[0_0_30px_rgba(255,193,7,0.5)] pointer-events-auto">
+          <button onClick={state.phase === 'day_recap' ? state.startVoting : state.advanceToNight} className="mt-12 p-5 w-full max-w-sm bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 rounded-xl font-black tracking-widest uppercase active:scale-95 transition-transform shadow-xl relative z-10 hover:shadow-[0_0_30px_rgba(255,193,7,0.5)] pointer-events-auto" style={tapSafeStyle}>
             {state.phase === 'day_recap' ? '→ Begin Voting' : '→ Go To Sleep (Next Night)'}
           </button>
         </div>
       )}
 
       {state.phase === 'day_voting' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none">
+        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <h2 className="text-slate-300 font-bold uppercase tracking-widest text-[12px] mt-14 mb-3 relative z-10 drop-shadow-md pointer-events-none">⚖️ Town Voting Phase</h2>
           <h3 className="text-5xl md:text-6xl font-black text-amber-300 my-4 uppercase relative z-10 drop-shadow-[0_0_20px_rgba(255,193,7,0.5)] pointer-events-none">{alivePlayers[state.votingState.currentVoterIndex]?.name}</h3>
           <p className="text-lg font-bold text-red-400 tracking-widest uppercase relative z-10 drop-shadow-md pointer-events-none">Who do you exile?</p>
           
           {/* ─── DAY VOTING LIST (4 ITEMS + BLUR MASK) ─── */}
-          <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-6 mb-6">
+          <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-6 mb-6" style={tapSafeStyle}>
             <div 
               className="w-full space-y-3 max-h-[280px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
               style={{
@@ -845,11 +862,11 @@ export default function GameBoard() {
               }}
             >
               {alivePlayers.filter(p => p.id !== alivePlayers[state.votingState.currentVoterIndex]?.id).map(p => (
-                <button key={p.id} onClick={() => { setVoteSelected(true); state.submitVote(p.id); }} className="w-full p-4 bg-slate-900/70 backdrop-blur-md text-white border-2 border-slate-700/70 rounded-lg font-bold uppercase active:scale-95 transition-all hover:border-slate-500 hover:bg-slate-900">
+                <button key={p.id} onClick={() => { setVoteSelected(true); state.submitVote(p.id); }} className="w-full p-4 bg-slate-900/70 backdrop-blur-md text-white border-2 border-slate-700/70 rounded-lg font-bold uppercase active:scale-95 transition-all hover:border-slate-500 hover:bg-slate-900" style={tapSafeStyle}>
                   → Vote {p.name}
                 </button>
               ))}
-              <button onClick={() => state.submitVote(null)} disabled={!voteSelected} className={`w-full p-4 border-2 rounded-lg font-bold uppercase mt-6 active:scale-95 transition-all ${!voteSelected ? 'opacity-40 pointer-events-none border-slate-700/30 bg-transparent text-slate-500' : 'bg-transparent border-slate-600/50 backdrop-blur-sm text-slate-300 hover:border-slate-400 hover:text-slate-200'}`}>
+              <button onClick={() => state.submitVote(null)} disabled={!voteSelected} className={`w-full p-4 border-2 rounded-lg font-bold uppercase mt-6 active:scale-95 transition-all ${!voteSelected ? 'opacity-40 pointer-events-none border-slate-700/30 bg-transparent text-slate-500' : 'bg-transparent border-slate-600/50 backdrop-blur-sm text-slate-300 hover:border-slate-400 hover:text-slate-200'}`} style={tapSafeStyle}>
                 ⊘ Pass / No Vote
               </button>
             </div>
@@ -862,7 +879,7 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'gameover' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none">
+        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <div className="relative z-10 flex flex-col items-center pointer-events-none">
             <h1 className={`text-6xl md:text-7xl font-black uppercase mb-2 mt-14 ${state.winner === 'Mafia' ? 'text-red-600 drop-shadow-[0_0_40px_rgba(220,38,38,0.8)]' : 'text-blue-400 drop-shadow-[0_0_40px_rgba(96,165,250,0.8)]'}`}>
@@ -889,7 +906,7 @@ export default function GameBoard() {
           </div>
 
           <div className="w-full flex justify-center mt-14 mb-6 relative z-10 pointer-events-auto">
-            <button onClick={() => { setTimeout(() => { state.playAgain(); }, 1500); }} className="splash-batman-btn">
+            <button onClick={() => { setTimeout(() => { state.playAgain(); }, 1500); }} className="splash-batman-btn" style={tapSafeStyle}>
               <span>PLAY AGAIN</span>
             </button>
           </div>
