@@ -238,7 +238,6 @@ export default function GameBoard() {
     );
   };
 
-  // ARCHITECT FIX: Added Native AnimatedItem wrapper to lists
   const renderPlayerList = (onSelect, includeSkip = false, hideRole = null) => {
     const visiblePlayers = hideRole ? alivePlayers.filter(p => p.role !== hideRole) : alivePlayers;
     return (
@@ -274,14 +273,6 @@ export default function GameBoard() {
 
   return (
     <>
-      <style>{`
-        * { -webkit-tap-highlight-color: transparent !important; outline: none !important; }
-        body { background-color: #050505 !important; -webkit-touch-callout: none; user-select: none; }
-        input { user-select: auto; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
-      
       {/* ─── PERMANENT BACKGROUND MOUNTS (ZERO FLICKER) ─── */}
       <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out" style={{ backgroundColor: '#e5e5e5', opacity: state.phase === 'splash' ? 1 : 0, zIndex: state.phase === 'splash' ? 0 : -100, visibility: state.phase === 'splash' ? 'visible' : 'hidden' }} />
       <div className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out" style={{ opacity: isGalaxyPhase ? 1 : 0, zIndex: isGalaxyPhase ? 0 : -50, visibility: isGalaxyPhase ? 'visible' : 'hidden' }}>
@@ -293,7 +284,7 @@ export default function GameBoard() {
 
       {/* ─── SPLASH PHASE ─── */}
       {state.phase === 'splash' && (
-        <div className="relative min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden z-10 transition-opacity duration-1000" style={tapSafeStyle}>
+        <div className="relative h-[100dvh] w-full flex flex-col items-center justify-center p-6 overflow-hidden z-10 transition-opacity duration-1000" style={tapSafeStyle}>
           <ImagePreloader />
           <button onPointerDown={(e) => e.stopPropagation()} onClick={() => { setTimeout(() => { state.enterLobby(); }, 800); }} className="splash-batman-btn" style={tapSafeStyle}>
             <span>PLAY GAME</span>
@@ -303,7 +294,7 @@ export default function GameBoard() {
 
       {/* ─── LOBBY PHASE ─── */}
       {state.phase === 'lobby' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 overflow-hidden pointer-events-none z-10" style={tapSafeStyle}>
+        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center p-6 overflow-hidden pointer-events-none z-10" style={tapSafeStyle}>
           <button onPointerDown={(e) => e.stopPropagation()} onClick={() => setShowSettings((prev) => !prev)} className="absolute top-4 left-4 z-50 w-12 h-12 rounded-xl border border-cyan-300/40 bg-[#02060a]/80 backdrop-blur-md flex items-center justify-center active:scale-95 transition-all hover:border-cyan-200/70 hover:bg-[#07111a]/85 pointer-events-auto" style={tapSafeStyle}>
             <svg className={`w-6 h-6 text-cyan-100 ${showSettings ? 'animate-spin' : ''}`} style={{ animationDuration: '0.8s' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3.2" /><path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.9 1.9 0 0 1-2.7 2.7l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 0 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.9 1.9 0 0 1-2.7-2.7l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 0 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0 1.1.2h0a1 1 0 0 0 .6-.9V4a2 2 0 0 1 4 0v.2a1 1 0 0 0 .6.9h0a1 1 0 0 0 1.1-.2l.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0-.2 1.1v0a1 1 0 0 0 .9.6h.2a2 2 0 0 1 0 4h-.2a1 1 0 0 0-.9.6Z" /></svg>
           </button>
@@ -370,7 +361,6 @@ export default function GameBoard() {
             </div>
           )}
 
-          {/* ─── LOBBY PLAYER LIST (NATIVE ANIMATION + 2 MAX HEIGHT) ─── */}
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mb-10" style={tapSafeStyle}>
             <div 
               className="w-full space-y-2 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
@@ -397,8 +387,9 @@ export default function GameBoard() {
         </div>
       )}
 
+      {/* ─── ROLE REVEAL ─── */}
       {state.phase === 'role_reveal' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
+        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <p className="text-slate-300 font-bold uppercase tracking-widest text-[10px] mb-2 relative z-10 pointer-events-none">Pass phone to</p>
           <h2 className="text-4xl font-black text-white uppercase mb-8 drop-shadow-md relative z-10 pointer-events-none">{state.players[state.revealIndex]?.name}</h2>
@@ -416,16 +407,27 @@ export default function GameBoard() {
             <RoleCard isFlipped={isFlipped} role={state.players[state.revealIndex]?.role} />
           </div>
 
-          {!cardViewed && <p className="mt-12 text-slate-400 font-bold text-sm relative z-10 animate-pulse pointer-events-none">👆 Tap the card to view your role</p>}
-
-          <button onPointerDown={(e) => e.stopPropagation()} onClick={() => { setIsFlipped(false); setCardViewed(false); state.nextRoleReveal(); }} disabled={!cardViewed} className={`mt-12 p-5 w-full max-w-sm rounded-xl font-black uppercase tracking-widest transition-all duration-300 relative z-10 ${!cardViewed ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0 bg-[#0a0a0a]/90 backdrop-blur-md text-white border border-slate-800 active:scale-95 pointer-events-auto'}`} style={tapSafeStyle}>
-            {state.revealIndex === state.players.length - 1 ? 'Give to Moderator' : 'Next Player'}
-          </button>
+          {/* ARCHITECT FIX: Fading the text instead of removing it prevents the layout jump! */}
+          <div className="relative w-full max-w-sm flex justify-center mt-12 z-10 pointer-events-none">
+            <p className={`absolute text-slate-400 font-bold text-sm transition-opacity duration-500 pointer-events-none ${cardViewed ? 'opacity-0' : 'opacity-100 animate-pulse'}`}>
+              👆 Tap the card to view your role
+            </p>
+            <button 
+              onPointerDown={(e) => e.stopPropagation()} 
+              onClick={() => { setIsFlipped(false); setCardViewed(false); state.nextRoleReveal(); }} 
+              disabled={!cardViewed} 
+              className={`p-5 w-full rounded-xl font-black uppercase tracking-widest transition-all duration-500 pointer-events-auto ${!cardViewed ? 'opacity-0 translate-y-4 scale-95' : 'opacity-100 translate-y-0 scale-100 bg-[#0a0a0a]/90 backdrop-blur-md text-white border border-slate-800 hover:border-slate-500 active:scale-95'}`} 
+              style={tapSafeStyle}
+            >
+              {state.revealIndex === state.players.length - 1 ? 'Give to Moderator' : 'Next Player'}
+            </button>
+          </div>
         </div>
       )}
 
+      {/* ─── NIGHT PHASES ─── */}
       {state.phase === 'night_transition' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
+        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none">
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="w-96 h-96 bg-black/30 rounded-full blur-3xl animate-pulse"></div></div>
@@ -437,7 +439,7 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'night_mafia' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
+        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <h2 className="text-3xl md:text-4xl font-black text-red-500 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
           <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🌙 Moderator: Ask the Mafia to wake up and point.</p>
@@ -447,7 +449,7 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'night_doctor' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
+        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <h2 className="text-3xl md:text-4xl font-black text-green-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(34,197,94,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
           <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🌙 Moderator: Ask the Doctor to wake up and point.</p>
@@ -457,7 +459,8 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'night_detective' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center justify-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
+        // ARCHITECT FIX: justify-center is only applied when investigationResult is shown, so the prompt aligns perfectly with Mafia/Doctor
+        <div className={`relative h-[100dvh] w-full text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none ${state.investigationResult ? 'justify-center' : ''}`} style={tapSafeStyle}>
           {renderBackButton()}
           {state.investigationResult ? (
             <>
@@ -477,7 +480,7 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'night_sheriff' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
+        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <h2 className="text-3xl md:text-4xl font-black text-purple-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(168,85,247,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
           <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">⚔️ Moderator: Ask the Sheriff to wake up and point.</p>
@@ -486,8 +489,9 @@ export default function GameBoard() {
         </div>
       )}
 
+      {/* ─── DAY PHASES ─── */}
       {state.phase === 'day_transition' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
+        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none">
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="w-96 h-96 bg-yellow-300/20 rounded-full blur-3xl animate-pulse"></div></div>
@@ -499,7 +503,7 @@ export default function GameBoard() {
       )}
 
       {(state.phase === 'day_recap' || state.phase === 'day_recap_post_vote') && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center justify-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
+        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center p-6 text-center justify-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <h2 className="text-4xl md:text-5xl font-black uppercase mb-12 text-white tracking-[0.2em] drop-shadow-[0_0_20px_rgba(255,255,255,0.6)] mt-14 relative z-10 animate-in fade-in duration-1000 pointer-events-none">The Town Awakens</h2>
           <div className="w-full max-w-2xl space-y-4 relative z-10 pointer-events-none">
@@ -512,12 +516,13 @@ export default function GameBoard() {
       )}
 
       {state.phase === 'day_voting' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
+        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <h2 className="text-slate-300 font-bold uppercase tracking-widest text-[12px] mt-14 mb-3 relative z-10 drop-shadow-md pointer-events-none">⚖️ Town Voting Phase</h2>
           <h3 className="text-5xl md:text-6xl font-black text-amber-300 my-4 uppercase relative z-10 drop-shadow-[0_0_20px_rgba(255,193,7,0.5)] pointer-events-none">{alivePlayers[state.votingState.currentVoterIndex]?.name}</h3>
           <p className="text-lg font-bold text-red-400 tracking-widest uppercase relative z-10 drop-shadow-md pointer-events-none">Who do you exile?</p>
           
+          {/* ─── DAY VOTING LIST (4 ITEMS + BLUR MASK) ─── */}
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-6 mb-6" style={tapSafeStyle}>
             <div 
               className="w-full space-y-3 max-h-[280px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
@@ -538,8 +543,9 @@ export default function GameBoard() {
         </div>
       )}
 
+      {/* ─── GAME OVER PHASE ─── */}
       {state.phase === 'gameover' && (
-        <div className="relative min-h-screen text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
+        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <div className="relative z-10 flex flex-col items-center pointer-events-none">
             <h1 className={`text-6xl md:text-7xl font-black uppercase mb-2 mt-14 ${state.winner === 'Mafia' ? 'text-red-600 drop-shadow-[0_0_40px_rgba(220,38,38,0.8)]' : 'text-blue-400 drop-shadow-[0_0_40px_rgba(96,165,250,0.8)]'}`}>{state.winner} WIN!</h1>
