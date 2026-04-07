@@ -378,15 +378,18 @@ const ImagePreloader = () => (
 const RoleCard = ({ isFlipped, role }) => {
   return (
     <div className="my-6 relative w-[240px] h-[360px] [perspective:1000px] select-none touch-none">
-      <div className={`relative w-full h-full transition-transform duration-[600ms] [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}>
+      {/* Architectural Fix: Enforce hardware acceleration layer and preserve 3d context across WebKit engines */}
+      <div className={`relative w-full h-full transition-transform duration-[600ms] [transform-style:preserve-3d] [-webkit-transform-style:preserve-3d] will-change-transform ${isFlipped ? '[transform:rotateY(180deg)]' : '[transform:translateZ(0)]'}`}>
         
-        <div className="absolute inset-0 [backface-visibility:hidden] rounded-[2rem] bg-[#0a0a0a] border border-slate-800 flex flex-col items-center justify-center p-4 shadow-xl">
+        {/* FRONT FACE: Explicit backface visibility masking and Z-offset translation to prevent Z-fighting flash */}
+        <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:translateZ(1px)] rounded-[2rem] bg-[#0a0a0a] border border-slate-800 flex flex-col items-center justify-center p-4 shadow-xl">
            <p className="text-slate-500 font-black tracking-widest uppercase text-center text-xl">Secret Role</p>
            <p className="text-[10px] text-slate-600 mt-4 tracking-widest uppercase font-bold animate-pulse">Tap & Hold to Reveal</p>
         </div>
         
+        {/* BACK FACE: Counter-rotate Z-offset to isolate rendering planes */}
         <div 
-          className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[2rem] bg-black" 
+          className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(180deg)_translateZ(1px)] rounded-[2rem] bg-black" 
           style={{ 
             backgroundImage: `url(${roleImages[role] || roleImages.Civilian})`,
             backgroundPosition: 'center',
