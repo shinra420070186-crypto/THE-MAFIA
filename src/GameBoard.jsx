@@ -6,624 +6,351 @@ import Galaxy from './Galaxy';
 const TRANSITION_MS = 5000;
 const TAU = Math.PI * 2;
 
-// ─── COLOR & MATH UTILITIES ──────────────────────────
-function lerp(a, b, t) {
-  return a + (b - a) * t;
-}
-
-function clamp(v, min = 0, max = 1) {
-  return Math.max(min, Math.min(max, v));
-}
-
-function smoothstep(edge0, edge1, x) {
-  const t = clamp((x - edge0) / (edge1 - edge0));
-  return t * t * (3 - 2 * t);
-}
-
-function easeInOutSine(t) {
-  return -(Math.cos(Math.PI * t) - 1) / 2;
-}
-
-function rgb(r, g, b) { return { r, g, b }; }
-
-function lerpColor(a, b, t) {
-  return { r: lerp(a.r, b.r, t), g: lerp(a.g, b.g, t), b: lerp(a.b, b.b, t) };
-}
-
-function rgbStr(c, a = 1) {
-  return `rgba(${Math.round(c.r)},${Math.round(c.g)},${Math.round(c.b)},${a})`;
-}
-
-// ─── NEW SKY COLOR PALETTES ──────────────────────────
-const SKY_PHASES = [
-  { pos: 0.00, zenith: rgb(8, 10, 28),     horizon: rgb(15, 18, 40) },
-  { pos: 0.15, zenith: rgb(12, 14, 35),     horizon: rgb(30, 25, 50) },
-  { pos: 0.20, zenith: rgb(25, 20, 55),     horizon: rgb(120, 50, 60) },
-  { pos: 0.25, zenith: rgb(60, 45, 90),     horizon: rgb(220, 120, 60) },
-  { pos: 0.30, zenith: rgb(80, 100, 170),   horizon: rgb(240, 170, 100) },
-  { pos: 0.35, zenith: rgb(100, 140, 210),  horizon: rgb(200, 190, 160) },
-  { pos: 0.45, zenith: rgb(85, 150, 225),   horizon: rgb(170, 195, 215) },
-  { pos: 0.50, zenith: rgb(75, 140, 220),   horizon: rgb(160, 190, 215) },
-  { pos: 0.55, zenith: rgb(85, 150, 225),   horizon: rgb(170, 195, 215) },
-  { pos: 0.65, zenith: rgb(100, 140, 210),  horizon: rgb(200, 185, 155) },
-  { pos: 0.70, zenith: rgb(80, 90, 160),    horizon: rgb(230, 150, 80) },
-  { pos: 0.75, zenith: rgb(55, 40, 85),     horizon: rgb(210, 100, 50) },
-  { pos: 0.80, zenith: rgb(25, 18, 52),     horizon: rgb(110, 45, 55) },
-  { pos: 0.85, zenith: rgb(12, 14, 35),     horizon: rgb(30, 25, 50) },
-  { pos: 1.00, zenith: rgb(8, 10, 28),      horizon: rgb(15, 18, 40) },
-];
-
-function getSkyColors(phase) {
-  const p = phase % 1;
-  for (let i = 0; i < SKY_PHASES.length - 1; i++) {
-    if (p >= SKY_PHASES[i].pos && p <= SKY_PHASES[i + 1].pos) {
-      const localT = (p - SKY_PHASES[i].pos) / (SKY_PHASES[i + 1].pos - SKY_PHASES[i].pos);
-      const t = easeInOutSine(localT);
-      return {
-        zenith: lerpColor(SKY_PHASES[i].zenith, SKY_PHASES[i + 1].zenith, t),
-        horizon: lerpColor(SKY_PHASES[i].horizon, SKY_PHASES[i + 1].horizon, t),
-      };
-    }
-  }
-  return { zenith: SKY_PHASES[0].zenith, horizon: SKY_PHASES[0].horizon };
-}
-
-// ─── GENERATORS ──────────────────────────────────────
-function generateStars(count) {
-  const stars = [];
-  for (let i = 0; i < count; i++) {
-    stars.push({
-      x: Math.random(),
-      y: Math.random() * 0.7,
-      size: Math.random() * 2.2 + 0.4,
-      brightness: Math.random() * 0.5 + 0.5,
-      twinkleSpeed: Math.random() * 2 + 0.5,
-      twinkleOffset: Math.random() * TAU,
-    });
-  }
-  return stars;
-}
-
-function generateClouds(count) {
-  const clouds = [];
-  for (let i = 0; i < count; i++) {
-    const layer = Math.floor(Math.random() * 3);
-    clouds.push({
-      x: Math.random() * 1.4 - 0.2,
-      y: 0.08 + Math.random() * 0.35,
-      width: 0.12 + Math.random() * 0.18,
-      height: 0.02 + Math.random() * 0.025,
-      speed: (0.008 + Math.random() * 0.015) * (1 + layer * 0.3),
-      opacity: 0.15 + Math.random() * 0.25,
-      layer,
-    });
-  }
-  return clouds;
-}
-
-function generateLightRays() {
-  const rays = [];
-  for (let i = 0; i < 12; i++) {
-    rays.push({
-      angle: -0.5 + Math.random() * 1.0,
-      width: 0.01 + Math.random() * 0.025,
-      length: 0.3 + Math.random() * 0.4,
-      opacity: 0.03 + Math.random() * 0.05,
-    });
-  }
-  return rays;
-}
-
-function createNoiseTexture(size) {
-  const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  const imageData = ctx.createImageData(size, size);
-  for (let i = 0; i < imageData.data.length; i += 4) {
-    const v = Math.random() * 255;
-    imageData.data[i] = v;
-    imageData.data[i + 1] = v;
-    imageData.data[i + 2] = v;
-    imageData.data[i + 3] = 255;
-  }
-  return imageData;
-}
-
-// ─── LANDSCAPE RENDERING ─────────────────────────────
-function drawTrees(ctx, w, h, baseY, dayFactor, time) {
-  const treeColor = `rgb(${Math.round(lerp(5, 18, dayFactor * 0.5))},${Math.round(lerp(10, 30, dayFactor * 0.5))},${Math.round(lerp(18, 40, dayFactor * 0.5))})`;
+// ─── FULL SCREEN SPOOKY HOUSE BACKGROUND ─────────────
+const FullScreenSpooky = ({ phase }) => {
+  const isNight = phase.startsWith('night') || phase === 'night_transition';
   
-  const seed = 42;
-  const treePosns = [];
-  let rng = seed;
-  for (let i = 0; i < 35; i++) {
-    rng = (rng * 16807 + 0) % 2147483647;
-    treePosns.push((rng / 2147483647));
-  }
-  
-  for (let i = 0; i < treePosns.length; i++) {
-    const tx = treePosns[i] * w;
-    rng = (rng * 16807 + 0) % 2147483647;
-    const treeH = h * (0.03 + (rng / 2147483647) * 0.05);
-    const ty = baseY + h * 0.01;
-    
-    ctx.fillStyle = treeColor;
-    ctx.beginPath();
-    ctx.moveTo(tx, ty - treeH);
-    ctx.lineTo(tx - treeH * 0.3, ty);
-    ctx.lineTo(tx + treeH * 0.3, ty);
-    ctx.closePath();
-    ctx.fill();
-    
-    ctx.beginPath();
-    ctx.moveTo(tx, ty - treeH * 0.7);
-    ctx.lineTo(tx - treeH * 0.35, ty - treeH * 0.1);
-    ctx.lineTo(tx + treeH * 0.35, ty - treeH * 0.1);
-    ctx.closePath();
-    ctx.fill();
-  }
-}
-
-function drawLandscape(ctx, w, h, phase, dayFactor, nightFactor, time) {
-  const baseY = h * 0.82;
-  
-  const layers = [
-    { yOff: -0.08, color: [20, 30, 50], dayColor: [70, 90, 120], detail: 0.003, amp: 0.08 },
-    { yOff: -0.04, color: [15, 22, 38], dayColor: [50, 70, 95], detail: 0.005, amp: 0.06 },
-    { yOff: 0, color: [8, 12, 22], dayColor: [30, 45, 65], detail: 0.008, amp: 0.04 },
-  ];
-  
-  for (const layer of layers) {
-    const lr = lerp(layer.color[0], layer.dayColor[0], dayFactor * 0.7);
-    const lg = lerp(layer.color[1], layer.dayColor[1], dayFactor * 0.7);
-    const lb = lerp(layer.color[2], layer.dayColor[2], dayFactor * 0.7);
-    
-    ctx.beginPath();
-    ctx.moveTo(0, h);
-    
-    const ly = baseY + layer.yOff * h;
-    for (let x = 0; x <= w; x += 3) {
-      const nx = x * layer.detail;
-      const mountain =
-        Math.sin(nx * 1.0 + 0.5) * 0.4 +
-        Math.sin(nx * 2.3 + 1.2) * 0.25 +
-        Math.sin(nx * 4.7 + 3.1) * 0.15 +
-        Math.sin(nx * 8.1 + 0.7) * 0.1 +
-        Math.sin(nx * 15.3 + 2.4) * 0.05;
-      
-      const y = ly - mountain * layer.amp * h;
-      ctx.lineTo(x, y);
-    }
-    
-    ctx.lineTo(w, h);
-    ctx.closePath();
-    ctx.fillStyle = `rgb(${Math.round(lr)},${Math.round(lg)},${Math.round(lb)})`;
-    ctx.fill();
-  }
-  
-  const groundGrad = ctx.createLinearGradient(0, baseY + h * 0.02, 0, h);
-  const gDay = dayFactor;
-  groundGrad.addColorStop(0, `rgb(${Math.round(lerp(10, 25, gDay))},${Math.round(lerp(15, 40, gDay))},${Math.round(lerp(25, 55, gDay))})`);
-  groundGrad.addColorStop(1, `rgb(${Math.round(lerp(5, 15, gDay))},${Math.round(lerp(8, 25, gDay))},${Math.round(lerp(15, 35, gDay))})`);
-  ctx.fillStyle = groundGrad;
-  ctx.fillRect(0, baseY + h * 0.02, w, h * 0.2);
-  
-  drawTrees(ctx, w, h, baseY, dayFactor, time);
-}
-
-// ─── 4K CINEMATIC SKY ENGINE ─────────────────────────
-const CinematicSky = ({ gamePhase }) => {
-  const canvasRef = useRef(null);
-  
-  const engineRef = useRef({
-    stars: [],
-    clouds: [],
-    meteors: [],
-    rays: [],
-    skyPhase: 0.0,
-    targetSkyPhase: 0.0,
-    transitionSpeed: 0,
-    globalTime: 0,
-    lastTime: performance.now(),
-    dpr: Math.max(2.5, window.devicePixelRatio || 1)
-  });
+  // Track continuous orbit to ensure Left-To-Right continuous sweeping
+  const [angles, setAngles] = useState({ sun: isNight ? 180 : 0, moon: isNight ? 0 : -180 });
+  const prevIsNight = useRef(isNight);
 
   useEffect(() => {
-    const engine = engineRef.current;
-    
-    if (gamePhase === 'day_transition') {
-      engine.skyPhase = 0.0;
-      engine.targetSkyPhase = 0.5;
-      engine.transitionSpeed = 0.5 / (TRANSITION_MS / 1000); 
-    } else if (gamePhase === 'night_transition') {
-      engine.skyPhase = 0.5;
-      engine.targetSkyPhase = 1.0;
-      engine.transitionSpeed = 0.5 / (TRANSITION_MS / 1000);
-    } else if (gamePhase.startsWith('day')) {
-      engine.skyPhase = 0.5;
-      engine.targetSkyPhase = 0.5;
-      engine.transitionSpeed = 0;
-    } else {
-      engine.skyPhase = 1.0; 
-      engine.targetSkyPhase = 1.0;
-      engine.transitionSpeed = 0;
+    if (isNight !== prevIsNight.current) {
+      setAngles(prev => ({
+        sun: prev.sun + 180,
+        moon: prev.moon + 180
+      }));
+      prevIsNight.current = isNight;
     }
-  }, [gamePhase]);
+  }, [isNight]);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d', { alpha: false });
-    if (!ctx) return;
-    const engine = engineRef.current;
+  const themeClass = isNight ? 'theme-night' : 'theme-day';
 
-    let W, H;
-    const resize = () => {
-      W = window.innerWidth;
-      H = window.innerHeight;
-      canvas.width = W * engine.dpr;
-      canvas.height = H * engine.dpr;
-      canvas.style.width = W + 'px';
-      canvas.style.height = H + 'px';
-      ctx.setTransform(engine.dpr, 0, 0, engine.dpr, 0, 0);
-    };
-    window.addEventListener('resize', resize);
-    resize();
+  return (
+    <div className={`full-spooky-bg ${themeClass}`} style={{
+      '--sun-angle': angles.sun,
+      '--moon-angle': angles.moon
+    }}>
+      <style>{`
+        .full-spooky-bg {
+          position: fixed;
+          inset: 0;
+          width: 100vw;
+          height: 100vh;
+          z-index: 0;
+          pointer-events: none;
+          transition: background-color 5s ease-in-out;
+          background-color: var(--sky-color);
+          overflow: hidden;
+          
+          /* Responsive Arc & Scale Settings */
+          --celestial-scale: 1;
+          --arc-radius: 85vh;
+        }
 
-    if (engine.stars.length === 0) engine.stars = generateStars(300);
-    if (engine.clouds.length === 0) engine.clouds = generateClouds(14);
-    if (engine.rays.length === 0) engine.rays = generateLightRays();
-    if (!engine.noiseCanvas) {
-      const c = document.createElement('canvas');
-      c.width = 256; c.height = 256;
-      c.getContext('2d').putImageData(createNoiseTexture(256), 0, 0);
-      engine.noiseCanvas = c;
-    }
+        @media (max-width: 768px) {
+          .full-spooky-bg {
+            --celestial-scale: 0.6;
+            --arc-radius: 75vh;
+          }
+        }
 
-    let rafId;
-    const render = (timestamp) => {
-      const dt = (timestamp - engine.lastTime) / 1000;
-      engine.lastTime = timestamp;
-      engine.globalTime += dt;
+        /* ─── DAY/NIGHT ANGLE TOGGLES ─── */
+        .full-spooky-bg.theme-night {
+          --sky-color: #212f3c;
+          --window-color: #ffd166;
+          --rain-opacity: 1;
+        }
 
-      if (engine.skyPhase < engine.targetSkyPhase) {
-        engine.skyPhase = Math.min(engine.targetSkyPhase, engine.skyPhase + engine.transitionSpeed * dt);
-      } else if (engine.skyPhase > engine.targetSkyPhase) {
-        engine.skyPhase = Math.max(engine.targetSkyPhase, engine.skyPhase - engine.transitionSpeed * dt);
-      }
+        .full-spooky-bg.theme-day {
+          --sky-color: #5b92e5;
+          --window-color: #222;
+          --rain-opacity: 0;
+        }
 
-      if (engine.skyPhase === 1.0 && engine.targetSkyPhase === 1.0) {
-        engine.skyPhase = 0.0;
-        engine.targetSkyPhase = 0.0;
-      }
+        /* ─── CINEMATIC ORBIT PIVOT SYSTEM ─── */
+        .celestial-pivot {
+          position: absolute;
+          top: 100vh; /* Invisible pivot point at the exact bottom center */
+          left: 50%;
+          width: 0;
+          height: 0;
+          z-index: 1;
+        }
 
-      const phase = engine.skyPhase;
-      const time = engine.globalTime;
+        .sun-pivot {
+          transition: transform 5s ease-in-out;
+          transform: rotate(calc(var(--sun-angle) * 1deg));
+        }
 
-      const sky = getSkyColors(phase);
-      const grad = ctx.createLinearGradient(0, 0, 0, H);
-      const midColor = lerpColor(sky.zenith, sky.horizon, 0.35);
-      const lowerMid = lerpColor(sky.zenith, sky.horizon, 0.65);
-      grad.addColorStop(0, rgbStr(sky.zenith));
-      grad.addColorStop(0.3, rgbStr(midColor));
-      grad.addColorStop(0.65, rgbStr(lowerMid));
-      grad.addColorStop(0.88, rgbStr(sky.horizon));
-      grad.addColorStop(1.0, rgbStr(lerpColor(sky.horizon, rgb(0, 0, 0), 0.1)));
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
+        .moon-pivot {
+          transition: transform 5s ease-in-out;
+          transform: rotate(calc(var(--moon-angle) * 1deg));
+        }
 
-      const isSunrise = smoothstep(0.18, 0.30, phase) * (1 - smoothstep(0.30, 0.40, phase));
-      const isSunset = smoothstep(0.60, 0.72, phase) * (1 - smoothstep(0.72, 0.85, phase));
-      const horizonGlow = Math.max(isSunrise, isSunset);
+        .celestial-body {
+          position: absolute;
+          left: -100px; /* Center perfectly on pivot (half of 200px) */
+          top: calc(-1 * var(--arc-radius)); /* Pushes the body up to the sky */
+          width: 200px;
+          height: 200px;
+          border-radius: 50%;
+        }
+
+        /* Moon Design */
+        .moon {
+          background-color: #95a5a6;
+          box-shadow: inset 7px -7px 0 rgba(0, 0, 0, 0.09);
+          transition: transform 5s ease-in-out;
+          /* Counter-rotate so the craters always stay upright! */
+          transform: scale(var(--celestial-scale)) rotate(calc(var(--moon-angle) * -1deg));
+        }
+        .moon:before, .moon:after {
+          content: "";
+          position: absolute;
+          border-radius: 50%;
+          background-color: rgba(0, 0, 0, 0.09);
+          box-shadow: inset -5px 5px 0 rgba(0, 0, 0, 0.09);
+        }
+        .moon:before { width: 30px; height: 30px; top: 50px; left: 45px; }
+        .moon:after { width: 40px; height: 40px; top: 100px; left: 30px; }
+
+        /* Sun Design (Identical stylistic structure to Moon) */
+        .sun {
+          background-color: #FFD700;
+          box-shadow: inset 7px -7px 0 rgba(200, 100, 0, 0.2), 0 0 50px rgba(255, 215, 0, 0.6);
+          transition: transform 5s ease-in-out;
+          /* Counter-rotate so the spots always stay upright! */
+          transform: scale(var(--celestial-scale)) rotate(calc(var(--sun-angle) * -1deg));
+        }
+        .sun:before, .sun:after {
+          content: "";
+          position: absolute;
+          border-radius: 50%;
+          background-color: rgba(255, 255, 255, 0.25);
+          box-shadow: inset -5px 5px 0 rgba(255, 255, 255, 0.1);
+        }
+        .sun:before { width: 30px; height: 30px; top: 50px; left: 45px; }
+        .sun:after { width: 40px; height: 40px; top: 100px; left: 30px; }
+
+        /* ─── FULL SCREEN GROUND & HOUSE ─── */
+        .ground {
+          position: absolute;
+          bottom: 0;
+          left: -10vw;
+          width: 120vw;
+          height: 25vh;
+          background-color: #000;
+          z-index: 9;
+          border-radius: 50% 50% 0 0 / 30px 30px 0 0;
+        }
+
+        .house-wrapper {
+          position: absolute;
+          bottom: 22vh;
+          left: 50%;
+          transform: translateX(-50%) scale(1.6);
+          z-index: 10;
+        }
+        @media (max-width: 768px) {
+          .house-wrapper { transform: translateX(-50%) scale(1.2); bottom: 23vh; }
+        }
+
+        /* House Architecture */
+        .house {
+          position: relative; width: 120px; height: 150px;
+          background-color: black; transform: rotate(5deg);
+        }
+        .house:before {
+          content: ""; position: absolute; width: 0; height: 0;
+          border-bottom: 30px solid black; border-right: 50px solid transparent;
+          left: 115px; top: 70px; transform: rotate(5deg);
+        }
+        .house:after {
+          content: ""; position: absolute; width: 5px; height: 65px;
+          background-color: black; left: 145px; top: 95px;
+        }
+
+        .porch {
+          position: absolute; width: 30px; height: 100px;
+          background-color: black; left: -20px; top: 55px; transform: rotate(-10deg);
+        }
+        .porch:before {
+          content: ""; position: absolute; width: 0; height: 0;
+          border-bottom: 20px solid black; border-left: 40px solid transparent;
+          left: -35px; top: 45px;
+        }
+        .porch:after {
+          content: ""; position: absolute; width: 0; height: 0;
+          border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 30px solid black;
+          left: -5px; top: -25px;
+        }
+
+        .first-floor {
+          position: absolute; transform: rotate(-10deg);
+          background-color: black; width: 5px; height: 45px; left: -37px; top: 125px;
+        }
+        .first-floor:before {
+          content: ""; position: absolute; background-color: #000;
+          width: 85px; height: 90px; top: -150px; left: 50px;
+        }
+        .first-floor:after {
+          content: ""; position: absolute;
+          border-left: 52px solid transparent; border-right: 52px solid transparent; border-bottom: 50px solid black;
+          top: -199px; left: 40px;
+        }
+
+        .second-floor {
+          position: absolute; background-color: black; width: 35px; height: 100px;
+          transform: rotate(3deg); top: -70px; left: 70px;
+        }
+        .second-floor:before {
+          content: ""; position: absolute; background-color: black;
+          width: 20px; height: 100px; left: 33px; top: 40px; transform: rotate(-3deg);
+        }
+        .second-floor:after {
+          content: ""; position: absolute; width: 0; height: 0;
+          border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid black;
+          top: 12px; left: 15px;
+        }
+
+        .roof {
+          position: absolute; width: 0; height: 0;
+          border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid black;
+          left: 65px; top: -95px;
+        }
+        .roof:before {
+          content: ""; position: absolute; width: 6px; height: 20px;
+          background-color: black; top: 5px; left: 10px; box-shadow: 20px 35px black;
+        }
+        .roof:after {
+          content: ""; position: absolute; width: 6px; height: 20px;
+          background-color: black; transform: rotate(-10deg); left: -110px; top: 35px; box-shadow: -27px 97px black;
+        }
+
+        .door {
+          position: absolute; background-color: var(--window-color);
+          transition: background-color 5s ease-in-out;
+          width: 30px; height: 50px; transform: rotate(-5deg); border-radius: 30px 30px 0 0;
+          box-shadow: inset -10px 5px rgba(0, 0, 0, 0.5); top: 90px; left: 40px;
+        }
+        .door:before {
+          content: ""; position: absolute; background-color: var(--window-color);
+          transition: background-color 5s ease-in-out;
+          border-radius: 30px 30px 0 0; box-shadow: inset -5px 2px rgba(0, 0, 0, 0.5);
+          width: 20px; height: 30px; left: -40px; transform: rotate(-3deg);
+        }
+        .door:after {
+          content: ""; position: absolute; background-color: var(--window-color);
+          transition: background-color 5s ease-in-out;
+          box-shadow: inset -5px 2px rgba(0, 0, 0, 0.5); border-radius: 30px 30px 0 0;
+          width: 20px; height: 30px; left: 45px; transform: rotate(3deg);
+        }
+
+        .small-windows {
+          position: absolute; background-color: var(--window-color);
+          transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out;
+          border-radius: 30px 30px 0 0; width: 13px; height: 25px; left: 100px; top: -20px;
+          box-shadow: -19px -40px var(--window-color), inset -4px 2px rgba(0, 0, 0, 0.5);
+        }
+        .small-windows:before {
+          content: ""; position: absolute; background-color: var(--window-color);
+          transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out;
+          border-radius: 30px 30px 0 0; width: 13px; height: 25px; transform: rotate(-7deg);
+          left: -60px; top: 50px; box-shadow: -60px 20px var(--window-color);
+        }
+
+        .big-window {
+          position: absolute; background-color: var(--window-color);
+          transition: background-color 5s ease-in-out;
+          border-radius: 30px 30px 0 0; transform: rotate(-7deg); width: 30px; height: 40px; top: -35px; left: 10px;
+        }
+        .big-window:before, .big-window:after {
+          content: ""; position: absolute; background-color: black;
+        }
+        .big-window:before { height: 40px; width: 2px; left: 15px; box-shadow: 13px 55px black, -47px 80px black, -32px 120px black; }
+        .big-window:after { height: 2px; width: 40px; top: 22px; box-shadow: 10px 58px black, -45px 78px black, -30px 120px black; }
+
+        .frames {
+          position: absolute; width: 2px; height: 40px; background-color: black;
+          top: -65px; left: 86.5px; box-shadow: 19px 40px black, 7px 150px black;
+        }
+        .frames:before {
+          content: ""; position: absolute; height: 2px; width: 30px; background-color: black;
+          top: 17px; left: -10px; box-shadow: 10px 40px black, 5px 150px black;
+        }
+
+        /* ─── FULL SCREEN RAIN SYSTEM ─── */
+        .rain-container {
+          position: absolute;
+          inset: 0;
+          z-index: 5;
+          opacity: var(--rain-opacity);
+          transition: opacity 5s ease-in-out;
+          overflow: hidden;
+        }
+
+        .dropOne, .dropTwo, .dropThree, .dropFour, .dropFive, 
+        .dropSix, .dropSeven, .dropEight, .dropNine, .dropTen {
+          position: absolute; background-color: rgba(211, 211, 211, 0.3); height: 10px; width: 1px; top: 0;
+          box-shadow: 0 -270px rgba(211, 211, 211, 0.3), -50px -50px rgba(211, 211, 211, 0.3), -50px -150px rgba(211, 211, 211, 0.3), 50px -395px rgba(211, 211, 211, 0.3), 50px -200px rgba(211, 211, 211, 0.3), 50px -100px rgba(211, 211, 211, 0.3), 100px -400px rgba(211, 211, 211, 0.3), 100px -320px rgba(211, 211, 211, 0.3), 100px -150px rgba(211, 211, 211, 0.3), 150px -200px rgba(211, 211, 211, 0.3), 200px -100px rgba(211, 211, 211, 0.3), 200px -370px rgba(211, 211, 211, 0.3), 250px -330px rgba(211, 211, 211, 0.3), 250px -220px rgba(211, 211, 211, 0.3), 300px -70px rgba(211, 211, 211, 0.3), 300px -140px rgba(211, 211, 211, 0.3), 300px -300px rgba(211, 211, 211, 0.3);
+        }
+        .dropOne { left: 10%; animation: rainAnim 1.5s linear infinite; }
+        .dropTwo { left: 20%; animation: rainAnim 1.2s linear infinite; }
+        .dropThree { left: 30%; animation: rainAnim 1.7s linear infinite; }
+        .dropFour { left: 40%; animation: rainAnim 1.4s linear infinite; }
+        .dropFive { left: 50%; animation: rainAnim 1.3s linear infinite; }
+        .dropSix { left: 60%; animation: rainAnim 1.6s linear infinite; }
+        .dropSeven { left: 70%; animation: rainAnim 1.1s linear infinite; }
+        .dropEight { left: 80%; animation: rainAnim 1.8s linear infinite; }
+        .dropNine { left: 90%; animation: rainAnim 1.4s linear infinite; }
+        .dropTen { left: 95%; animation: rainAnim 1.5s linear infinite; }
+
+        @keyframes rainAnim { 0% { transform: translateY(-200px); } 100% { transform: translateY(120vh); } }
+      `}</style>
       
-      if (horizonGlow > 0.01) {
-        const glowColor = isSunrise > isSunset ? rgb(255, 140, 50) : rgb(245, 100, 40);
-        const glowGrad = ctx.createRadialGradient(W * 0.5, H * 0.82, 0, W * 0.5, H * 0.82, W * 0.7);
-        glowGrad.addColorStop(0, rgbStr(glowColor, horizonGlow * 0.35));
-        glowGrad.addColorStop(0.3, rgbStr(glowColor, horizonGlow * 0.15));
-        glowGrad.addColorStop(0.6, rgbStr(glowColor, horizonGlow * 0.04));
-        glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = glowGrad;
-        ctx.fillRect(0, 0, W, H);
-      }
+      {/* Sun on its orbital pivot */}
+      <div className="celestial-pivot sun-pivot">
+        <div className="celestial-body sun"></div>
+      </div>
 
-      const nightFactor = phase < 0.5 ? 1 - smoothstep(0.15, 0.30, phase) : smoothstep(0.70, 0.85, phase);
-      const dayFactor = 1 - nightFactor;
+      {/* Moon on its orbital pivot */}
+      <div className="celestial-pivot moon-pivot">
+        <div className="celestial-body moon"></div>
+      </div>
 
-      if (nightFactor > 0.01) {
-        for (const star of engine.stars) {
-          const twinkle = 0.6 + 0.4 * Math.sin(time * star.twinkleSpeed + star.twinkleOffset);
-          const alpha = nightFactor * star.brightness * twinkle;
-          if (alpha < 0.01) continue;
-          
-          const sx = star.x * W;
-          const sy = star.y * H;
-          
-          if (star.size > 1.5) {
-            const glowR = star.size * 4;
-            const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, glowR);
-            glow.addColorStop(0, `rgba(200,220,255,${alpha * 0.3})`);
-            glow.addColorStop(1, 'rgba(200,220,255,0)');
-            ctx.fillStyle = glow;
-            ctx.fillRect(sx - glowR, sy - glowR, glowR * 2, glowR * 2);
-          }
-          
-          ctx.beginPath();
-          ctx.arc(sx, sy, star.size * 0.6, 0, TAU);
-          ctx.fillStyle = `rgba(220,230,255,${alpha})`;
-          ctx.fill();
-        }
-      }
+      <div className="house-wrapper">
+        <div className="house">
+          <div className="porch"></div>
+          <div className="first-floor"></div>
+          <div className="second-floor"></div>
+          <div className="roof"></div>
+          <div className="door"></div>
+          <div className="small-windows"></div>
+          <div className="big-window"></div>
+          <div className="frames"></div>
+        </div>
+      </div>
 
-      const sunProgress = (phase - 0.2) / 0.6;
-      const sunAngleRad = sunProgress * Math.PI;
-      const sunX = W * (0.15 + sunProgress * 0.7);
-      const sunY = H * 0.85 - Math.sin(sunAngleRad) * H * 0.65;
-      const sunVisible = sunProgress > 0 && sunProgress < 1 && sunY < H * 0.9;
-      
-      if (sunVisible && dayFactor > 0.01) {
-        const sunRadius = 28;
-        
-        if (horizonGlow > 0.02) {
-          ctx.save();
-          ctx.translate(sunX, sunY);
-          for (const ray of engine.rays) {
-            ctx.save();
-            ctx.rotate(ray.angle);
-            const rayLen = ray.length * H;
-            const rayGrad = ctx.createLinearGradient(0, 0, rayLen, 0);
-            rayGrad.addColorStop(0, `rgba(255,200,100,${ray.opacity * horizonGlow * 1.5})`);
-            rayGrad.addColorStop(0.5, `rgba(255,180,80,${ray.opacity * horizonGlow * 0.5})`);
-            rayGrad.addColorStop(1, 'rgba(255,180,80,0)');
-            ctx.fillStyle = rayGrad;
-            ctx.fillRect(0, -ray.width * W * 0.5, rayLen, ray.width * W);
-            ctx.restore();
-          }
-          ctx.restore();
-        }
-        
-        for (let i = 4; i >= 0; i--) {
-          const bloomR = sunRadius + i * 35;
-          const bloomAlpha = dayFactor * 0.04 * (1 - i / 5);
-          const bloomGrad = ctx.createRadialGradient(sunX, sunY, sunRadius * 0.5, sunX, sunY, bloomR);
-          bloomGrad.addColorStop(0, `rgba(255,250,230,${bloomAlpha})`);
-          bloomGrad.addColorStop(0.4, `rgba(255,220,150,${bloomAlpha * 0.4})`);
-          bloomGrad.addColorStop(1, 'rgba(255,200,100,0)');
-          ctx.fillStyle = bloomGrad;
-          ctx.beginPath();
-          ctx.arc(sunX, sunY, bloomR, 0, TAU);
-          ctx.fill();
-        }
-        
-        const sunGrad = ctx.createRadialGradient(
-          sunX - sunRadius * 0.15, sunY - sunRadius * 0.15, 0,
-          sunX, sunY, sunRadius
-        );
-        sunGrad.addColorStop(0, `rgba(255,255,250,${dayFactor})`);
-        sunGrad.addColorStop(0.6, `rgba(255,245,220,${dayFactor * 0.95})`);
-        sunGrad.addColorStop(0.85, `rgba(255,220,150,${dayFactor * 0.7})`);
-        sunGrad.addColorStop(1, `rgba(255,180,80,0)`);
-        ctx.fillStyle = sunGrad;
-        ctx.beginPath();
-        ctx.arc(sunX, sunY, sunRadius, 0, TAU);
-        ctx.fill();
-      }
+      <div className="ground"></div>
 
-      const moonProgress = ((phase + 0.5) % 1 - 0.2) / 0.6;
-      const moonAngleRad = moonProgress * Math.PI;
-      const moonX = W * (0.15 + moonProgress * 0.7);
-      const moonY = H * 0.85 - Math.sin(moonAngleRad) * H * 0.6;
-      const moonVisible = moonProgress > 0 && moonProgress < 1 && moonY < H * 0.9;
-      
-      if (moonVisible && nightFactor > 0.01) {
-        const moonRadius = 22;
-        
-        for (let i = 3; i >= 0; i--) {
-          const glowR = moonRadius + i * 25;
-          const glowAlpha = nightFactor * 0.03 * (1 - i / 4);
-          const moonGlow = ctx.createRadialGradient(moonX, moonY, moonRadius * 0.3, moonX, moonY, glowR);
-          moonGlow.addColorStop(0, `rgba(180,200,230,${glowAlpha})`);
-          moonGlow.addColorStop(0.5, `rgba(140,160,200,${glowAlpha * 0.3})`);
-          moonGlow.addColorStop(1, 'rgba(100,120,180,0)');
-          ctx.fillStyle = moonGlow;
-          ctx.beginPath();
-          ctx.arc(moonX, moonY, glowR, 0, TAU);
-          ctx.fill();
-        }
-        
-        const moonGrad = ctx.createRadialGradient(
-          moonX - moonRadius * 0.25, moonY - moonRadius * 0.25, 0,
-          moonX, moonY, moonRadius
-        );
-        moonGrad.addColorStop(0, `rgba(230,235,245,${nightFactor * 0.95})`);
-        moonGrad.addColorStop(0.5, `rgba(210,215,230,${nightFactor * 0.9})`);
-        moonGrad.addColorStop(0.8, `rgba(185,195,215,${nightFactor * 0.8})`);
-        moonGrad.addColorStop(1, `rgba(160,170,195,${nightFactor * 0.3})`);
-        ctx.fillStyle = moonGrad;
-        ctx.beginPath();
-        ctx.arc(moonX, moonY, moonRadius, 0, TAU);
-        ctx.fill();
-
-        const craters = [
-          { ox: -0.2, oy: -0.15, r: 0.18 },
-          { ox: 0.15, oy: 0.2, r: 0.12 },
-          { ox: -0.05, oy: 0.3, r: 0.09 },
-          { ox: 0.25, oy: -0.1, r: 0.07 },
-          { ox: -0.3, oy: 0.1, r: 0.1 },
-        ];
-        for (const c of craters) {
-          const cx = moonX + c.ox * moonRadius;
-          const cy = moonY + c.oy * moonRadius;
-          const cr = c.r * moonRadius;
-          ctx.beginPath();
-          ctx.arc(cx, cy, cr, 0, TAU);
-          ctx.fillStyle = `rgba(160,170,195,${nightFactor * 0.2})`;
-          ctx.fill();
-        }
-      }
-
-      for (const cloud of engine.clouds) {
-        cloud.x += cloud.speed * dt * 0.15;
-        if (cloud.x > 1.3) cloud.x = -0.3;
-        
-        const cx = cloud.x * W;
-        const cy = cloud.y * H;
-        const cw = cloud.width * W;
-        const ch = cloud.height * H;
-        
-        const cloudBrightness = dayFactor > 0.5 ? lerp(180, 245, dayFactor) : lerp(40, 180, dayFactor * 2);
-        const cloudR = cloudBrightness + (horizonGlow > 0.1 ? horizonGlow * 40 : 0);
-        const cloudG = cloudBrightness + (horizonGlow > 0.1 ? horizonGlow * 15 : 0);
-        const cloudB = cloudBrightness - (horizonGlow > 0.1 ? horizonGlow * 20 : 0);
-        const layerOpacity = cloud.opacity * (0.6 + cloud.layer * 0.15);
-        
-        const puffs = [
-          { ox: 0, oy: 0, sw: 1, sh: 1 },
-          { ox: -0.3, oy: 0.1, sw: 0.7, sh: 0.8 },
-          { ox: 0.3, oy: 0.05, sw: 0.65, sh: 0.75 },
-          { ox: -0.15, oy: -0.15, sw: 0.8, sh: 0.6 },
-          { ox: 0.15, oy: -0.1, sw: 0.75, sh: 0.65 },
-        ];
-        
-        for (const puff of puffs) {
-          const px = cx + puff.ox * cw;
-          const py = cy + puff.oy * ch;
-          const pw = cw * puff.sw;
-          const ph = ch * puff.sh;
-          
-          const cloudGrad = ctx.createRadialGradient(px, py, 0, px, py, Math.max(pw, ph));
-          cloudGrad.addColorStop(0, `rgba(${Math.round(cloudR)},${Math.round(cloudG)},${Math.round(cloudB)},${layerOpacity * 0.5})`);
-          cloudGrad.addColorStop(0.5, `rgba(${Math.round(cloudR)},${Math.round(cloudG)},${Math.round(cloudB)},${layerOpacity * 0.25})`);
-          cloudGrad.addColorStop(1, `rgba(${Math.round(cloudR)},${Math.round(cloudG)},${Math.round(cloudB)},0)`);
-          
-          ctx.save();
-          ctx.translate(px, py);
-          ctx.scale(pw / Math.max(pw, ph), ph / Math.max(pw, ph));
-          ctx.fillStyle = cloudGrad;
-          ctx.beginPath();
-          ctx.arc(0, 0, Math.max(pw, ph), 0, TAU);
-          ctx.fill();
-          ctx.restore();
-        }
-      }
-
-      if (dayFactor > 0.3) {
-        const shimmerOpacity = dayFactor * 0.015;
-        for (let i = 0; i < 3; i++) {
-          const sy = H * (0.4 + i * 0.15);
-          const shimmerX = Math.sin(time * 0.4 + i * 1.5) * W * 0.1;
-          const shimmerW = W * 0.6;
-          const shimmerGrad = ctx.createRadialGradient(
-            W * 0.5 + shimmerX, sy, 0,
-            W * 0.5 + shimmerX, sy, shimmerW
-          );
-          shimmerGrad.addColorStop(0, `rgba(255,250,230,${shimmerOpacity})`);
-          shimmerGrad.addColorStop(0.5, `rgba(255,245,220,${shimmerOpacity * 0.3})`);
-          shimmerGrad.addColorStop(1, 'rgba(255,245,220,0)');
-          ctx.fillStyle = shimmerGrad;
-          ctx.fillRect(0, sy - shimmerW, W, shimmerW * 2);
-        }
-      }
-
-      if (nightFactor > 0.5) {
-        if (timestamp - engine.lastMeteorTime > 800 + Math.random() * 2500 || !engine.lastMeteorTime) {
-          if (Math.random() < 0.4) {
-            engine.meteors.push({
-              x: Math.random() * W * 0.8 + W * 0.1,
-              y: Math.random() * H * 0.3,
-              angle: Math.PI * 0.2 + Math.random() * Math.PI * 0.15,
-              speed: 400 + Math.random() * 350,
-              length: 60 + Math.random() * 80,
-              life: 0,
-              maxLife: 0.4 + Math.random() * 0.4,
-              brightness: 0.5 + Math.random() * 0.5,
-            });
-            engine.lastMeteorTime = timestamp;
-          }
-        }
-        
-        for (let i = engine.meteors.length - 1; i >= 0; i--) {
-          const m = engine.meteors[i];
-          m.life += dt;
-          if (m.life > m.maxLife) {
-            engine.meteors.splice(i, 1);
-            continue;
-          }
-          
-          const lifeProgress = m.life / m.maxLife;
-          const fade = lifeProgress < 0.1 ? lifeProgress / 0.1 : 1 - smoothstep(0.3, 1, lifeProgress);
-          
-          const mx = m.x + Math.cos(m.angle) * m.speed * m.life;
-          const my = m.y + Math.sin(m.angle) * m.speed * m.life;
-          const tailX = mx - Math.cos(m.angle) * m.length * fade;
-          const tailY = my - Math.sin(m.angle) * m.length * fade;
-          
-          const trailGrad = ctx.createLinearGradient(tailX, tailY, mx, my);
-          trailGrad.addColorStop(0, 'rgba(255,255,255,0)');
-          trailGrad.addColorStop(0.7, `rgba(200,220,255,${fade * m.brightness * nightFactor * 0.3})`);
-          trailGrad.addColorStop(1, `rgba(255,255,255,${fade * m.brightness * nightFactor * 0.8})`);
-          
-          ctx.save();
-          ctx.lineCap = 'round';
-          ctx.lineWidth = 2;
-          ctx.strokeStyle = trailGrad;
-          ctx.beginPath();
-          ctx.moveTo(tailX, tailY);
-          ctx.lineTo(mx, my);
-          ctx.stroke();
-          
-          ctx.lineWidth = 1;
-          ctx.strokeStyle = `rgba(255,255,255,${fade * m.brightness * nightFactor})`;
-          ctx.beginPath();
-          ctx.moveTo(mx - Math.cos(m.angle) * 4, my - Math.sin(m.angle) * 4);
-          ctx.lineTo(mx, my);
-          ctx.stroke();
-          
-          const headGlow = ctx.createRadialGradient(mx, my, 0, mx, my, 8);
-          headGlow.addColorStop(0, `rgba(220,240,255,${fade * m.brightness * nightFactor * 0.4})`);
-          headGlow.addColorStop(1, 'rgba(220,240,255,0)');
-          ctx.fillStyle = headGlow;
-          ctx.fillRect(mx - 8, my - 8, 16, 16);
-          ctx.restore();
-        }
-      }
-
-      ctx.save();
-      ctx.globalAlpha = 0.035;
-      ctx.globalCompositeOperation = 'overlay';
-      const grainOffX = (Math.random() * 256) | 0;
-      const grainOffY = (Math.random() * 256) | 0;
-      const pattern = ctx.createPattern(engine.noiseCanvas, 'repeat');
-      if (pattern) {
-        ctx.translate(grainOffX, grainOffY);
-        ctx.fillStyle = pattern;
-        ctx.fillRect(-grainOffX, -grainOffY, W + 256, H + 256);
-      }
-      ctx.restore();
-
-      const vignetteGrad = ctx.createRadialGradient(W * 0.5, H * 0.5, W * 0.25, W * 0.5, H * 0.5, W * 0.85);
-      vignetteGrad.addColorStop(0, 'rgba(0,0,0,0)');
-      vignetteGrad.addColorStop(0.7, 'rgba(0,0,0,0.05)');
-      vignetteGrad.addColorStop(1, 'rgba(0,0,0,0.25)');
-      ctx.fillStyle = vignetteGrad;
-      ctx.fillRect(0, 0, W, H);
-
-      drawLandscape(ctx, W, H, phase, dayFactor, nightFactor, time);
-
-      rafId = requestAnimationFrame(render);
-    };
-
-    rafId = requestAnimationFrame(render);
-    return () => {
-      window.removeEventListener('resize', resize);
-      cancelAnimationFrame(rafId);
-    };
-  }, []);
-
-  return <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none" />;
+      <div className="rain-container">
+        <div className="dropOne"></div>
+        <div className="dropTwo"></div>
+        <div className="dropThree"></div>
+        <div className="dropFour"></div>
+        <div className="dropFive"></div>
+        <div className="dropSix"></div>
+        <div className="dropSeven"></div>
+        <div className="dropEight"></div>
+        <div className="dropNine"></div>
+        <div className="dropTen"></div>
+      </div>
+    </div>
+  );
 };
 
+// ─── IMAGE PRELOADER & CARD COMPONENTS ───────────────
 const roleImages = {
   'Mafia': '/mafia-card.jpg',
   'Doctor': '/doctor-card.jpg',
@@ -674,6 +401,7 @@ const RoleCard = ({ isFlipped, role }) => {
   );
 };
 
+// ─── MAIN GAMEBOARD COMPONENT ────────────────────────
 export default function GameBoard() {
   const state = useGameStore();
   const [newPlayerName, setNewPlayerName] = useState('');
@@ -719,6 +447,8 @@ export default function GameBoard() {
 
   const renderBackground = () => {
     if (state.phase === 'splash') return null; 
+    
+    // Lobby & Role Reveal uses Galaxy
     if (state.phase === 'lobby' || state.phase === 'role_reveal') {
       return (
         <div className="fixed inset-0 w-full h-full z-0 pointer-events-auto">
@@ -739,7 +469,9 @@ export default function GameBoard() {
         </div>
       );
     }
-    return <CinematicSky gamePhase={state.phase} />;
+    
+    // Day and Night uses the new Spooky House Engine
+    return <FullScreenSpooky phase={state.phase} />;
   };
 
   const renderBackButton = () => {
@@ -825,7 +557,7 @@ export default function GameBoard() {
             strokeLinejoin="round"
           >
             <circle cx="12" cy="12" r="3.2" />
-            <path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.9 1.9 0 0 1-2.7 2.7l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 0 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.9 1.9 0 0 1-2.7-2.7l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 0 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.9 1.9 0 0 1 2.7-2.7l.1.1a1 1 0 0 0 1.1.2h0a1 1 0 0 0 .6-.9V4a2 2 0 0 1 4 0v.2a1 1 0 0 0 .6.9h0a1 1 0 0 0 1.1-.2l.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0-.2 1.1v0a1 1 0 0 0 .9.6h.2a2 2 0 0 1 0 4h-.2a1 1 0 0 0-.9.6Z" />
+            <path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.9 1.9 0 0 1-2.7 2.7l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 0 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.9 1.9 0 0 1-2.7-2.7l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 0 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0 1.1.2h0a1 1 0 0 0 .6-.9V4a2 2 0 0 1 4 0v.2a1 1 0 0 0 .6.9h0a1 1 0 0 0 1.1-.2l.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0-.2 1.1v0a1 1 0 0 0 .9.6h.2a2 2 0 0 1 0 4h-.2a1 1 0 0 0-.9.6Z" />
           </svg>
         </button>
         
