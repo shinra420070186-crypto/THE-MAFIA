@@ -491,28 +491,37 @@ export default function GameBoard() {
   };
 
   const renderPlayerList = (onSelect, includeSkip = false, disableCondition = () => false) => (
-    <div className="w-full max-w-sm space-y-2 mt-6 max-h-[50vh] overflow-y-auto pr-2 relative z-10 pointer-events-auto">
-      {alivePlayers.map(p => {
-        const isDisabled = disableCondition(p);
-        return (
+    <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-6 mb-10">
+      {/* ─── NATIVE CSS GRADUAL BLUR ─── */}
+      <div 
+        className="w-full space-y-2 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
+        style={{
+          maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)'
+        }}
+      >
+        {alivePlayers.map(p => {
+          const isDisabled = disableCondition(p);
+          return (
+            <button 
+              key={p.id} 
+              onClick={() => onSelect(p.id)}
+              disabled={isDisabled}
+              className={`w-full p-4 rounded-xl font-bold uppercase transition-all ${isDisabled ? 'bg-slate-900/80 text-slate-600 border border-slate-800' : 'bg-[#111] text-white active:scale-95 border border-slate-700'}`}
+            >
+              {p.name} {isDisabled && <span className="text-[10px] ml-2 tracking-widest text-slate-600">(LOCKED)</span>}
+            </button>
+          );
+        })}
+        {includeSkip && (
           <button 
-            key={p.id} 
-            onClick={() => onSelect(p.id)}
-            disabled={isDisabled}
-            className={`w-full p-4 rounded-xl font-bold uppercase transition-all ${isDisabled ? 'bg-slate-900/80 text-slate-600 border border-slate-800' : 'bg-[#111] text-white active:scale-95 border border-slate-700'}`}
+            onClick={() => onSelect(null)}
+            className="w-full p-4 bg-transparent border border-slate-700/80 text-slate-400 rounded-xl font-bold uppercase mt-4 active:scale-95"
           >
-            {p.name} {isDisabled && <span className="text-[10px] ml-2 tracking-widest text-slate-600">(LOCKED)</span>}
+            Skip / Nobody
           </button>
-        );
-      })}
-      {includeSkip && (
-        <button 
-          onClick={() => onSelect(null)}
-          className="w-full p-4 bg-transparent border border-slate-700/80 text-slate-400 rounded-xl font-bold uppercase mt-4 active:scale-95"
-        >
-          Skip / Nobody
-        </button>
-      )}
+        )}
+      </div>
     </div>
   );
 
@@ -525,6 +534,14 @@ export default function GameBoard() {
         }
         body {
           background-color: #050505 !important;
+        }
+        /* Hides scrollbar on the Gradual Blur lists to keep it cinematic */
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
       `}</style>
       
@@ -570,6 +587,7 @@ export default function GameBoard() {
           {showSettings && (
             <div className="w-full max-w-sm mb-8 p-4 rounded-2xl border border-cyan-300/30 bg-[#02060a]/85 backdrop-blur-lg relative z-10 shadow-xl pointer-events-auto">
               <p className="text-cyan-200 text-[11px] font-black uppercase tracking-[0.2em] mb-4">Game Settings</p>
+              
               <div className="mb-4">
                 <p className="text-slate-300 text-[10px] uppercase tracking-widest mb-2">Mafia Count</p>
                 <div className="grid grid-cols-3 gap-2">
@@ -580,7 +598,8 @@ export default function GameBoard() {
                   ))}
                 </div>
               </div>
-              <div className="mb-1">
+              
+              <div className="mb-4">
                 <p className="text-slate-300 text-[10px] uppercase tracking-widest mb-2">Sheriff Role</p>
                 <div className="grid grid-cols-3 gap-2">
                   {['auto', 'always', 'off'].map((mode) => (
@@ -590,6 +609,20 @@ export default function GameBoard() {
                   ))}
                 </div>
               </div>
+
+              {/* ─── MOVED FROM LOBBY: REVEAL ROLES TOGGLE ─── */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between bg-[#010201]/50 border border-slate-700/50 p-3 rounded-xl">
+                  <span className="font-bold text-[10px] tracking-widest uppercase text-slate-400">Reveal Roles on Death?</span>
+                  <button 
+                    onClick={state.toggleRevealRoles} 
+                    className={`px-3 py-1 rounded text-[10px] uppercase font-black tracking-widest transition-colors ${state.settings?.revealRoles ? 'bg-green-500/20 text-green-500 border border-green-500/50' : 'bg-[#222] text-slate-500 border border-slate-700'}`}
+                  >
+                    {state.settings?.revealRoles ? 'ON' : 'OFF'}
+                  </button>
+                </div>
+              </div>
+
               <div className="mt-4 p-3 rounded-xl bg-slate-900/70 border border-slate-700/70">
                 <p className="text-[10px] text-slate-300 uppercase tracking-widest font-bold mb-2">Current Match Setup</p>
                 <div className="text-xs text-slate-200 space-y-1">
@@ -632,20 +665,22 @@ export default function GameBoard() {
             </div>
           )}
 
-          <div className="w-full space-y-2 mb-10 max-h-[300px] overflow-y-auto px-2 relative z-10 pointer-events-auto">
-            {state.players.map((p) => (
-              <div key={p.id} className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all">
-                <span className="font-bold tracking-widest text-white">{p.name}</span>
-                <button onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6">✕</button>
-              </div>
-            ))}
-          </div>
-
-          <div className="w-full max-w-sm flex items-center justify-between bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 p-4 rounded-xl mb-10 relative z-10 pointer-events-auto">
-            <span className="font-bold text-[10px] tracking-widest uppercase text-slate-400">Reveal Roles on Death?</span>
-            <button onClick={state.toggleRevealRoles} className={`px-4 py-2 rounded text-[10px] uppercase font-black tracking-widest transition-colors ${state.settings?.revealRoles ? 'bg-green-500/20 text-green-500 border border-green-500/50' : 'bg-[#222] text-slate-500 border border-slate-700'}`}>
-              {state.settings?.revealRoles ? 'ON' : 'OFF'}
-            </button>
+          {/* ─── RESTRICTED GRADUAL BLUR SCROLL AREA FOR PLAYERS ─── */}
+          <div className="w-full max-w-sm relative z-10 pointer-events-auto mb-10">
+            <div 
+              className="w-full space-y-2 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
+              style={{
+                maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)'
+              }}
+            >
+              {state.players.map((p) => (
+                <div key={p.id} className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all">
+                  <span className="font-bold tracking-widest text-white">{p.name}</span>
+                  <button onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6">✕</button>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="w-full flex justify-center relative z-10 mb-6 pointer-events-auto">
