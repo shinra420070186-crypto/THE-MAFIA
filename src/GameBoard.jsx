@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useGameStore } from './store';
 import Galaxy from './Galaxy';
 
@@ -55,16 +55,16 @@ const FullScreenSpooky = ({ phase }) => {
           }
         }
 
-        /* ─── DAY/NIGHT ANGLE TOGGLES ─── */
+        /* ─── DAY/NIGHT PURE SILHOUETTE TOGGLES ─── */
         .full-spooky-bg.theme-night {
           --sky-color: #212f3c;
-          --window-color: #ffd166;
+          --window-color: #ffd166; /* Glowing windows */
           --rain-opacity: 1;
         }
 
         .full-spooky-bg.theme-day {
-          --sky-color: #5b92e5;
-          --window-color: #222;
+          --sky-color: #5b92e5; /* Blue sky */
+          --window-color: #111;    /* Dark unlit windows */
           --rain-opacity: 0;
         }
 
@@ -102,7 +102,7 @@ const FullScreenSpooky = ({ phase }) => {
           background-color: #95a5a6;
           box-shadow: inset 7px -7px 0 rgba(0, 0, 0, 0.09);
           transition: transform 5s ease-in-out;
-          /* Counter-rotate so the craters always stay upright! */
+          /* Counter-rotate so the craters always stay upright */
           transform: scale(var(--celestial-scale)) rotate(calc(var(--moon-angle) * -1deg));
         }
         .moon:before, .moon:after {
@@ -115,12 +115,12 @@ const FullScreenSpooky = ({ phase }) => {
         .moon:before { width: 30px; height: 30px; top: 50px; left: 45px; }
         .moon:after { width: 40px; height: 40px; top: 100px; left: 30px; }
 
-        /* Sun Design (Identical stylistic structure to Moon) */
+        /* Sun Design */
         .sun {
           background-color: #FFD700;
           box-shadow: inset 7px -7px 0 rgba(200, 100, 0, 0.2), 0 0 50px rgba(255, 215, 0, 0.6);
           transition: transform 5s ease-in-out;
-          /* Counter-rotate so the spots always stay upright! */
+          /* Counter-rotate so the spots always stay upright */
           transform: scale(var(--celestial-scale)) rotate(calc(var(--sun-angle) * -1deg));
         }
         .sun:before, .sun:after {
@@ -133,7 +133,7 @@ const FullScreenSpooky = ({ phase }) => {
         .sun:before { width: 30px; height: 30px; top: 50px; left: 45px; }
         .sun:after { width: 40px; height: 40px; top: 100px; left: 30px; }
 
-        /* ─── FULL SCREEN GROUND & HOUSE ─── */
+        /* ─── FULL SCREEN GROUND & HOUSE (PURE BLACK SILHOUETTE) ─── */
         .ground {
           position: absolute;
           bottom: 0;
@@ -156,7 +156,7 @@ const FullScreenSpooky = ({ phase }) => {
           .house-wrapper { transform: translateX(-50%) scale(1.2); bottom: 23vh; }
         }
 
-        /* House Architecture */
+        /* House Architecture - Strict Silhouette */
         .house {
           position: relative; width: 120px; height: 150px;
           background-color: black; transform: rotate(5deg);
@@ -309,12 +309,10 @@ const FullScreenSpooky = ({ phase }) => {
         @keyframes rainAnim { 0% { transform: translateY(-200px); } 100% { transform: translateY(120vh); } }
       `}</style>
       
-      {/* Sun on its orbital pivot */}
       <div className="celestial-pivot sun-pivot">
         <div className="celestial-body sun"></div>
       </div>
 
-      {/* Moon on its orbital pivot */}
       <div className="celestial-pivot moon-pivot">
         <div className="celestial-body moon"></div>
       </div>
@@ -445,13 +443,15 @@ export default function GameBoard() {
     setVoteSelected(false);
   }, [state.phase]);
 
-  const renderBackground = () => {
+  // ARCHITECT FIX: useMemo prevents the background canvas from unmounting and causing flashes
+  // when the UI state updates (e.g. typing names or clicking remove player).
+  const memoizedBackground = useMemo(() => {
     if (state.phase === 'splash') return null; 
     
     // Lobby & Role Reveal uses Galaxy
     if (state.phase === 'lobby' || state.phase === 'role_reveal') {
       return (
-        <div className="fixed inset-0 w-full h-full z-0 pointer-events-auto">
+        <div className="fixed inset-0 w-full h-full z-0 pointer-events-none">
           <Galaxy 
             mouseRepulsion={true}
             mouseInteraction={true}
@@ -472,7 +472,7 @@ export default function GameBoard() {
     
     // Day and Night uses the updated Full Screen House Engine
     return <FullScreenSpooky phase={state.phase} />;
-  };
+  }, [state.phase]);
 
   const renderBackButton = () => {
     if (state.phase === 'lobby' || state.phase === 'splash') return null;
@@ -518,18 +518,8 @@ export default function GameBoard() {
 
   return (
     <>
-      <style>{`
-        /* PERMANENT FIX: Stops the mobile browser from flashing white/gray when a button or card is tapped */
-        * {
-          -webkit-tap-highlight-color: transparent !important;
-        }
-        body {
-          background-color: #050505 !important;
-        }
-      `}</style>
-      
-      {/* Background Layer: Hoisted to the top so it never unmounts/remounts during phase changes */}
-      {renderBackground()}
+      {/* Background Layer: Hooked perfectly to state to kill the flash */}
+      {memoizedBackground}
 
       {/* ─── PHASE OVERLAYS ─── */}
       {state.phase === 'splash' && (
@@ -557,16 +547,7 @@ export default function GameBoard() {
             aria-label="Toggle settings"
             className="absolute top-4 left-4 z-50 w-12 h-12 rounded-xl border border-cyan-300/40 bg-[#02060a]/80 backdrop-blur-md flex items-center justify-center active:scale-95 transition-all hover:border-cyan-200/70 hover:bg-[#07111a]/85 pointer-events-auto"
           >
-            <svg
-              className={`w-6 h-6 text-cyan-100 ${showSettings ? 'animate-spin' : ''}`}
-              style={{ animationDuration: '0.8s' }}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg className={`w-6 h-6 text-cyan-100 ${showSettings ? 'animate-spin' : ''}`} style={{ animationDuration: '0.8s' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3.2" />
               <path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.9 1.9 0 0 1-2.7 2.7l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 0 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.9 1.9 0 0 1-2.7-2.7l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 0 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0 1.1.2h0a1 1 0 0 0 .6-.9V4a2 2 0 0 1 4 0v.2a1 1 0 0 0 .6.9h0a1 1 0 0 0 1.1-.2l.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0-.2 1.1v0a1 1 0 0 0 .9.6h.2a2 2 0 0 1 0 4h-.2a1 1 0 0 0-.9.6Z" />
             </svg>
@@ -579,37 +560,26 @@ export default function GameBoard() {
           {showSettings && (
             <div className="w-full max-w-sm mb-8 p-4 rounded-2xl border border-cyan-300/30 bg-[#02060a]/85 backdrop-blur-lg relative z-10 shadow-xl pointer-events-auto">
               <p className="text-cyan-200 text-[11px] font-black uppercase tracking-[0.2em] mb-4">Game Settings</p>
-
               <div className="mb-4">
                 <p className="text-slate-300 text-[10px] uppercase tracking-widest mb-2">Mafia Count</p>
                 <div className="grid grid-cols-3 gap-2">
                   {['auto', 1, 2].map((mode) => (
-                    <button
-                      key={String(mode)}
-                      onClick={() => state.setMafiaCount(mode)}
-                      className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${selectedMafiaCount === mode ? 'bg-rose-400/20 text-rose-200 border-rose-300/60' : 'bg-slate-900/70 text-slate-300 border-slate-700/70 hover:border-slate-500'}`}
-                    >
+                    <button key={String(mode)} onClick={() => state.setMafiaCount(mode)} className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${selectedMafiaCount === mode ? 'bg-rose-400/20 text-rose-200 border-rose-300/60' : 'bg-slate-900/70 text-slate-300 border-slate-700/70 hover:border-slate-500'}`}>
                       {mode}
                     </button>
                   ))}
                 </div>
               </div>
-
               <div className="mb-1">
                 <p className="text-slate-300 text-[10px] uppercase tracking-widest mb-2">Sheriff Role</p>
                 <div className="grid grid-cols-3 gap-2">
                   {['auto', 'always', 'off'].map((mode) => (
-                    <button
-                      key={mode}
-                      onClick={() => state.setSheriffMode(mode)}
-                      className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${selectedSheriffMode === mode ? 'bg-violet-400/20 text-violet-200 border-violet-300/60' : 'bg-slate-900/70 text-slate-300 border-slate-700/70 hover:border-slate-500'}`}
-                    >
+                    <button key={mode} onClick={() => state.setSheriffMode(mode)} className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${selectedSheriffMode === mode ? 'bg-violet-400/20 text-violet-200 border-violet-300/60' : 'bg-slate-900/70 text-slate-300 border-slate-700/70 hover:border-slate-500'}`}>
                       {mode}
                     </button>
                   ))}
                 </div>
               </div>
-
               <div className="mt-4 p-3 rounded-xl bg-slate-900/70 border border-slate-700/70">
                 <p className="text-[10px] text-slate-300 uppercase tracking-widest font-bold mb-2">Current Match Setup</p>
                 <div className="text-xs text-slate-200 space-y-1">
@@ -625,59 +595,15 @@ export default function GameBoard() {
           
           <div className="w-full mb-10 flex justify-center relative z-10 pointer-events-auto">
             <div className="poda-wrapper">
-              <div className="poda-glow"></div>
-              <div className="poda-darkBorderBg"></div>
-              <div className="poda-darkBorderBg"></div>
-              <div className="poda-darkBorderBg"></div>
-              <div className="poda-white"></div>
-              <div className="poda-border"></div>
+              <div className="poda-glow"></div><div className="poda-darkBorderBg"></div><div className="poda-darkBorderBg"></div><div className="poda-darkBorderBg"></div><div className="poda-white"></div><div className="poda-border"></div>
               <div className="poda-main">
-                <input 
-                  placeholder="Add Player..." 
-                  type="text" 
-                  value={newPlayerName}
-                  onChange={(e) => setNewPlayerName(e.target.value)}
-                  onKeyDown={(e) => { 
-                    if (e.key === 'Enter' && newPlayerName.trim()) { 
-                      state.addPlayer(newPlayerName.trim()); 
-                      setNewPlayerName(''); 
-                    } 
-                  }}
-                  className="poda-input" 
-                />
-                <div className="poda-input-mask"></div>
-                <div className="poda-pink-mask"></div>
-                <div className="poda-filterBorder"></div>
-                
-                <div 
-                  className="poda-filter-icon" 
-                  onClick={() => { 
-                    if(newPlayerName.trim()) { 
-                      state.addPlayer(newPlayerName.trim()); 
-                      setNewPlayerName(''); 
-                    } 
-                  }}
-                >
-                  <svg preserveAspectRatio="none" height="27" width="27" viewBox="4.8 4.56 14.832 15.408" fill="none">
-                    <path d="M8.16 6.65002H15.83C16.47 6.65002 16.99 7.17002 16.99 7.81002V9.09002C16.99 9.56002 16.7 10.14 16.41 10.43L13.91 12.64C13.56 12.93 13.33 13.51 13.33 13.98V16.48C13.33 16.83 13.1 17.29 12.81 17.47L12 17.98C11.24 18.45 10.2 17.92 10.2 16.99V13.91C10.2 13.5 9.97 12.98 9.73 12.69L7.52 10.36C7.23 10.08 7 9.55002 7 9.20002V7.87002C7 7.17002 7.52 6.65002 8.16 6.65002Z" stroke="#d6d6e6" strokeWidth="1" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"></path>
-                  </svg>
+                <input placeholder="Add Player..." type="text" value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && newPlayerName.trim()) { state.addPlayer(newPlayerName.trim()); setNewPlayerName(''); } }} className="poda-input" />
+                <div className="poda-input-mask"></div><div className="poda-pink-mask"></div><div className="poda-filterBorder"></div>
+                <div className="poda-filter-icon" onClick={() => { if(newPlayerName.trim()) { state.addPlayer(newPlayerName.trim()); setNewPlayerName(''); } }}>
+                  <svg preserveAspectRatio="none" height="27" width="27" viewBox="4.8 4.56 14.832 15.408" fill="none"><path d="M8.16 6.65002H15.83C16.47 6.65002 16.99 7.17002 16.99 7.81002V9.09002C16.99 9.56002 16.7 10.14 16.41 10.43L13.91 12.64C13.56 12.93 13.33 13.51 13.33 13.98V16.48C13.33 16.83 13.1 17.29 12.81 17.47L12 17.98C11.24 18.45 10.2 17.92 10.2 16.99V13.91C10.2 13.5 9.97 12.98 9.73 12.69L7.52 10.36C7.23 10.08 7 9.55002 7 9.20002V7.87002C7 7.17002 7.52 6.65002 8.16 6.65002Z" stroke="#d6d6e6" strokeWidth="1" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"></path></svg>
                 </div>
-                
                 <div className="poda-search-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" viewBox="0 0 24 24" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" height="24" fill="none">
-                    <circle stroke="url(#search)" r="8" cy="11" cx="11"></circle>
-                    <line stroke="url(#searchl)" y2="16.65" y1="22" x2="16.65" x1="22"></line>
-                    <defs>
-                      <linearGradient gradientTransform="rotate(50)" id="search">
-                        <stop stopColor="#f8e7f8" offset="0%"></stop>
-                        <stop stopColor="#b6a9b7" offset="50%"></stop>
-                      </linearGradient>
-                      <linearGradient id="searchl">
-                        <stop stopColor="#b6a9b7" offset="0%"></stop>
-                        <stop stopColor="#837484" offset="50%"></stop>
-                      </linearGradient>
-                    </defs>
-                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" viewBox="0 0 24 24" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" height="24" fill="none"><circle stroke="url(#search)" r="8" cy="11" cx="11"></circle><line stroke="url(#searchl)" y2="16.65" y1="22" x2="16.65" x1="22"></line><defs><linearGradient gradientTransform="rotate(50)" id="search"><stop stopColor="#f8e7f8" offset="0%"></stop><stop stopColor="#b6a9b7" offset="50%"></stop></linearGradient><linearGradient id="searchl"><stop stopColor="#b6a9b7" offset="0%"></stop><stop stopColor="#837484" offset="50%"></stop></linearGradient></defs></svg>
                 </div>
               </div>
             </div>
@@ -688,11 +614,7 @@ export default function GameBoard() {
               <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-3 pl-2 text-center drop-shadow-md">Recent Players</p>
               <div className="flex flex-wrap justify-center gap-2">
                 {availableRecentNames.slice(0, 6).map(name => (
-                  <button 
-                    key={name} 
-                    onClick={() => state.addPlayer(name)} 
-                    className="px-4 py-2 bg-[#222] text-[#e81cff] border border-[#e81cff]/30 rounded-full text-xs font-bold tracking-wider active:scale-95 transition-all shadow-md"
-                  >
+                  <button key={name} onClick={() => state.addPlayer(name)} className="px-4 py-2 bg-[#222] text-[#e81cff] border border-[#e81cff]/30 rounded-full text-xs font-bold tracking-wider active:scale-95 transition-all shadow-md">
                     + {name}
                   </button>
                 ))}
@@ -711,30 +633,16 @@ export default function GameBoard() {
 
           <div className="w-full max-w-sm flex items-center justify-between bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 p-4 rounded-xl mb-10 relative z-10 pointer-events-auto">
             <span className="font-bold text-[10px] tracking-widest uppercase text-slate-400">Reveal Roles on Death?</span>
-            <button 
-              onClick={state.toggleRevealRoles} 
-              className={`px-4 py-2 rounded text-[10px] uppercase font-black tracking-widest transition-colors ${state.settings?.revealRoles ? 'bg-green-500/20 text-green-500 border border-green-500/50' : 'bg-[#222] text-slate-500 border border-slate-700'}`}
-            >
+            <button onClick={state.toggleRevealRoles} className={`px-4 py-2 rounded text-[10px] uppercase font-black tracking-widest transition-colors ${state.settings?.revealRoles ? 'bg-green-500/20 text-green-500 border border-green-500/50' : 'bg-[#222] text-slate-500 border border-slate-700'}`}>
               {state.settings?.revealRoles ? 'ON' : 'OFF'}
             </button>
           </div>
 
           <div className="w-full flex justify-center relative z-10 mb-6 pointer-events-auto">
-            <button 
-              disabled={state.players.length < 4}
-              onClick={() => {
-                setTimeout(() => { state.startGame(); }, 250); 
-              }}
-              className="stealth-btn"
-            >
+            <button disabled={state.players.length < 4} onClick={() => { setTimeout(() => { state.startGame(); }, 250); }} className="stealth-btn">
               <strong className="stealth-strong">BEGIN GAME ({state.players.length})</strong>
-              <div className="stealth-container-stars">
-                <div className="stealth-stars"></div>
-              </div>
-              <div className="stealth-glow">
-                <div className="stealth-circle"></div>
-                <div className="stealth-circle"></div>
-              </div>
+              <div className="stealth-container-stars"><div className="stealth-stars"></div></div>
+              <div className="stealth-glow"><div className="stealth-circle"></div><div className="stealth-circle"></div></div>
             </button>
           </div>
         </div>
@@ -757,15 +665,9 @@ export default function GameBoard() {
             <RoleCard isFlipped={isFlipped} role={state.players[state.revealIndex]?.role} />
           </div>
 
-          {!cardViewed && (
-            <p className="mt-12 text-slate-400 font-bold text-sm relative z-10 animate-pulse pointer-events-none">👆 Tap the card to view your role</p>
-          )}
+          {!cardViewed && <p className="mt-12 text-slate-400 font-bold text-sm relative z-10 animate-pulse pointer-events-none">👆 Tap the card to view your role</p>}
 
-          <button 
-            onClick={() => { setIsFlipped(false); setCardViewed(false); state.nextRoleReveal(); }}
-            disabled={!cardViewed} 
-            className={`mt-12 p-5 w-full max-w-sm rounded-xl font-black uppercase tracking-widest transition-all duration-300 relative z-10 ${!cardViewed ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0 bg-[#0a0a0a]/90 backdrop-blur-md text-white border border-slate-800 active:scale-95 pointer-events-auto'}`}
-          >
+          <button onClick={() => { setIsFlipped(false); setCardViewed(false); state.nextRoleReveal(); }} disabled={!cardViewed} className={`mt-12 p-5 w-full max-w-sm rounded-xl font-black uppercase tracking-widest transition-all duration-300 relative z-10 ${!cardViewed ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0 bg-[#0a0a0a]/90 backdrop-blur-md text-white border border-slate-800 active:scale-95 pointer-events-auto'}`}>
             {state.revealIndex === state.players.length - 1 ? 'Give to Moderator' : 'Next Player'}
           </button>
         </div>
@@ -778,12 +680,8 @@ export default function GameBoard() {
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="w-96 h-96 bg-black/30 rounded-full blur-3xl animate-pulse"></div>
             </div>
-            <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] relative z-20 animate-in fade-in duration-1000">
-              EVERYONE
-          </h2>
-            <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] relative z-20 mt-4 animate-in fade-in duration-1000 delay-500">
-              CLOSE YOUR EYES
-          </h2>
+            <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] relative z-20 animate-in fade-in duration-1000">EVERYONE</h2>
+            <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] relative z-20 mt-4 animate-in fade-in duration-1000 delay-500">CLOSE YOUR EYES</h2>
             <p className="text-slate-300 mt-8 text-lg tracking-widest font-bold relative z-20 animate-pulse">Get ready for the night...</p>
           </div>
         </div>
@@ -820,10 +718,7 @@ export default function GameBoard() {
               <h1 className={`text-6xl md:text-7xl font-black uppercase relative z-10 pointer-events-none ${state.investigationResult === 'DEAD_ROLE' ? 'text-slate-500 drop-shadow-[0_0_20px_rgba(107,114,128,0.5)]' : state.investigationResult === 'MAFIA' ? 'text-red-600 drop-shadow-[0_0_30px_rgba(220,38,38,0.7)]' : 'text-green-400 drop-shadow-[0_0_30px_rgba(34,197,94,0.7)]'}`}>
                 {state.investigationResult === 'DEAD_ROLE' ? 'ROLE DEAD' : state.investigationResult}
               </h1>
-              <button 
-                onClick={state.advanceFromDetective}
-                className="mt-12 p-5 w-full max-w-sm bg-[#0a0a0a]/90 backdrop-blur-md rounded-xl font-black tracking-widest uppercase active:scale-95 relative z-10 border border-slate-700 hover:border-slate-500 transition-colors shadow-lg pointer-events-auto"
-              >
+              <button onClick={state.advanceFromDetective} className="mt-12 p-5 w-full max-w-sm bg-[#0a0a0a]/90 backdrop-blur-md rounded-xl font-black tracking-widest uppercase active:scale-95 relative z-10 border border-slate-700 hover:border-slate-500 transition-colors shadow-lg pointer-events-auto">
                 Continue →
               </button>
             </>
@@ -855,12 +750,8 @@ export default function GameBoard() {
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="w-96 h-96 bg-yellow-300/20 rounded-full blur-3xl animate-pulse"></div>
             </div>
-            <h2 className="text-5xl md:text-6xl font-black text-amber-50 uppercase tracking-[0.3em] drop-shadow-[0_0_40px_rgba(255,210,0,0.8)] relative z-20 animate-in fade-in duration-1000">
-              EVERYONE
-            </h2>
-            <h2 className="text-5xl md:text-6xl font-black text-amber-50 uppercase tracking-[0.3em] drop-shadow-[0_0_40px_rgba(255,210,0,0.8)] relative z-20 mt-4 animate-in fade-in duration-1000 delay-500">
-              OPEN YOUR EYES
-            </h2>
+            <h2 className="text-5xl md:text-6xl font-black text-amber-50 uppercase tracking-[0.3em] drop-shadow-[0_0_40px_rgba(255,210,0,0.8)] relative z-20 animate-in fade-in duration-1000">EVERYONE</h2>
+            <h2 className="text-5xl md:text-6xl font-black text-amber-50 uppercase tracking-[0.3em] drop-shadow-[0_0_40px_rgba(255,210,0,0.8)] relative z-20 mt-4 animate-in fade-in duration-1000 delay-500">OPEN YOUR EYES</h2>
             <p className="text-yellow-100 mt-8 text-lg tracking-widest font-bold relative z-20 animate-pulse">The sun is rising...</p>
           </div>
         </div>
@@ -872,19 +763,12 @@ export default function GameBoard() {
           <h2 className="text-4xl md:text-5xl font-black uppercase mb-12 text-white tracking-[0.2em] drop-shadow-[0_0_20px_rgba(255,255,255,0.6)] mt-14 relative z-10 animate-in fade-in duration-1000 pointer-events-none">The Town Awakens</h2>
           <div className="w-full max-w-2xl space-y-4 relative z-10 pointer-events-none">
             {state.dayRecap.map((msg, i) => (
-              <div 
-                key={i} 
-                className="p-6 bg-slate-900/50 backdrop-blur-md rounded-xl text-lg font-bold border-l-4 border-amber-400 shadow-xl animate-in fade-in duration-1000 transition-colors pointer-events-auto hover:bg-slate-900/70"
-                style={{ animationDelay: `${i * 200}ms` }}
-              >
+              <div key={i} className="p-6 bg-slate-900/50 backdrop-blur-md rounded-xl text-lg font-bold border-l-4 border-amber-400 shadow-xl animate-in fade-in duration-1000 transition-colors pointer-events-auto hover:bg-slate-900/70" style={{ animationDelay: `${i * 200}ms` }}>
                 <span className="text-amber-300">▸ </span>{msg}
               </div>
             ))}
           </div>
-          <button 
-            onClick={state.phase === 'day_recap' ? state.startVoting : state.advanceToNight}
-            className="mt-12 p-5 w-full max-w-sm bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 rounded-xl font-black tracking-widest uppercase active:scale-95 transition-transform shadow-xl relative z-10 hover:shadow-[0_0_30px_rgba(255,193,7,0.5)] pointer-events-auto"
-          >
+          <button onClick={state.phase === 'day_recap' ? state.startVoting : state.advanceToNight} className="mt-12 p-5 w-full max-w-sm bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 rounded-xl font-black tracking-widest uppercase active:scale-95 transition-transform shadow-xl relative z-10 hover:shadow-[0_0_30px_rgba(255,193,7,0.5)] pointer-events-auto">
             {state.phase === 'day_recap' ? '→ Begin Voting' : '→ Go To Sleep (Next Night)'}
           </button>
         </div>
@@ -899,29 +783,15 @@ export default function GameBoard() {
           
           <div className="w-full max-w-sm mt-10 space-y-3 max-h-[50vh] overflow-y-auto pr-2 relative z-10 pointer-events-auto">
             {alivePlayers.filter(p => p.id !== alivePlayers[state.votingState.currentVoterIndex]?.id).map(p => (
-              <button 
-                key={p.id} 
-                onClick={() => { setVoteSelected(true); state.submitVote(p.id); }}
-                className="w-full p-4 bg-slate-900/70 backdrop-blur-md text-white border-2 border-slate-700/70 rounded-lg font-bold uppercase active:scale-95 transition-all hover:border-slate-500 hover:bg-slate-900"
-              >
+              <button key={p.id} onClick={() => { setVoteSelected(true); state.submitVote(p.id); }} className="w-full p-4 bg-slate-900/70 backdrop-blur-md text-white border-2 border-slate-700/70 rounded-lg font-bold uppercase active:scale-95 transition-all hover:border-slate-500 hover:bg-slate-900">
                 → Vote {p.name}
               </button>
             ))}
-            <button 
-              onClick={() => state.submitVote(null)}
-              disabled={!voteSelected}
-              className={`w-full p-4 border-2 rounded-lg font-bold uppercase mt-6 active:scale-95 transition-all ${
-                !voteSelected 
-                  ? 'opacity-40 pointer-events-none border-slate-700/30 bg-transparent text-slate-500' 
-                  : 'bg-transparent border-slate-600/50 backdrop-blur-sm text-slate-300 hover:border-slate-400 hover:text-slate-200'
-              }`}
-            >
+            <button onClick={() => state.submitVote(null)} disabled={!voteSelected} className={`w-full p-4 border-2 rounded-lg font-bold uppercase mt-6 active:scale-95 transition-all ${!voteSelected ? 'opacity-40 pointer-events-none border-slate-700/30 bg-transparent text-slate-500' : 'bg-transparent border-slate-600/50 backdrop-blur-sm text-slate-300 hover:border-slate-400 hover:text-slate-200'}`}>
               ⊘ Pass / No Vote
             </button>
           </div>
-          {!voteSelected && (
-            <p className="mt-8 text-slate-400 font-bold text-sm relative z-10 animate-pulse pointer-events-none">👉 Select a vote first, then you can pass</p>
-          )}
+          {!voteSelected && <p className="mt-8 text-slate-400 font-bold text-sm relative z-10 animate-pulse pointer-events-none">👉 Select a vote first, then you can pass</p>}
           <p className="mt-10 text-slate-400 font-bold text-[11px] uppercase tracking-wider relative z-10 bg-slate-900/40 px-4 py-2 rounded-full backdrop-blur-md border border-slate-700/50 pointer-events-none">
             Vote {state.votingState.currentVoterIndex + 1} of {alivePlayers.length}
           </p>
@@ -956,12 +826,7 @@ export default function GameBoard() {
           </div>
 
           <div className="w-full flex justify-center mt-14 mb-6 relative z-10 pointer-events-auto">
-            <button 
-              onClick={() => {
-                setTimeout(() => { state.playAgain(); }, 1500); 
-              }}
-              className="splash-batman-btn"
-            >
+            <button onClick={() => { setTimeout(() => { state.playAgain(); }, 1500); }} className="splash-batman-btn">
               <span>PLAY AGAIN</span>
             </button>
           </div>
