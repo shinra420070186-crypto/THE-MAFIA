@@ -403,10 +403,10 @@ const ImagePreloader = () => (
 const RoleCard = ({ isFlipped, role }) => {
   return (
     <div className="my-6 relative w-[240px] h-[360px] [perspective:1000px] select-none touch-none" style={tapSafeStyle}>
-      {/* ARCHITECT FIX: Hardware acceleration (translateZ) permanently fixes WebKit 3D white flash rendering bugs */}
+      {/* ARCHITECT FIX: Combine translateZ and rotateY in the SAME inline style to prevent overriding */}
       <div 
-        className={`relative w-full h-full transition-transform duration-[600ms] [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}
-        style={{ transform: 'translateZ(0)' }}
+        className="relative w-full h-full transition-transform duration-[600ms] [transform-style:preserve-3d]"
+        style={{ transform: isFlipped ? 'rotateY(180deg) translateZ(0)' : 'rotateY(0deg) translateZ(0)' }}
       >
         <div className="absolute inset-0 [backface-visibility:hidden] rounded-[2rem] bg-[#0a0a0a] border border-slate-800 flex flex-col items-center justify-center p-4 shadow-xl">
            <p className="text-slate-500 font-black tracking-widest uppercase text-center text-xl">Secret Role</p>
@@ -414,8 +414,9 @@ const RoleCard = ({ isFlipped, role }) => {
         </div>
         
         <div 
-          className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[2rem] bg-black" 
+          className="absolute inset-0 [backface-visibility:hidden] rounded-[2rem] bg-black" 
           style={{ 
+            transform: 'rotateY(180deg)',
             backgroundImage: `url(${roleImages[role] || roleImages.Civilian})`,
             backgroundPosition: 'center',
             backgroundSize: '105%',
@@ -535,6 +536,30 @@ export default function GameBoard() {
 
   return (
     <>
+      <style>{`
+        /* PERMANENT FIX: Root level reset to kill tap highlights */
+        * {
+          -webkit-tap-highlight-color: transparent !important;
+          outline: none !important;
+        }
+        body {
+          background-color: #050505 !important;
+          -webkit-touch-callout: none;
+          user-select: none;
+        }
+        input {
+          user-select: auto;
+        }
+        /* Hides scrollbar on the Gradual Blur lists to keep it cinematic */
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+      
       {/* ─── PERMANENT BACKGROUND MOUNTS (ZERO FLICKER ARCHITECTURE) ─── */}
       <div 
         className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out"
@@ -577,7 +602,7 @@ export default function GameBoard() {
             onClick={() => {
               setTimeout(() => {
                 state.enterLobby();
-              }, 1200); 
+              }, 800); 
             }}
             className="splash-batman-btn"
             style={tapSafeStyle}
@@ -718,7 +743,6 @@ export default function GameBoard() {
           <p className="text-slate-300 font-bold uppercase tracking-widest text-[10px] mb-2 relative z-10 pointer-events-none">Pass phone to</p>
           <h2 className="text-4xl font-black text-white uppercase mb-8 drop-shadow-md relative z-10 pointer-events-none">{state.players[state.revealIndex]?.name}</h2>
           
-          {/* ARCHITECT FIX: stopPropagation added to card flip events so touch doesn't bleed into background */}
           <div 
             onPointerDown={(e) => e.stopPropagation()}
             onMouseDown={() => setIsFlipped(true)}
