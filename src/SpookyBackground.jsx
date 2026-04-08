@@ -1,21 +1,22 @@
 import React from 'react';
 import './SpookyBackground.css';
 
-export default function SpookyBackground({ phase }) {
-  // Added a safety check to prevent rendering errors
-  const safePhase = phase || '';
-  const isNight = safePhase.startsWith('night') || safePhase === 'night_transition';
+export default function SpookyBackground({ phase = '' }) {
+  // Added safety fallback so it doesn't crash if 'phase' is temporarily undefined
+  const isNight = typeof phase === 'string' && (phase.includes('night') || phase === 'night_transition');
   const themeClass = isNight ? 'theme-night' : 'theme-day';
 
   return (
     <div className={`scene-wrapper ${themeClass}`}>
       <div className="sky">
+        
         <div className="celestial-pivot sun-pivot">
-          <div className="sun"></div>
+            <div className="sun"></div>
         </div>
         <div className="celestial-pivot moon-pivot">
-          <div className="moon"></div>
+            <div className="moon"></div>
         </div>
+
         <div className="clouds">
           <span></span><span></span><span></span><span></span>
         </div>
