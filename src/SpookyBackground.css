@@ -66,62 +66,75 @@
 }
 
 /* ==========================================================================
-   FIX: SMOOTH "C" ARC ANIMATION & NEW SUN DESIGN
+   PERFECT HORIZONTAL 'C' ARC (NO MOBILE GLITCHING)
    ========================================================================== */
-.moon, .sun {
+
+/* The Pivot anchor sits at the bottom center of the screen */
+.celestial-pivot {
     position: absolute;
-    z-index: 2;
-    width: 16vmin;
-    height: 16vmin;
+    bottom: -10vmin;
     left: 50%;
-    top: 15vh;
-    margin-left: -8vmin;
-    /* The secret to the perfect C-Shape Arc: Pivot point is at the bottom of the screen */
-    transform-origin: 50% 85vh;
-    opacity: 0;
-    pointer-events: none;
-    transform: rotate(-90deg); /* Default hidden starting state (left horizon) */
+    width: 0;
+    height: 0;
+    z-index: 2;
 }
 
-/* NEW: Cleaner, Bright, Glowing Sun Design */
+/* Sun & Moon are attached to the pivot, swinging on an 85vmin radius */
+.moon, .sun {
+    position: absolute; 
+    width: 20vmin; 
+    height: 20vmin; 
+    left: -10vmin;  /* Centers them exactly over the pivot line */
+    bottom: 85vmin; /* The radius (height) of the arc */
+    border-radius: 100%;
+    pointer-events: none;
+    /* Optional: Counter-rotates them slightly so shadows/craters stay upright */
+    transform: rotate(15deg);
+}
+
+/* Clean, Blazing Bright Sun Design */
 .sun {
-    background: #fffde7;
+    background: #ffffff;
     box-shadow: 
-        0 0 4vmin 2vmin #ffe066, 
-        0 0 8vmin 4vmin #ffc107aa, 
-        0 0 15vmin 6vmin #ff980055, 
-        inset 0 0 2vmin #ffeb3b;
+        0 0 8vmin 3vmin #ffeb3b, 
+        0 0 16vmin 6vmin #ffc107, 
+        0 0 30vmin 10vmin rgba(255, 152, 0, 0.4), 
+        inset 0 0 3vmin #ffe082;
 }
 
 /* Original Detailed Moon */
 .moon {
-    background: radial-gradient(circle at 50% 50%, #fdfdfd 0% 7vmin, #ffffff00 7.25vmin 100%), #fff;
-    box-shadow: 0 0 8em 4em #6493a9, 0 0 8em -16em #ff660000 inset, 0 0 20px 5px #fdfdfd;
+    background: radial-gradient(circle at 50% 50%,#fdfdfd 0% 7vmin,#ffffff00 7.25vmin 100%),#fff;
+    box-shadow: 0 0 8em 4em #6493a9, 0 0 8em -16em #ff660000 inset,0 0 20px 5px #fdfdfd;
 }
 .moon:before { content: ""; background: radial-gradient(circle at 100% 60%, #ffffff00 0% 60%, #dddddd 75% 100%); width: 100%; height: 100%; position: absolute; top: 0%; left: 0%; border-radius: 100%; }
 .moon:after { content: ""; background: radial-gradient(circle at 0% 40%,#efefef 0% 60%,#ededed 75% 100%); width: 4.5vmin; height: 4.5vmin; position: absolute; top: 20%; left: 20%; border-radius: 100%; filter: blur(2px); }
 
-/* C-Shape Arc Keyframes */
-/* Rise: From bottom-left horizon (-90deg) to Top Center (0deg) */
+/* HARDWARE-ACCELERATED ARC ANIMATIONS */
+/* Rise: Swings in from bottom-left horizon to Top Center */
 @keyframes celestial-rise {
-    0%   { opacity: 0; transform: rotate(-90deg); }
+    0%   { opacity: 0; transform: rotate(-80deg); }
     20%  { opacity: 1; }
     100% { opacity: 1; transform: rotate(0deg); }
 }
 
-/* Set: From Top Center (0deg) to bottom-right horizon (90deg) */
+/* Set: Swings from Top Center to bottom-right horizon */
 @keyframes celestial-set {
     0%   { opacity: 1; transform: rotate(0deg); }
     80%  { opacity: 1; }
-    100% { opacity: 0; transform: rotate(90deg); }
+    100% { opacity: 0; transform: rotate(80deg); }
 }
 
-/* Trigger the animations (forwards forces them to STOP entirely after arriving) */
-.theme-day .sun  { animation: celestial-rise 2.5s ease-out forwards; }
-.theme-day .moon { animation: celestial-set 2.5s ease-in forwards; }
+/* Trigger rules:
+  - 'forwards' ensures they FREEZE completely after moving (no glitching during voting).
+  - Day logic: Sun rises (Left->Center), Moon sets (Center->Right).
+  - Night logic: Moon rises (Left->Center), Sun sets (Center->Right). 
+*/
+.theme-day .sun-pivot  { animation: celestial-rise 2.5s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.theme-day .moon-pivot { animation: celestial-set 2.5s ease-in forwards; }
 
-.theme-night .moon { animation: celestial-rise 2.5s ease-out forwards; }
-.theme-night .sun  { animation: celestial-set 2.5s ease-in forwards; }
+.theme-night .moon-pivot { animation: celestial-rise 2.5s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.theme-night .sun-pivot  { animation: celestial-set 2.5s ease-in forwards; }
 /* ========================================================================== */
 
 .level-0 { width: 30vmin; height: 25vmin; background: var(--house); bottom: 0; left: 22vmin; transform: rotateX(82deg) skewX(5deg); z-index: 1; }
@@ -354,7 +367,7 @@
 .cable { width: 34vmin; height: 8vmin; --cables: #fff0 30vmin, var(--house) calc(30vmin + 1px) calc(30vmin + 2px), #fff0 calc(30vmin + 3px) 100%; background: radial-gradient(circle at 50% -25vmin, var(--cables)), radial-gradient(circle at 55% -25vmin, var(--cables)), radial-gradient(circle at 42% -23.5vmin, var(--cables)), radial-gradient(circle at 53% -26vmin, var(--cables)), radial-gradient(circle at 36% -27vmin, var(--cables)); top: -2vmin; background-repeat: no-repeat; background-size: 100% 100%, 100% 100%, 100% 100%, 81% 100%, 81% 100%; background-position: 100% 0, 100% 0, 100% 0, 100% 1vmin, 100% 3vmin; transition: all 0.25s var(--bounce) 0s; animation: move-cable 0.5s var(--bounce) 0s 2; }
 .cable + .cable { transform: rotate(113deg) rotateX(180deg) scaleX(3); transform-origin: 0 0%; left: 6vmin; top: -17vmin; clip-path: polygon(16% 0, 100% 0, 100% 100%, 15% 100%); border-bottom: 2px solid var(--house); border-radius: 0 100% 100% 100%; animation: none; }
 .cable:hover { animation-iteration-count: infinite; }
-.cable span { width: 3vmin; height: 5vmin; background: var(--house); left: 9.5vmin; top: 6.25vmin; transform-origin: 50% 0; animation: hanging 0.01s ease 0s infinite alternate, hanging-2 1s ease 0s infinite alternate; animation-iteration-count: 80, 1; animation-fill-mode: forwards; clip-path: polygon(35% 4%, 35% 4%, 37% 7%, 37% 7%, 40% 10%, 40% 10%, 41% 15%, 41% 15%, 32% 37%, 32% 37%, 30% 33%, 30% 33%, 22% 52%, 22% 52%, 19% 58%, 19% 58%, 19% 62%, 19% 62%, 19% 66%, 19% 66%, 20% 85%, 20% 85%, 17% 84%, 17% 84%, 21% 87%, 21% 87%, 22% 88%, 22% 88%, 24% 87%, 24% 87%, 28% 82%, 28% 82%, 30% 80%, 30% 80%, 33% 78%, 33% 78%, 35% 81%, 35% 81%, 37% 83%, 37% 83%, 39% 88%, 39% 88%, 34% 90%, 34% 90%, 32% 94%, 32% 94%, 31% 97%, 31% 97%, 35% 96%, 35% 96%, 39% 94%, 39% 94%, 41% 92%, 41% 92%, 45% 93%, 45% 93%, 49% 93%, 49% 93%, 49% 93%, 49% 93%, 51% 93%, 51% 93%, 55% 93%, 55% 93%, 58% 92%, 58% 92%, 60% 94%, 60% 94%, 64% 96%, 64% 96%, 68% 96%, 68% 96%, 68% 94%, 68% 94%, 66% 91%, 66% 91%, 62% 89%, 62% 89%, 61% 88%, 61% 88%, 62% 85%, 62% 85%, 64% 81%, 64% 81%, 66% 79%, 66% 79%, 66% 78%, 66% 78%, 69% 81%, 69% 81%, 76% 87%, 76% 87%, 78% 87%, 78% 87%, 79% 87%, 79% 87%, 81% 85%, 81% 85%, 79% 86%, 79% 86%, 78% 85%, 78% 85%, 79% 84%, 79% 84%, 81% 79%, 81% 79%, 83% 65%, 83% 61%, 83% 59%, 83% 59%, 85% 53%, 86% 49%, 96% 33%, 69% 37%, 58% 16%, 58% 11%, 58% 11%, 60% 9%,  61% 8%, 63% 5%, 63% 11%, 63% 4%, 63% 4%, 58% 3%, 58% 3%, 55% 3%, 55% 3%, 55% 8%, 55% 8%, 54% 13%, 54% 13%, 49% 23%, 49% 23%, 45% 14%, 45% 14%, 44% 9%, 44% 9%, 44% 7%, 44% 7%, 45% 4%, 45% 4%, 36% 4%, 36% 4%); } }
+.cable span { width: 3vmin; height: 5vmin; background: var(--house); left: 9.5vmin; top: 6.25vmin; transform-origin: 50% 0; animation: hanging 0.01s ease 0s infinite alternate, hanging-2 1s ease 0s infinite alternate; animation-iteration-count: 80, 1; animation-fill-mode: forwards; clip-path: polygon(35% 4%, 35% 4%, 37% 7%, 37% 7%, 40% 10%, 40% 10%, 41% 15%, 41% 15%, 32% 37%, 32% 37%, 30% 33%, 30% 33%, 22% 52%, 22% 52%, 19% 58%, 19% 58%, 19% 62%, 19% 62%, 19% 66%, 19% 66%, 20% 85%, 20% 85%, 17% 84%, 17% 84%, 21% 87%, 21% 87%, 22% 88%, 22% 88%, 24% 87%, 24% 87%, 28% 82%, 28% 82%, 30% 80%, 30% 80%, 33% 78%, 33% 78%, 35% 81%, 35% 81%, 37% 83%, 37% 83%, 39% 88%, 39% 88%, 34% 90%, 34% 90%, 32% 94%, 32% 94%, 31% 97%, 31% 97%, 35% 96%, 35% 96%, 39% 94%, 39% 94%, 41% 92%, 41% 92%, 45% 93%, 45% 93%, 49% 93%, 49% 93%, 49% 93%, 49% 93%, 51% 93%, 51% 93%, 55% 93%, 55% 93%, 58% 92%, 58% 92%, 60% 94%, 60% 94%, 64% 96%, 64% 96%, 68% 96%, 68% 96%, 68% 94%, 68% 94%, 66% 91%, 66% 91%, 62% 89%, 62% 89%, 61% 88%, 61% 88%, 62% 85%, 62% 85%, 64% 81%, 64% 81%, 66% 79%, 66% 79%, 66% 78%, 66% 78%, 69% 81%, 69% 81%, 76% 87%, 76% 87%, 78% 87%, 78% 87%, 79% 87%, 79% 87%, 81% 85%, 81% 85%, 79% 86%, 79% 86%, 78% 85%, 78% 85%, 79% 84%, 79% 84%, 80% 79%, 80% 79%, 81% 65%, 81% 61%, 81% 59%, 81% 59%, 78% 53%, 78% 49%, 69% 33%, 69% 37%, 58% 16%, 58% 11%, 59% 11%, 59% 15%, 62% 8%, 62% 8%, 63% 6%, 63% 11%, 63% 4%, 63% 4%, 58% 3%, 58% 3%, 55% 3%, 55% 3%, 55% 8%, 55% 8%, 54% 13%, 54% 13%, 49% 23%, 49% 23%, 45% 14%, 45% 14%, 44% 9%, 44% 9%, 44% 7%, 44% 7%, 45% 4%, 45% 4%, 36% 4%, 36% 4%); } }
 @keyframes hanging-2 { 25% { transform: rotate(-5deg); } 0%, 50% { transform: rotate(0deg); } 75% { transform: rotate(5deg); } }
 @keyframes box-move { 50% { transform: rotateX(12deg) rotateY(74deg) rotate(45deg); } }
 @keyframes light-off { 5%, 20% {--window-local: rgb(6, 6, 48);} 12.5% { --window-local: inherit; } }
