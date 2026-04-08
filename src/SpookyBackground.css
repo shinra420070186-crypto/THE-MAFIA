@@ -2,9 +2,6 @@
 .theme-night {
 	--sky-bg: linear-gradient(0deg, #673ab78a, #3c3c3c94);
 	--scene-bg: linear-gradient(238deg, #000, #fff0, #fff0), linear-gradient(180deg, #000, #fff0, #fff0), radial-gradient(circle at 50% 100%, #005eff, #6d006d, #38005e);
-	--celestial-bg: radial-gradient(circle at 50% 50%, #fdfdfd 0% 7vmin, #ffffff00 7.25vmin 100%), #fff;
-	--celestial-shadow: 0 0 8em 4em #6493a9, 0 0 8em -16em #ff660000 inset, 0 0 20px 5px #fdfdfd;
-	--celestial-pseudo: block;
 	--gray: #1a191a;
 	--black: #080708;
 	--dark: #443847;
@@ -18,9 +15,6 @@
 .theme-day {
 	--sky-bg: linear-gradient(0deg, #87CEEB, #e0f6ff);
 	--scene-bg: linear-gradient(180deg, #b3e5fc, #fff0, #fff0), radial-gradient(circle at 50% 100%, #4facfe, #00f2fe, #e0c3fc);
-	--celestial-bg: radial-gradient(circle at 50% 50%, #fff 0%, #ffeb3b 40%, #fbc02d 80%, #fff0 100%);
-	--celestial-shadow: 0 0 8em 4em #ffeb3b66, 0 0 25px 10px #fff;
-	--celestial-pseudo: none;
 	--gray: #6b7280;
 	--black: #1f2937;
 	--dark: #374151;
@@ -31,53 +25,33 @@
 	--bounce: linear(0 0%, 0 2.27%, 0.02 4.53%, 0.04 6.8%, 0.06 9.07%, 0.1 11.33%, 0.14 13.6%, 0.25 18.15%, 0.39 22.7%, 0.56 27.25%, 0.77 31.8%, 1 36.35%, 0.89 40.9%, 0.85 43.18%, 0.81 45.45%, 0.79 47.72%, 0.77 50%, 0.75 52.27%, 0.75 54.55%, 0.75 56.82%, 0.77 59.1%, 0.79 61.38%, 0.81 63.65%, 0.85 65.93%, 0.89 68.2%, 1 72.7%, 0.97 74.98%, 0.95 77.25%, 0.94 79.53%, 0.94 81.8%, 0.94 84.08%, 0.95 86.35%, 0.97 88.63%, 1 90.9%, 0.99 93.18%, 0.98 95.45%, 0.99 97.73%, 1 100%);
 }
 
+/* Base structural CSS mappings */
 .scene-wrapper {
-	margin: 0;
-	padding: 0;
-	width: 100vw;
-	height: 100vh;
-	overflow: hidden;
-	display: flex;
-	align-items: flex-end;
-	justify-content: center;
-	align-content: flex-end;
-	background: var(--scene-bg);
-	transition: background 2s ease;
-	position: relative;
+	margin: 0; padding: 0; width: 100vw; height: 100dvh; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; background: var(--scene-bg); transition: background 2.5s ease-in-out; position: absolute; inset: 0; pointer-events: none; z-index: -10;
 }
 
 .scene-wrapper:after {
-	content: "";
-	position: absolute;
-	width: 100%;
-	height: 10vmin;
-	z-index: -1;
-	bottom: 0;
-	background: 
-		radial-gradient(circle at calc(50% - 33vmin) calc(100% + 31vmin), var(--house) 40vmin, #fff0 calc(40vmin + 1px) ), 
-		radial-gradient(circle at calc(50% + 33vmin) calc(100% + 30vmin), var(--house) 40vmin, #fff0 calc(40vmin + 1px) ), 
-		radial-gradient(circle at 50% calc(100% + 43vmin), var(--house) 50vmin, #fff0 calc(50vmin + 1px) );
-	background-repeat: no-repeat;
-	transition: background 2s ease;
+	content: ""; position: absolute; width: 100%; height: 10vmin; z-index: -1; bottom: 0; background: radial-gradient(circle at calc(50% - 33vmin) calc(100% + 31vmin), var(--house) 40vmin, #fff0 calc(40vmin + 1px) ), radial-gradient(circle at calc(50% + 33vmin) calc(100% + 30vmin), var(--house) 40vmin, #fff0 calc(40vmin + 1px) ), radial-gradient(circle at 50% calc(100% + 43vmin), var(--house) 50vmin, #fff0 calc(50vmin + 1px) ); background-repeat: no-repeat; transition: background 2.5s ease-in-out;
 }
 
+/* FIX: Scaling and Positioning */
 .content {
-	width: 90vmin;
-	height: 90vmin;
-	background-size: cover;
-	position: relative;
-	perspective: 100vmin;
-	perspective-origin: top;
-	bottom: 5vmin;
+	width: 90vmin; height: 90vmin; background-size: cover; position: relative; perspective: 100vmin; perspective-origin: top; bottom: 5vmin; transform-origin: bottom center; transform: scale(1);
 }
 
-.content * {
-	position: absolute;
-	transform-style: preserve-3d;
-	transition: background 2s ease, border-color 2s ease, box-shadow 2s ease, color 2s ease;
+@media (max-width: 768px) {
+    .content {
+        transform: scale(0.85); /* Fixes the zoom/clipping issue */
+        bottom: 8vmin;
+    }
 }
 
-/* Base structural CSS mappings */
+/* FIX: Removed * wildcard transition for extreme performance boost */
+.content * { position: absolute; transform-style: preserve-3d; pointer-events: none; }
+
+/* Targeted transitions only for elements that need color swaps */
+.window, .door, .roof-0 .window { transition: background 2.5s ease-in-out; }
+
 .level-0 { width: 30vmin; height: 25vmin; background: var(--house); bottom: 0; left: 22vmin; transform: rotateX(82deg) skewX(5deg); z-index: 1; }
 .level-1 { width: 16vmin; height: 34vmin; background: var(--house); bottom: 3.75vmin; left: 53vmin; transform: perspective(100vmin) rotateX(82deg) skewX(-10deg); }
 .level-2 { width: 19vmin; height: 35vmin; background: var(--house); bottom: 31.5vmin; left: 29vmin; transform: perspective(150vmin) rotateX(45deg) skewX(2deg) rotate(2deg); clip-path: polygon(0% 85%, 0% 0%, 100% 0%, 100% 94%, 48% 57%); z-index: 1; box-shadow: 0.25vmin -0.5vmin 0.5vmin 0 #fff3 inset, 0.5vmin -0.5vmin 1.5vmin 0 #fff2 inset; }
@@ -130,7 +104,7 @@
 
 .sky {
 	background: var(--sky-bg);
-	height: 100vh; z-index: -1; position: absolute; left: 0; transition: background 2s ease;
+	height: 100vh; z-index: -1; position: absolute; left: 0; width: 100vw; top: 0; transition: background 2.5s ease-in-out;
 }
 
 .sky:after {
@@ -138,31 +112,32 @@
 	background-image: radial-gradient(2px 2px at 20px 30px, #484341, transparent), radial-gradient(2px 2px at 43px 75px, #735454, transparent), radial-gradient(2px 1px at 54px 184px, #828282, transparent), radial-gradient(2px 2px at 93px 47px, #654b49, transparent), radial-gradient(1px 1px at 148px 87px, #3a1919, transparent), radial-gradient(2px 2px at 193px 137px, #a26662, transparent), radial-gradient(1px 2px at 210px 154px, #805241, transparent), radial-gradient(2px 2px at 243px 102px, #866356, transparent), radial-gradient(2px 1px at 264px 184px, #794937, transparent), radial-gradient(2px 2px at 293px 44px, #735454, transparent), radial-gradient(1px 1px at 223px 62px, #ad968e, transparent), radial-gradient(2px 2px at 249px 162px, #884228, transparent), radial-gradient(2px 2px at 73px 99px, #442e26, transparent), radial-gradient(1px 1px at 163px 42px, #403433, transparent), linear-gradient(180deg, #fff0 10%, var(--house) 25%, #111 50%, #222 75%, #111 100%);
 	background-repeat: no-repeat, repeat;
 	background-size: 333px 263px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 100% 100%;
-	opacity: var(--sky-overlay-opacity); mix-blend-mode: color-burn; transition: opacity 2s ease;
+	opacity: var(--sky-overlay-opacity); mix-blend-mode: color-burn; transition: opacity 2.5s ease-in-out;
 }
 
-/* --- HORIZONTAL ARC CELESTIAL ANIMATION --- */
-.celestial-body {
-	position: absolute; z-index: 2; width: 20vmin; height: 20vmin;
-	border-radius: 100%;
-	background: var(--celestial-bg);
-	box-shadow: var(--celestial-shadow);
-	animation: celestial-arc 35s linear infinite;
-	transition: background 1.5s ease-in-out, box-shadow 1.5s ease-in-out;
+/* FIX: STATIC MOON AND SUN THAT FADE IN/OUT */
+.moon, .sun {
+    position: absolute; z-index: 2; width: 20vmin; height: 20vmin; left: 20vmin; top: 15vmin; border-radius: 100%; transition: transform 2.5s ease-in-out, opacity 2.5s ease-in-out;
 }
 
-@keyframes celestial-arc {
-	0%   { transform: translate(-50vw, 20vh); opacity: 0; }
-	15%  { transform: translate(-35vw, 5vh); opacity: 1; }
-	30%  { transform: translate(-20vw, -2vh); }
-	50%  { transform: translate(0vw, -5vh); }
-	70%  { transform: translate(20vw, -2vh); }
-	85%  { transform: translate(35vw, 5vh); opacity: 1; }
-	100% { transform: translate(50vw, 20vh); opacity: 0; }
+.moon {
+    background: radial-gradient(circle at 50% 50%,#fdfdfd 0% 7vmin,#ffffff00 7.25vmin 100%),#fff;
+    box-shadow: 0 0 8em 4em #6493a9, 0 0 8em -16em #ff660000 inset,0 0 20px 5px #fdfdfd;
+}
+.moon:before { content: ""; background: radial-gradient(circle at 100% 60%, #ffffff00 0% 60%, #dddddd 75% 100%); width: 100%; height: 100%; position: absolute; top: 0%; left: 0%; border-radius: 100%; }
+.moon:after { content: ""; background: radial-gradient(circle at 0% 40%,#efefef 0% 60%,#ededed 75% 100%); width: 4.5vmin; height: 4.5vmin; position: absolute; top: 20%; left: 20%; border-radius: 100%; filter: blur(2px); }
+
+.sun {
+    background: radial-gradient(circle at 50% 50%, #fff 0%, #ffeb3b 40%, #fbc02d 80%, #fff0 100%);
+    box-shadow: 0 0 8em 4em #ffeb3b66, 0 0 25px 10px #fff;
 }
 
-.celestial-body:before { content: ""; background: radial-gradient(circle at 100% 60%, #ffffff00 0% 60%, #dddddd 75% 100%); width: 100%; height: 100%; position: absolute; top: 0%; left: 0%; border-radius: 100%; display: var(--celestial-pseudo); }
-.celestial-body:after { content: ""; background: radial-gradient(circle at 0% 40%,#efefef 0% 60%,#ededed 75% 100%); width: 4.5vmin; height: 4.5vmin; position: absolute; top: 20%; left: 20%; border-radius: 100%; filter: blur(2px); display: var(--celestial-pseudo); }
+/* Logic for smoothly swapping Moon and Sun based on phase */
+.theme-night .moon { opacity: 1; transform: translateY(0) scale(1); }
+.theme-night .sun { opacity: 0; transform: translateY(30vmin) scale(0.8); }
+
+.theme-day .sun { opacity: 1; transform: translateY(0) scale(1); }
+.theme-day .moon { opacity: 0; transform: translateY(30vmin) scale(0.8); }
 
 /* Bat Logic */
 .bat { width: 15vmin; height: 12vmin; bottom: 30vmin; margin-bottom: 0; left: 13.25vmin; }
@@ -350,7 +325,6 @@
 .cable + .cable { transform: rotate(113deg) rotateX(180deg) scaleX(3); transform-origin: 0 0%; left: 6vmin; top: -17vmin; clip-path: polygon(16% 0, 100% 0, 100% 100%, 15% 100%); border-bottom: 2px solid var(--house); border-radius: 0 100% 100% 100%; animation: none; }
 .cable:hover { animation-iteration-count: infinite; }
 .cable span { width: 3vmin; height: 5vmin; background: var(--house); left: 9.5vmin; top: 6.25vmin; transform-origin: 50% 0; animation: hanging 0.01s ease 0s infinite alternate, hanging-2 1s ease 0s infinite alternate; animation-iteration-count: 80, 1; animation-fill-mode: forwards; clip-path: polygon(35% 4%, 35% 4%, 37% 7%, 37% 7%, 40% 10%, 40% 10%, 41% 15%, 41% 15%, 32% 37%, 32% 37%, 30% 33%, 30% 33%, 22% 52%, 22% 52%, 19% 58%, 19% 58%, 19% 62%, 19% 62%, 19% 66%, 19% 66%, 20% 85%, 20% 85%, 17% 84%, 17% 84%, 21% 87%, 21% 87%, 22% 88%, 22% 88%, 24% 87%, 24% 87%, 28% 82%, 28% 82%, 30% 80%, 30% 80%, 33% 78%, 33% 78%, 35% 81%, 35% 81%, 37% 83%, 37% 83%, 39% 88%, 39% 88%, 34% 90%, 34% 90%, 32% 94%, 32% 94%, 31% 97%, 31% 97%, 35% 96%, 35% 96%, 39% 94%, 39% 94%, 41% 92%, 41% 92%, 45% 93%, 45% 93%, 49% 93%, 49% 93%, 49% 93%, 49% 93%, 51% 93%, 51% 93%, 55% 93%, 55% 93%, 58% 92%, 58% 92%, 60% 94%, 60% 94%, 64% 96%, 64% 96%, 68% 96%, 68% 96%, 68% 94%, 68% 94%, 66% 91%, 66% 91%, 62% 89%, 62% 89%, 61% 88%, 61% 88%, 62% 85%, 62% 85%, 64% 81%, 64% 81%, 66% 79%, 66% 79%, 66% 78%, 66% 78%, 69% 81%, 69% 81%, 76% 87%, 76% 87%, 78% 87%, 78% 87%, 79% 87%, 79% 87%, 81% 85%, 81% 85%, 79% 86%, 79% 86%, 78% 85%, 78% 85%, 79% 84%, 79% 84%, 80% 79%, 80% 79%, 81% 65%, 81% 61%, 81% 59%, 81% 59%, 78% 53%, 78% 49%, 69% 33%, 69% 37%, 58% 16%, 58% 11%, 59% 11%, 59% 15%, 62% 8%, 62% 8%, 63% 6%, 63% 11%, 63% 4%, 63% 4%, 58% 3%, 58% 3%, 55% 3%, 55% 3%, 55% 8%, 55% 8%, 54% 13%, 54% 13%, 49% 23%, 49% 23%, 45% 14%, 45% 14%, 44% 9%, 44% 9%, 44% 7%, 44% 7%, 45% 4%, 45% 4%, 36% 4%, 36% 4%); }
-.cable:hover span { animation-iteration-count: infinite; }
 .cable:hover span:before, .cable:hover span:after { content: ""; position: absolute; width: 0.1vmin; height: 0.1vmin; background: #ff0000; bottom: 13%; border-radius: 100%; left: 44%; }
 .cable:hover span:after { left: 56%; }
 .cable span + span { left: 12vmin; top: 5.75vmin; width: 3.5vmin; height: 5.83vmin; animation-delay: 0.27s, 0.35s; animation-duration: 0.015s, 0.85s; }
