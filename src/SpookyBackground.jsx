@@ -138,3 +138,4 @@ export default function SpookyBackground({ phase = '' }) {
       </div>
     </div>
   );
+}
