@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from './store';
 import Galaxy from './Galaxy';
+import SpookyBackground from './SpookyBackground'; // <-- ADDED IMPORT
 
 // ─── CONSTANTS ───────────────────────────────────────
 const TRANSITION_MS = 5000;
@@ -66,110 +67,6 @@ const MemoizedGalaxy = React.memo(() => (
     speed={1}
   />
 ));
-
-// ─── FULL SCREEN SPOOKY HOUSE BACKGROUND ─────────────
-const FullScreenSpooky = ({ phase }) => {
-  const isNight = phase.startsWith('night') || phase === 'night_transition';
-  
-  const [angles, setAngles] = useState({ sun: isNight ? 180 : 0, moon: isNight ? 0 : -180 });
-  const prevIsNight = useRef(isNight);
-
-  useEffect(() => {
-    if (isNight !== prevIsNight.current) {
-      setAngles(prev => ({
-        sun: prev.sun + 180,
-        moon: prev.moon + 180
-      }));
-      prevIsNight.current = isNight;
-    }
-  }, [isNight]);
-
-  const themeClass = isNight ? 'theme-night' : 'theme-day';
-
-  return (
-    <div className={`full-spooky-bg ${themeClass}`} style={{
-      '--sun-angle': angles.sun,
-      '--moon-angle': angles.moon
-    }}>
-      <style>{`
-        .full-spooky-bg {
-          position: fixed;
-          inset: 0;
-          width: 100vw;
-          height: 100vh;
-          z-index: 0;
-          pointer-events: none;
-          transition: background-color 5s ease-in-out;
-          background-color: var(--sky-color);
-          overflow: hidden;
-          --celestial-scale: 1;
-          --arc-radius: 85vh;
-        }
-        @media (max-width: 768px) {
-          .full-spooky-bg { --celestial-scale: 0.6; --arc-radius: 75vh; }
-        }
-        .full-spooky-bg.theme-night { --sky-color: #212f3c; --window-color: #ffd166; --rain-opacity: 1; }
-        .full-spooky-bg.theme-day { --sky-color: #5b92e5; --window-color: #111; --rain-opacity: 0; }
-
-        .celestial-pivot { position: absolute; top: 100vh; left: 50%; width: 0; height: 0; z-index: 1; }
-        .sun-pivot { transition: transform 5s ease-in-out; transform: rotate(calc(var(--sun-angle) * 1deg)); }
-        .moon-pivot { transition: transform 5s ease-in-out; transform: rotate(calc(var(--moon-angle) * 1deg)); }
-
-        .celestial-body { position: absolute; left: -100px; top: calc(-1 * var(--arc-radius)); width: 200px; height: 200px; border-radius: 50%; }
-        
-        .moon { background-color: #95a5a6; box-shadow: inset 7px -7px 0 rgba(0, 0, 0, 0.09); transition: transform 5s ease-in-out; transform: scale(var(--celestial-scale)) rotate(calc(var(--moon-angle) * -1deg)); }
-        .moon:before, .moon:after { content: ""; position: absolute; border-radius: 50%; background-color: rgba(0, 0, 0, 0.09); box-shadow: inset -5px 5px 0 rgba(0, 0, 0, 0.09); }
-        .moon:before { width: 30px; height: 30px; top: 50px; left: 45px; }
-        .moon:after { width: 40px; height: 40px; top: 100px; left: 30px; }
-
-        .sun { background-color: #FFD700; box-shadow: inset 7px -7px 0 rgba(200, 100, 0, 0.2), 0 0 50px rgba(255, 215, 0, 0.6); transition: transform 5s ease-in-out; transform: scale(var(--celestial-scale)) rotate(calc(var(--sun-angle) * -1deg)); }
-        .sun:before, .sun:after { content: ""; position: absolute; border-radius: 50%; background-color: rgba(255, 255, 255, 0.25); box-shadow: inset -5px 5px 0 rgba(255, 255, 255, 0.1); }
-        .sun:before { width: 30px; height: 30px; top: 50px; left: 45px; }
-        .sun:after { width: 40px; height: 40px; top: 100px; left: 30px; }
-
-        .ground { position: absolute; bottom: 0; left: -10vw; width: 120vw; height: 25vh; background-color: #000; z-index: 9; border-radius: 50% 50% 0 0 / 30px 30px 0 0; }
-        .house-wrapper { position: absolute; bottom: 22vh; left: 50%; transform: translateX(-50%) scale(1.6); z-index: 10; }
-        @media (max-width: 768px) { .house-wrapper { transform: translateX(-50%) scale(1.2); bottom: 23vh; } }
-
-        .house { position: relative; width: 120px; height: 150px; background-color: black; transform: rotate(5deg); }
-        .house:before { content: ""; position: absolute; width: 0; height: 0; border-bottom: 30px solid black; border-right: 50px solid transparent; left: 115px; top: 70px; transform: rotate(5deg); }
-        .house:after { content: ""; position: absolute; width: 5px; height: 65px; background-color: black; left: 145px; top: 95px; }
-        .porch { position: absolute; width: 30px; height: 100px; background-color: black; left: -20px; top: 55px; transform: rotate(-10deg); }
-        .porch:before { content: ""; position: absolute; width: 0; height: 0; border-bottom: 20px solid black; border-left: 40px solid transparent; left: -35px; top: 45px; }
-        .porch:after { content: ""; position: absolute; width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 30px solid black; left: -5px; top: -25px; }
-        .first-floor { position: absolute; transform: rotate(-10deg); background-color: black; width: 5px; height: 45px; left: -37px; top: 125px; }
-        .first-floor:before { content: ""; position: absolute; background-color: #000; width: 85px; height: 90px; top: -150px; left: 50px; }
-        .first-floor:after { content: ""; position: absolute; border-left: 52px solid transparent; border-right: 52px solid transparent; border-bottom: 50px solid black; top: -199px; left: 40px; }
-        .second-floor { position: absolute; background-color: black; width: 35px; height: 100px; transform: rotate(3deg); top: -70px; left: 70px; }
-        .second-floor:before { content: ""; position: absolute; background-color: black; width: 20px; height: 100px; left: 33px; top: 40px; transform: rotate(-3deg); }
-        .second-floor:after { content: ""; position: absolute; width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid black; top: 12px; left: 15px; }
-        .roof { position: absolute; width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid black; left: 65px; top: -95px; }
-        .roof:before { content: ""; position: absolute; width: 6px; height: 20px; background-color: black; top: 5px; left: 10px; box-shadow: 20px 35px black; }
-        .roof:after { content: ""; position: absolute; width: 6px; height: 20px; background-color: black; transform: rotate(-10deg); left: -110px; top: 35px; box-shadow: -27px 97px black; }
-        .door { position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out; width: 30px; height: 50px; transform: rotate(-5deg); border-radius: 30px 30px 0 0; box-shadow: inset -10px 5px rgba(0, 0, 0, 0.5); top: 90px; left: 40px; }
-        .door:before { content: ""; position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out; border-radius: 30px 30px 0 0; box-shadow: inset -5px 2px rgba(0, 0, 0, 0.5); width: 20px; height: 30px; left: -40px; transform: rotate(-3deg); }
-        .door:after { content: ""; position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out; box-shadow: inset -5px 2px rgba(0, 0, 0, 0.5); border-radius: 30px 30px 0 0; width: 20px; height: 30px; left: 45px; transform: rotate(3deg); }
-        .small-windows { position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out; border-radius: 30px 30px 0 0; width: 13px; height: 25px; left: 100px; top: -20px; box-shadow: -19px -40px var(--window-color), inset -4px 2px rgba(0, 0, 0, 0.5); }
-        .small-windows:before { content: ""; position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out; border-radius: 30px 30px 0 0; width: 13px; height: 25px; transform: rotate(-7deg); left: -60px; top: 50px; box-shadow: -60px 20px var(--window-color); }
-        .big-window { position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out; border-radius: 30px 30px 0 0; transform: rotate(-7deg); width: 30px; height: 40px; top: -35px; left: 10px; }
-        .big-window:before, .big-window:after { content: ""; position: absolute; background-color: black; }
-        .big-window:before { height: 40px; width: 2px; left: 15px; box-shadow: 13px 55px black, -47px 80px black, -32px 120px black; }
-        .big-window:after { height: 2px; width: 40px; top: 22px; box-shadow: 10px 58px black, -45px 78px black, -30px 120px black; }
-        .frames { position: absolute; width: 2px; height: 40px; background-color: black; top: -65px; left: 86.5px; box-shadow: 19px 40px black, 7px 150px black; }
-        .frames:before { content: ""; position: absolute; height: 2px; width: 30px; background-color: black; top: 17px; left: -10px; box-shadow: 10px 40px black, 5px 150px black; }
-        .rain-container { position: absolute; inset: 0; z-index: 5; opacity: var(--rain-opacity); transition: opacity 5s ease-in-out; overflow: hidden; }
-        .dropOne, .dropTwo, .dropThree, .dropFour, .dropFive, .dropSix, .dropSeven, .dropEight, .dropNine, .dropTen { position: absolute; background-color: rgba(211, 211, 211, 0.3); height: 10px; width: 1px; top: 0; box-shadow: 0 -270px rgba(211, 211, 211, 0.3), -50px -50px rgba(211, 211, 211, 0.3), -50px -150px rgba(211, 211, 211, 0.3), 50px -395px rgba(211, 211, 211, 0.3), 50px -200px rgba(211, 211, 211, 0.3), 50px -100px rgba(211, 211, 211, 0.3), 100px -400px rgba(211, 211, 211, 0.3), 100px -320px rgba(211, 211, 211, 0.3), 100px -150px rgba(211, 211, 211, 0.3), 150px -200px rgba(211, 211, 211, 0.3), 200px -100px rgba(211, 211, 211, 0.3), 200px -370px rgba(211, 211, 211, 0.3), 250px -330px rgba(211, 211, 211, 0.3), 250px -220px rgba(211, 211, 211, 0.3), 300px -70px rgba(211, 211, 211, 0.3), 300px -140px rgba(211, 211, 211, 0.3), 300px -300px rgba(211, 211, 211, 0.3); }
-        .dropOne { left: 10%; animation: rainAnim 1.5s linear infinite; } .dropTwo { left: 20%; animation: rainAnim 1.2s linear infinite; } .dropThree { left: 30%; animation: rainAnim 1.7s linear infinite; } .dropFour { left: 40%; animation: rainAnim 1.4s linear infinite; } .dropFive { left: 50%; animation: rainAnim 1.3s linear infinite; } .dropSix { left: 60%; animation: rainAnim 1.6s linear infinite; } .dropSeven { left: 70%; animation: rainAnim 1.1s linear infinite; } .dropEight { left: 80%; animation: rainAnim 1.8s linear infinite; } .dropNine { left: 90%; animation: rainAnim 1.4s linear infinite; } .dropTen { left: 95%; animation: rainAnim 1.5s linear infinite; }
-        @keyframes rainAnim { 0% { transform: translateY(-200px); } 100% { transform: translateY(120vh); } }
-      `}</style>
-      <div className="celestial-pivot sun-pivot"><div className="celestial-body sun"></div></div>
-      <div className="celestial-pivot moon-pivot"><div className="celestial-body moon"></div></div>
-      <div className="house-wrapper"><div className="house"><div className="porch"></div><div className="first-floor"></div><div className="second-floor"></div><div className="roof"></div><div className="door"></div><div className="small-windows"></div><div className="big-window"></div><div className="frames"></div></div></div>
-      <div className="ground"></div>
-      <div className="rain-container"><div className="dropOne"></div><div className="dropTwo"></div><div className="dropThree"></div><div className="dropFour"></div><div className="dropFive"></div><div className="dropSix"></div><div className="dropSeven"></div><div className="dropEight"></div><div className="dropNine"></div><div className="dropTen"></div></div>
-    </div>
-  );
-};
 
 // ─── IMAGE PRELOADER & CARD COMPONENTS ───────────────
 const roleImages = { 'Mafia': '/mafia-card.jpg', 'Doctor': '/doctor-card.jpg', 'Detective': '/detective-card.jpg', 'Sheriff': '/sheriff-card.jpg', 'Civilian': '/civilian-card.jpg' };
@@ -237,7 +134,6 @@ export default function GameBoard() {
     );
   };
 
-  // ARCHITECT FIX: Added strict hideCondition logic to permanently erase names from the list.
   const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
     
@@ -295,8 +191,11 @@ export default function GameBoard() {
       <div className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out" style={{ opacity: isGalaxyPhase ? 1 : 0, zIndex: isGalaxyPhase ? 0 : -50, visibility: isGalaxyPhase ? 'visible' : 'hidden' }}>
         <MemoizedGalaxy />
       </div>
+      
+      {/* ─── NEW SPOOKY BACKGROUND MOUNT ─── */}
       <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-700 ease-in-out" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
-        <FullScreenSpooky phase={state.phase} />
+        {/* We unmount it completely during galaxy phase so it never bleeds through */}
+        {!isGalaxyPhase && <SpookyBackground phase={state.phase} />}
       </div>
 
       {/* ─── SPLASH PHASE ─── */}
@@ -424,7 +323,6 @@ export default function GameBoard() {
             <RoleCard isFlipped={isFlipped} role={state.players[state.revealIndex]?.role} />
           </div>
 
-          {/* ARCHITECT FIX: Fading the text instead of removing it prevents the layout jump! */}
           <div className="relative w-full max-w-sm flex justify-center mt-12 z-10 pointer-events-none h-[80px]">
             <p className={`absolute top-0 text-slate-400 font-bold text-sm transition-opacity duration-500 pointer-events-none ${cardViewed ? 'opacity-0' : 'opacity-100 animate-pulse'}`}>
               👆 Tap the card to view your role
@@ -480,7 +378,6 @@ export default function GameBoard() {
           {renderBackButton()}
           {state.investigationResult ? (
             <>
-              {/* ARCHITECT FIX: Detective alignment perfectly matches other screens now */}
               <h2 className="text-3xl md:text-4xl font-black text-blue-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(96,165,250,0.6)] tracking-[0.15em] pointer-events-none">Investigation</h2>
               <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">{state.investigationResult === 'DEAD_ROLE' ? "🔍 Moderator: Pretend to give an answer!" : "🔍 Moderator: Nod or shake your head."}</p>
               <h3 className={`text-5xl md:text-6xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(96,165,250,0.4)] tracking-[0.1em] pointer-events-none ${state.investigationResult === 'DEAD_ROLE' ? 'text-slate-500 drop-shadow-[0_0_20px_rgba(107,114,128,0.5)]' : state.investigationResult === 'MAFIA' ? 'text-red-600 drop-shadow-[0_0_30px_rgba(220,38,38,0.7)]' : 'text-green-400 drop-shadow-[0_0_30px_rgba(34,197,94,0.7)]'}`}>
@@ -554,7 +451,6 @@ export default function GameBoard() {
                   <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.submitVote(p.id)} className="w-full p-4 bg-slate-900/70 backdrop-blur-md text-white border-2 border-slate-700/70 rounded-lg font-bold uppercase active:scale-95 transition-all hover:border-slate-500 hover:bg-slate-900" style={tapSafeStyle}>→ Vote {p.name}</button>
                 </AnimatedItem>
               ))}
-              {/* ARCHITECT FIX: Voting skip completely unlocked for everyone, including Player 1 */}
               <AnimatedItem index={999} delay={0.05}>
                 <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.submitVote(null)} className="w-full p-4 border-2 rounded-lg font-bold uppercase mt-2 active:scale-95 transition-all bg-transparent border-slate-600/50 backdrop-blur-sm text-slate-300 hover:border-slate-400 hover:text-slate-200" style={tapSafeStyle}>⊘ Pass / No Vote</button>
               </AnimatedItem>
