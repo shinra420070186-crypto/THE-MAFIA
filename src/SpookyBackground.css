@@ -1,3 +1,5 @@
+/* src/SpookyBackground.css */
+
 /* --- THEME VARIABLES --- */
 .theme-night {
 	--sky-bg: linear-gradient(0deg, #673ab78a, #3c3c3c94);
@@ -34,7 +36,7 @@
 	content: ""; position: absolute; width: 100%; height: 10vmin; z-index: -1; bottom: 0; background: radial-gradient(circle at calc(50% - 33vmin) calc(100% + 31vmin), var(--house) 40vmin, #fff0 calc(40vmin + 1px) ), radial-gradient(circle at calc(50% + 33vmin) calc(100% + 30vmin), var(--house) 40vmin, #fff0 calc(40vmin + 1px) ), radial-gradient(circle at 50% calc(100% + 43vmin), var(--house) 50vmin, #fff0 calc(50vmin + 1px) ); background-repeat: no-repeat; transition: background 2.5s ease-in-out;
 }
 
-/* FIX: Scaling and Positioning */
+/* Proper Scaling so it matches your screen */
 .content {
 	width: 90vmin; height: 90vmin; background-size: cover; position: relative; perspective: 100vmin; perspective-origin: top; bottom: 5vmin; transform-origin: bottom center; transform: scale(1);
 }
@@ -46,12 +48,71 @@
     }
 }
 
-/* FIX: Removed * wildcard transition for extreme performance boost */
 .content * { position: absolute; transform-style: preserve-3d; pointer-events: none; }
-
-/* Targeted transitions only for elements that need color swaps */
 .window, .door, .roof-0 .window { transition: background 2.5s ease-in-out; }
 
+/* ─── NEW HORIZONTAL C-CURVE CELESTIAL ANIMATION ─── */
+
+.sun, .moon {
+    position: absolute;
+    top: 0; left: 0;
+    width: 14vmin; 
+    height: 14vmin;
+    margin-left: -7vmin; 
+    margin-top: -7vmin;
+    border-radius: 50%;
+    transition: opacity 2s ease-in-out;
+    z-index: 2;
+    /* Both run on the same path, taking 50 seconds to cross the screen */
+    animation: celestial-arc 50s linear infinite;
+}
+
+/* Beautiful Glowing Sun Design */
+.sun {
+    background: #fff9c4;
+    box-shadow: 
+        0 0 3vmin 1vmin #ffeb3b, 
+        0 0 8vmin 3vmin #ff9800, 
+        0 0 15vmin 5vmin #ff572288, 
+        inset 0 0 1.5vmin #ffffff;
+}
+
+/* Realistic Moon Design with Craters */
+.moon {
+    background: #e0e0e0;
+    box-shadow: 
+        inset -1.5vmin 0 2vmin #9e9e9e,
+        0 0 3vmin 1vmin #81d4fa88,
+        0 0 8vmin 3vmin #29b6f644;
+    /* Offset the moon by exactly half the animation time so they are perfectly synced */
+    animation-delay: -25s; 
+}
+
+.moon:before {
+    content: ""; background: rgba(0,0,0,0.12); width: 2.5vmin; height: 2.5vmin; position: absolute; top: 20%; left: 30%; border-radius: 50%; box-shadow: inset 0.5vmin 0.5vmin 0.5vmin rgba(0,0,0,0.1);
+}
+.moon:after {
+    content: ""; background: rgba(0,0,0,0.12); width: 3.5vmin; height: 3.5vmin; position: absolute; top: 50%; left: 55%; border-radius: 50%; box-shadow: inset 0.5vmin 0.5vmin 0.5vmin rgba(0,0,0,0.1);
+}
+
+/* Smooth fading based on phase */
+.theme-night .moon { opacity: 1; }
+.theme-night .sun { opacity: 0; }
+
+.theme-day .moon { opacity: 0; }
+.theme-day .sun { opacity: 1; }
+
+/* The Parabolic "C" Arc Path */
+@keyframes celestial-arc {
+    0%   { transform: translate(-15vw, 45vh) scale(0.6); }
+    20%  { transform: translate(15vw, 20vh) scale(0.85); }
+    50%  { transform: translate(50vw, 8vh) scale(1); }
+    80%  { transform: translate(85vw, 20vh) scale(0.85); }
+    100% { transform: translate(115vw, 45vh) scale(0.6); }
+}
+
+
+/* ─── REST OF THE SPOOKY HOUSE CSS ─── */
 .level-0 { width: 30vmin; height: 25vmin; background: var(--house); bottom: 0; left: 22vmin; transform: rotateX(82deg) skewX(5deg); z-index: 1; }
 .level-1 { width: 16vmin; height: 34vmin; background: var(--house); bottom: 3.75vmin; left: 53vmin; transform: perspective(100vmin) rotateX(82deg) skewX(-10deg); }
 .level-2 { width: 19vmin; height: 35vmin; background: var(--house); bottom: 31.5vmin; left: 29vmin; transform: perspective(150vmin) rotateX(45deg) skewX(2deg) rotate(2deg); clip-path: polygon(0% 85%, 0% 0%, 100% 0%, 100% 94%, 48% 57%); z-index: 1; box-shadow: 0.25vmin -0.5vmin 0.5vmin 0 #fff3 inset, 0.5vmin -0.5vmin 1.5vmin 0 #fff2 inset; }
@@ -115,31 +176,6 @@
 	opacity: var(--sky-overlay-opacity); mix-blend-mode: color-burn; transition: opacity 2.5s ease-in-out;
 }
 
-/* FIX: STATIC MOON AND SUN THAT FADE IN/OUT */
-.moon, .sun {
-    position: absolute; z-index: 2; width: 20vmin; height: 20vmin; left: 20vmin; top: 15vmin; border-radius: 100%; transition: transform 2.5s ease-in-out, opacity 2.5s ease-in-out;
-}
-
-.moon {
-    background: radial-gradient(circle at 50% 50%,#fdfdfd 0% 7vmin,#ffffff00 7.25vmin 100%),#fff;
-    box-shadow: 0 0 8em 4em #6493a9, 0 0 8em -16em #ff660000 inset,0 0 20px 5px #fdfdfd;
-}
-.moon:before { content: ""; background: radial-gradient(circle at 100% 60%, #ffffff00 0% 60%, #dddddd 75% 100%); width: 100%; height: 100%; position: absolute; top: 0%; left: 0%; border-radius: 100%; }
-.moon:after { content: ""; background: radial-gradient(circle at 0% 40%,#efefef 0% 60%,#ededed 75% 100%); width: 4.5vmin; height: 4.5vmin; position: absolute; top: 20%; left: 20%; border-radius: 100%; filter: blur(2px); }
-
-.sun {
-    background: radial-gradient(circle at 50% 50%, #fff 0%, #ffeb3b 40%, #fbc02d 80%, #fff0 100%);
-    box-shadow: 0 0 8em 4em #ffeb3b66, 0 0 25px 10px #fff;
-}
-
-/* Logic for smoothly swapping Moon and Sun based on phase */
-.theme-night .moon { opacity: 1; transform: translateY(0) scale(1); }
-.theme-night .sun { opacity: 0; transform: translateY(30vmin) scale(0.8); }
-
-.theme-day .sun { opacity: 1; transform: translateY(0) scale(1); }
-.theme-day .moon { opacity: 0; transform: translateY(30vmin) scale(0.8); }
-
-/* Bat Logic */
 .bat { width: 15vmin; height: 12vmin; bottom: 30vmin; margin-bottom: 0; left: 13.25vmin; }
 .bat:hover { transition: all 1s linear 0s; }
 .bat .head { background: radial-gradient(circle at 50% 100%, #fff0 calc(2vmin - 1px), #5558 calc(2vmin + 0px), var(--bat) calc(2vmin + 2px)); width: 6vmin; height: 9.5vmin; left: 4vmin; top: 0.75vmin; border-radius: 50% 50% 50% 50% / 25% 25% 75% 75%; transform: rotate(-173deg); }
@@ -160,7 +196,6 @@
 .bat .wings:before, .bat .wings:after { content: ""; position: absolute; width: 30%; height: 70%; background: radial-gradient(circle at -2.2vmin 2.2vmin, #fff0 3vmin, var(--bat) calc(3vmin + 1px)), radial-gradient(circle at -1.25vmin 2.35vmin, #fff0 3vmin, var(--bat) calc(3vmin + 1px)); bottom: 2.5vmin; left: 1vmin; transform-origin: 100% 100%; transform: rotate(-150deg); border-radius: 0 3.55vmin 0 0; background-repeat: no-repeat; background-size: 100% 3.2vmin, 100% 2.5vmin; background-position: 0 0, 0 3vmin; }
 .bat .wings:after { bottom: 2.65vmin; left: 3.75vmin; top: 0.25vmin; transform-origin: 100% 100%; transform: rotate(170deg) rotateY(180deg); animation-delay: -0.05s; }
 
-/* Entities */
 .tomb { background: var(--house); width: 5vmin; height: 6vmin; border-radius: 5vmin 5vmin 0 0; bottom: 3vmin; right: 0; transform: rotateX(12deg) skew(-11deg, 20deg); text-align: center; color: #3a1752; padding-top: 2vmin; font-family: serif; font-weight: bold; transition: all 2s ease 0s; z-index: 1; cursor: default; font-size: 1.75vmin; }
 .tomb:after { content: ""; position: absolute; height: 100%; width: 5vmin; border-right: 1vmin solid var(--house); border-top: 0.05vmin solid #fff0; border-radius: 0 3vmin 0 0; right: -1.2vmin; bottom: 0.1vmin; }
 .tomb:hover { transform: rotateX(12deg) skew(-19deg, 25deg) rotateX(-13deg); transform-origin: 50% 100%; }
@@ -180,12 +215,10 @@
 .flying-bat { position: absolute; width: 15vmin; height: 14vmin; bottom: 27vmin; left: 12vmin; z-index: 1; }
 .flying-bat:hover + .fence .bat { animation: bat-fly 4s linear 0s infinite; }
 .flying-bat:hover + .fence .chimney { transform: rotateY(180deg) rotateZ(22deg); transition: transform 1s var(--bounce) 0s; }
-
 .phantom { background: radial-gradient(circle at 60% 23%, #0e1d24 0.25vmin, #fff0 calc(0.25vmin + 1px)), radial-gradient(circle at 35% 25%, #0e1d24  0.25vmin, #fff0 calc(0.25vmin + 1px)), #ffffff10; width: 3vmin; height: 5vmin; border-radius: 2vmin 2vmin 0 0; left: 1vmin; top: 1vmin; transform: skew(10deg, -10deg); clip-path: polygon(6% 90%, 4% 66%, 3% 56%, 3% 48%, 5% 35%, 9% 22%, 15% 13%, 22% 8%, 30% 4%, 36% 3%, 42% 3%, 48% 4%, 56% 6%, 56% 8%, 63% 9%, 63% 9%, 70% 13%, 73% 17%, 78% 24%, 81% 28%, 85% 36%, 85% 38%, 88% 44%, 91% 51%, 93% 62%, 95% 74%, 97% 88%, 96% 89%, 93% 88%, 90% 87%, 84% 88%, 77% 90%, 72% 91%, 67% 93%, 63% 92%, 59% 92%, 56% 91%, 53% 90%, 50% 91%, 45% 94%, 41% 96%, 38% 96%, 32% 96%, 27% 94%, 19% 96%, 13% 97%, 9% 98%, 7% 99%, 5% 98%, 4% 96%, 4% 96%, 4% 93%); animation: move-phantom 2s ease 0s infinite alternate; }
 .phantom + .phantom { transform: skew(-7deg, 9deg) rotateY(180deg); animation-delay: -1s; animation-direction: reverse; animation-duration: 2.1s; margin-top: -0.25vmin; width: 3.5vmin; height: 5.5vmin; animation: move-phantom-2 2.03s ease -1s infinite alternate; }
 .roof-0 .window:hover { animation: light-on 0.75s linear 0s 1; animation-fill-mode: forwards; }
 .roof-0 .window:hover .phantom { opacity: 0.15; }
-
 .zombie-hand { width: 5vmin; height: 8vmin; left: 12.75vmin; bottom: -2vmin; clip-path: polygon(24% 99%, 30% 77%, 32% 69%, 33% 66%, 34% 60%, 32% 56%, 27% 54%, 25% 52%, 22% 44%, 22% 39%, 21% 37%, 16% 36%, 15% 38%, 11% 38%, 6% 36%, 5% 34%, 7% 32%, 10% 32%, 12% 31%, 14% 31%, 16% 32%, 20% 32%, 25% 33%, 28% 33%, 29% 32%, 30% 30%, 28% 28%, 25% 27%, 23% 27%, 20% 27%, 17% 27%, 16% 26%, 17% 24%, 18% 22%, 19% 20%, 24% 20%, 28% 21%, 33% 22%, 35% 24%, 36% 27%, 38% 28%, 42% 26%, 42% 24%, 41% 21%, 38% 20%, 33% 17%, 31% 16%, 28% 16%, 26% 15%, 27% 12%, 29% 11%, 33% 12%, 36% 12%, 37% 13%, 39% 13%, 42% 15%, 45% 17%, 48% 19%, 49% 20%, 50% 23%, 53% 25%, 53% 23%, 53% 21%, 52% 18%, 52% 16%, 52% 14%, 48% 12%, 46% 9%, 44% 6%, 45% 5%, 48% 4%, 49% 4%, 52% 5%, 54% 7%, 58% 9%, 59% 10%, 60% 11%, 61% 13%, 63% 17%, 64% 18%, 66% 19%, 67% 21%, 67% 23%, 67% 25%, 66% 29%, 66% 32%, 68% 34%, 68% 35%, 70% 37%, 72% 37%, 74% 34%, 76% 33%, 77% 32%, 76% 31%, 76% 30%, 77% 27%, 81% 23%, 85% 21%, 88% 21%, 92% 21%, 93% 21%, 94% 21%, 94% 22%, 92% 24%, 92% 25%, 91% 27%, 90% 28%, 92% 29%, 92% 30%, 93% 31%, 94% 33%, 94% 34%, 91% 35%, 89% 36%, 88% 38%, 85% 39%, 84% 42%, 84% 43%, 83% 45%, 80% 47%, 75% 48%, 72% 50%, 68% 53%, 66% 56%, 64% 61%, 64% 65%, 63% 69%, 64% 73%, 64% 76%, 66% 99%); background: var(--house); transform-origin: 75% 100%; transform: rotate(10deg); transition: bottom 1s ease 0s; }
 .tomb:hover + .zombie-hand { animation: move-zombie 0.25s ease 0s infinite; animation-fill-mode: forwards; bottom: 5.25vmin; transition: bottom 3s ease 0.25s; }
 .tomb:hover + .zombie-hand + .stones:before, .tomb:hover + .zombie-hand + .stones:after { content: ""; position: absolute; width: 0.5vmin; height: 0.75vmin; top: 0vmin; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; background: var(--house); animation: move-stone-1 2s ease-out 0s; animation-fill-mode: forwards; }
@@ -209,7 +242,6 @@
 .bat-cat .wing + .wing { transform: rotateY(180deg); left: 7vmin; animation: stop-fly-left 1s linear 0s 1; animation-fill-mode: forwards; }
 .balcony:hover + .bat-cat .wing { opacity: 1; transition: opacity 0.5s ease 0s; animation: fly-right 0.15s ease 0s infinite; }
 .balcony:hover + .bat-cat .wing + .wing { animation-name: fly-left; }
-
 .finger { border-radius: 3vmin 5vmin; width: 0vmin; height: 22vmin; background: #f002; transform: rotate(68deg); top: -6vmin; left: 11vmin; border: 0.85vmin solid var(--black); background: var(--black); z-index: 2; }
 .finger + .finger { transform: rotate(28deg); top: 0vmin; left: 16vmin; height: 19vmin; }
 .finger + .finger + .finger { transform: rotate(-9deg); top: 0vmin; left: 23vmin; height: 23vmin; }
