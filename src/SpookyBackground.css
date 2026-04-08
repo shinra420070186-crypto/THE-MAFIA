@@ -4,7 +4,8 @@
   --dark: #443847;
   --house: #000000;
   --bat: #070707;
-  --bounce: linear(0 0%, 0 2.27%, 0.02 4.53%, 0.04 6.8%, 0.06 9.07%, 0.1 11.33%, 0.14 13.6%, 0.25 18.15%, 0.39 22.7%, 0.56 27.25%, 0.77 31.8%, 1 36.35%, 0.89 40.9%, 0.85 43.18%, 0.81 45.45%, 0.79 47.72%, 0.77 50%, 0.75 52.27%, 0.75 54.55%, 0.75 56.82%, 0.77 59.1%, 0.79 61.38%, 0.81 63.65%, 0.85 65.93%, 0.89 68.2%, 1 72.7%, 0.97 74.98%, 0.95 77.25%, 0.94 79.53%, 0.94 81.8%, 0.94 84.08%, 0.95 86.35%, 0.97 88.63%, 1 90.9%, 0.99 93.18%, 0.98 95.45%, 0.99 97.73%, 1 100%);
+  /* ARCHITECT FIX: Replaced bleeding-edge linear() array with a safe, universally supported bouncy cubic-bezier to stop Vercel/Vite build crashes */
+  --bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .theme-day {
@@ -45,7 +46,7 @@
   height: 10vmin;
   z-index: -1;
   bottom: 0;
-  background: radial-gradient(circle at calc(50% - 33vmin) calc(100% + 31vmin), var(--house) 40vmin, #fff0 calc(40vmin + 1px)), radial-gradient(circle at calc(50% + 33vmin) calc(100% + 30vmin), var(--house) 40vmin, #fff0 calc(40vmin + 1px)), radial-gradient(circle at 50% calc(100% + 43vmin), var(--house) 50vmin, #fff0 calc(50vmin + 1px));
+  background: radial-gradient(circle at calc(50% - 33vmin) calc(100% + 31vmin), var(--house) 40vmin, rgba(255, 255, 255, 0) calc(40vmin + 1px)), radial-gradient(circle at calc(50% + 33vmin) calc(100% + 30vmin), var(--house) 40vmin, rgba(255, 255, 255, 0) calc(40vmin + 1px)), radial-gradient(circle at 50% calc(100% + 43vmin), var(--house) 50vmin, rgba(255, 255, 255, 0) calc(50vmin + 1px));
   background-repeat: no-repeat;
 }
 
@@ -56,7 +57,6 @@
   position: relative;
   perspective: 100vmin;
   perspective-origin: top;
-  /* ARCHITECT FIX: Lifted the house entirely up so the bottom isn't cut off */
   bottom: 25vmin; 
   transform: scale(0.65);
   transform-origin: bottom center;
@@ -83,7 +83,7 @@
   width: 100vw;
   height: 100vh;
   top: 0vh;
-  background-image: radial-gradient(2px 2px at 20px 30px, #484341, transparent), radial-gradient(2px 2px at 43px 75px, #735454, transparent), radial-gradient(2px 1px at 54px 184px, #828282, transparent), radial-gradient(2px 2px at 93px 47px, #654b49, transparent), radial-gradient(1px 1px at 148px 87px, #3a1919, transparent), radial-gradient(2px 2px at 193px 137px, #a26662, transparent), radial-gradient(1px 2px at 210px 154px, #805241, transparent), radial-gradient(2px 2px at 243px 102px, #866356, transparent), radial-gradient(2px 1px at 264px 184px, #794937, transparent), radial-gradient(2px 2px at 293px 44px, #735454, transparent), radial-gradient(1px 1px at 223px 62px, #ad968e, transparent), radial-gradient(2px 2px at 249px 162px, #884228, transparent), radial-gradient(2px 2px at 73px 99px, #442e26, transparent), radial-gradient(1px 1px at 163px 42px, #403433, transparent), linear-gradient(180deg, #fff0 10%, var(--house) 25%, #111 50%, #222 75%, #111 100%);
+  background-image: radial-gradient(2px 2px at 20px 30px, #484341, transparent), radial-gradient(2px 2px at 43px 75px, #735454, transparent), radial-gradient(2px 1px at 54px 184px, #828282, transparent), radial-gradient(2px 2px at 93px 47px, #654b49, transparent), radial-gradient(1px 1px at 148px 87px, #3a1919, transparent), radial-gradient(2px 2px at 193px 137px, #a26662, transparent), radial-gradient(1px 2px at 210px 154px, #805241, transparent), radial-gradient(2px 2px at 243px 102px, #866356, transparent), radial-gradient(2px 1px at 264px 184px, #794937, transparent), radial-gradient(2px 2px at 293px 44px, #735454, transparent), radial-gradient(1px 1px at 223px 62px, #ad968e, transparent), radial-gradient(2px 2px at 249px 162px, #884228, transparent), radial-gradient(2px 2px at 73px 99px, #442e26, transparent), radial-gradient(1px 1px at 163px 42px, #403433, transparent), linear-gradient(180deg, rgba(255, 255, 255, 0) 10%, var(--house) 25%, #111 50%, #222 75%, #111 100%);
   background-repeat: no-repeat, repeat;
   background-size: 333px 263px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 100% 100%;
   opacity: var(--stars-opacity);
@@ -94,7 +94,7 @@
 .celestial-pivot {
   position: absolute;
   left: 50%;
-  top: 100vh; /* Pushed the pivot down so the arc swings wider */
+  top: 100vh;
   width: 0;
   height: 0;
   transition: transform 4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -106,9 +106,9 @@
   width: 16vmin;
   height: 16vmin;
   left: -8vmin;
-  top: -95vmin; /* Increased radius so it orbits safely over the house */
-  background: radial-gradient(circle at 50% 50%, #fff 0%, #ffeb3b 40%, #fbc02d 80%, #fff0 100%);
-  box-shadow: 0 0 8em 4em #ffeb3b66, 0 0 25px 10px #fff;
+  top: -95vmin;
+  background: radial-gradient(circle at 50% 50%, #fff 0%, #ffeb3b 40%, #fbc02d 80%, rgba(255, 255, 255, 0) 100%);
+  box-shadow: 0 0 8em 4em rgba(255, 235, 59, 0.4), 0 0 25px 10px #fff;
   border-radius: 100%;
   transition: opacity 2s ease-in-out;
 }
@@ -118,9 +118,9 @@
   width: 16vmin;
   height: 16vmin;
   left: -8vmin;
-  top: -95vmin; /* Increased radius so it orbits safely over the house */
+  top: -95vmin;
   border-radius: 100%;
-  background: radial-gradient(circle at 50% 50%, #fdfdfd 0%, #ffffff00 100%), #fff;
+  background: radial-gradient(circle at 50% 50%, #fdfdfd 0%, rgba(255, 255, 255, 0) 100%), #fff;
   box-shadow: 0 0 8em 4em #6493a9, 0 0 8em -16em rgba(255, 102, 0, 0) inset, 0 0 20px 5px #fdfdfd;
   transition: opacity 2s ease-in-out;
 }
@@ -224,7 +224,13 @@
 .tomb:hover { transform: rotateX(12deg) skew(-19deg, 25deg) rotateX(-13deg); transform-origin: 50% 100%; }
 
 @keyframes move-witch { 0% { left: 1.5vmin; } 25% { bottom: -4vmin; } 50% { left: -5vmin; } 75% { bottom: 2vmin; } 100% { left: 1.5vmin; } }
-.witch { width: 15vmin; height: 18vmin; left: -9.5vmin; bottom: -0.15vmin; opacity: 0.5; background: var(--house); animation: move-witch 4s ease 0s infinite alternate; box-sizing: border-box; clip-path: polygon(3% 55%, 5% 55%, 11% 55%, 22% 56%, 24% 57%, 24% 55%, 28% 56%, 34% 53%, 36% 51%, 38% 48%, 41% 42%, 42% 41%, 42% 38%, 43% 36%, 42% 36%, 40% 38%, 40% 38%, 40% 36%, 39% 33%, 38% 33%, 36% 33%, 35% 34%, 35% 33%, 35% 32%, 36% 30%, 37% 29%, 38% 27%, 38% 26%, 34% 23%, 32% 21%, 28% 17%, 27% 14%, 27% 12%, 40% 20%, 45% 17%, 50% 14%, 56% 10%, 59% 8%, 62% 8%, 66% 8%, 64% 9%, 62% 10%, 60% 13%, 58% 15%, 54% 18%, 53% 18%, 52% 24%, 56% 25%, 60% 27%, 64% 27%, 62% 28%, 58% 29%, 56% 30%, 59% 32%, 57% 31%, 56% 33%, 56% 32%, 55% 33%, 57% 33%, 56% 33%, 60% 36%, 56% 36%, 62% 37%, 56% 38%, 56% 40%, 58% 42%, 61% 45%, 64% 48%, 67% 52%, 69% 54%, 70% 56%, 69% 58%, 68% 59%, 70% 60%, 75% 60%, 76% 57%, 77% 56%, 78% 55%, 80% 56%, 80% 56%, 82% 57%, 83% 56%, 87% 56%, 90% 56%, 93% 56%, 96% 55%, 95% 56%, 97% 57%, 98% 60%, 97% 64%, 97% 67%, 96% 70%, 93% 69%, 88% 68%, 85% 67%, 82% 66%, 81% 66%, 80% 67%, 78% 66%, 77% 66%, 76% 66%, 75% 65%, 75% 63%, 74% 62%, 71% 61%, 67% 60%, 66% 61%, 64% 61%, 63% 62%, 64% 65%, 66% 67%, 68% 70%, 70% 72%, 73% 73%, 75% 75%, 78% 77%, 81% 78%, 78% 79%, 76% 80%, 75% 82%, 72% 81%, 71% 82%, 70% 82%, 70% 82%, 69% 81%, 67% 81%, 66% 79%, 65% 79%, 64% 78%, 62% 78%, 58% 78%, 54% 78%, 52% 77%, 51% 77%, 51% 77%, 51% 78%, 51% 79%, 54% 82%, 55% 84%, 56% 86%, 55% 86%, 53% 87%, 52% 89%, 50% 90%, 47% 92%, 47% 92%, 46% 91%, 47% 91%, 48% 90%, 50% 89%, 51% 87%, 51% 84%, 52% 84%, 47% 78%, 44% 75%, 41% 73%, 40% 79%, 41% 83%, 42% 85%, 41% 85%, 40% 84%, 39% 85%, 38% 86%, 36% 88%, 33% 89%, 32% 89%, 34% 87%, 36% 86%, 36% 84%, 36% 83%, 37% 82%, 38% 80%, 38% 74%, 37% 70%, 37% 68%, 36% 67%, 34% 66%, 35% 64%, 36% 62%, 36% 59%, 32% 59%, 29% 58%, 26% 59%, 24% 58%, 22% 57%, 12% 56%, 5% 56%, 3% 55%); animation: move-frankenstein 8s ease 0s infinite alternate; transform-origin: 50% 100%; }
+.witch { width: 15vmin; height: 18vmin; left: -9.5vmin; bottom: -0.15vmin; opacity: 0.5; background: var(--house); animation: move-witch 4s ease 0s infinite alternate; box-sizing: border-box; clip-path: polygon(3% 55%, 5% 55%, 11% 55%, 22% 56%, 24% 57%, 24% 55%, 28% 56%, 34% 53%, 36% 51%, 38% 48%, 41% 42%, 42% 41%, 42% 38%, 43% 36%, 42% 36%, 40% 38%, 40% 38%, 40% 36%, 39% 33%, 38% 33%, 36% 33%, 35% 34%, 35% 33%, 35% 32%, 36% 30%, 37% 29%, 38% 27%, 38% 26%, 34% 23%, 32% 21%, 28% 17%, 27% 14%, 27% 12%, 40% 20%, 45% 17%, 50% 14%, 56% 10%, 59% 8%, 62% 8%, 66% 8%, 64% 9%, 62% 10%, 60% 13%, 58% 15%, 54% 18%, 53% 18%, 52% 24%, 56% 25%, 60% 27%, 64% 27%, 62% 28%, 58% 29%, 56% 30%, 59% 32%, 57% 31%, 56% 33%, 56% 32%, 55% 33%, 57% 33%, 56% 33%, 60% 36%, 56% 36%, 62% 37%, 56% 38%, 56% 40%, 58% 42%, 61% 45%, 64% 48%, 67% 52%, 69% 54%, 70% 56%, 69% 58%, 68% 59%, 70% 60%, 75% 60%, 76% 57%, 77% 56%, 78% 55%, 80% 56%, 80% 56%, 82% 57%, 83% 56%, 87% 56%, 90% 56%, 93% 56%, 96% 55%, 95% 56%, 97% 57%, 98% 60%, 97% 64%, 97% 67%, 96% 70%, 93% 69%, 88% 68%, 85% 67%, 82% 66%, 81% 66%, 80% 67%, 78% 66%, 77% 66%, 76% 66%, 75% 65%, 75% 63%, 74% 62%, 71% 61%, 67% 60%, 66% 61%, 64% 61%, 63% 62%, 64% 65%, 66% 67%, 68% 70%, 70% 72%, 73% 73%, 75% 75%, 78% 77%, 81% 78%, 78% 79%, 76% 80%, 75% 82%, 72% 81%, 71% 82%, 70% 82%, 70% 82%, 69% 81%, 67% 81%, 66% 79%, 65% 79%, 64% 78%, 62% 78%, 58% 78%, 54% 78%, 52% 77%, 51% 77%, 51% 77%, 51% 78%, 51% 79%, 54% 82%, 55% 84%, 56% 86%, 55% 86%, 53% 87%, 52% 89%, 50% 90%, 47% 92%, 47% 92%, 46% 91%, 47% 91%, 48% 90%, 50% 89%, 51% 87%, 51% 84%, 52% 84%, 47% 78%, 44% 75%, 41% 73%, 40% 79%, 41% 83%, 42% 85%, 41% 85%, 40% 84%, 39% 85%, 38% 86%, 36% 88%, 33% 89%, 32% 89%, 34% 87%, 36% 86%, 36% 84%, 36% 83%, 37% 82%, 38% 80%, 38% 74%, 37% 70%, 37% 68%, 36% 67%, 34% 66%, 35% 64%, 36% 62%, 36% 59%, 32% 59%, 29% 58%, 26% 59%, 24% 58%, 22% 57%, 12% 56%, 5% 56%, 3% 55%); 
+  /* ARCHITECT FIX: Replaced huge linear() array with simple ease for Vercel/Vite build safety */
+  animation: move-nosferatu 10s ease 0s infinite; transform-origin: 50% 100%; }
+
+@keyframes move-nosferatu { 0% { left: -4vmin; } 45% { left: 1.75vmin; } 50% { bottom: 0; } 100% { left: -4vmin; } }
+
+.frankenstein { width: 20vmin; height: 20vmin; left: -6.5vmin; bottom: -6.25vmin; opacity: 0.5; background: var(--house); box-sizing: border-box; clip-path: polygon(29% 87%, 31% 82%, 32% 82%, 38% 85%, 39% 83%, 41% 81%, 42% 79%, 46% 76%, 49% 68%, 49% 64%, 50% 59%, 51% 57%, 52% 55%, 52% 52%, 50% 51%, 49% 51%, 51% 48%, 52% 45%, 53% 42%, 54% 39%, 54% 38%, 53% 37%, 52% 38%, 51% 40%, 50% 40%, 48% 39%, 46% 37%, 45% 38%, 44% 38%, 43% 38%, 41% 42%, 40% 42%, 40% 40%, 41% 38%, 40% 39%, 38% 40%, 37% 42%, 36% 41%, 36% 41%, 36% 41%, 36% 41%, 35% 40%, 34% 40%, 34% 40%, 35% 38%, 38% 36%, 40% 35%, 43% 34%, 43% 33%, 45% 33%, 47% 32%, 47% 31%, 46% 30%, 43% 30%, 39% 30%, 37% 30%, 37% 32%, 36% 30%, 36% 28%, 36% 28%, 34% 27%, 31% 27%, 30% 27%, 28% 28%, 25% 27%, 24% 27%, 24% 26%, 23% 25%, 22% 25%, 22% 24%, 23% 23%, 23% 23%, 22% 22%, 22% 22%, 24% 22%, 26% 23%, 28% 23%, 29% 23%, 30% 23%, 31% 23%, 33% 24%, 35% 24%, 36% 23%, 37% 23%, 40% 23%, 45% 23%, 50% 23%, 53% 23%, 54% 21%, 55% 21%, 56% 21%, 58% 21%, 60% 21%, 60% 19%, 62% 19%, 62% 17%, 60% 17%, 59% 17%, 58% 16%, 58% 15%, 59% 14%, 58% 13%, 59% 13%, 59% 12%, 59% 11%, 58% 11%, 57% 11%, 57% 10%, 58% 9%, 58% 9%, 59% 8%, 59% 7%, 58% 7%, 58% 6%, 59% 5%, 59% 1%, 60% 0%, 61% 0%, 63% 0%, 64% 1%, 65% 1%, 66% 1%, 67% 2%, 68% 1%, 69% 3%, 70% 2%, 70% 2%, 71% 3%, 72% 3%, 73% 4%, 72% 5%, 72% 8%, 72% 10%, 70% 12%, 71% 14%, 69% 14%, 69% 15%, 69% 15%, 69% 15%, 70% 15%, 70% 16%, 69% 16%, 69% 15%, 68% 16%, 68% 16%, 69% 17%, 69% 17%, 69% 18%, 70% 19%, 72% 20%, 73% 21%, 74% 23%, 74% 24%, 74% 27%, 74% 31%, 74% 34%, 73% 38%, 73% 42%, 73% 45%, 73% 47%, 73% 49%, 73% 50%, 73% 51%, 73% 53%, 73% 54%, 74% 56%, 74% 56%, 72% 57%, 71% 57%, 71% 58%, 70% 61%, 70% 63%, 70% 64%, 71% 66%, 71% 68%, 71% 70%, 70% 71%, 71% 74%, 72% 77%, 73% 81%, 75% 86%, 76% 88%, 76% 89%, 77% 90%, 77% 91%, 77% 93%, 76% 93%, 76% 97%, 72% 98%, 66% 99%, 60% 100%, 59% 98%, 59% 96%, 59% 95%, 59% 94%, 60% 94%, 62% 93%, 64% 93%, 65% 92%, 65% 92%, 64% 91%, 64% 90%, 64% 89%, 64% 87%, 64% 85%, 64% 84%, 63% 82%, 62% 80%, 62% 78%, 61% 76%, 60% 73%, 60% 71%, 58% 73%, 55% 78%, 54% 80%, 52% 84%, 52% 86%, 51% 88%, 49% 89%, 48% 90%, 48% 91%, 46% 94%, 44% 96%, 44% 96%, 43% 96%, 42% 96%, 37% 93%, 31% 90%, 29% 88%); animation: move-frankenstein 8s ease 0s infinite alternate; transform-origin: 50% 100%; }
 
 @keyframes move-frankenstein { 0% { left: -6.5vmin; } 20%, 60%, 80% { transform: rotate(5deg); } 0%, 40%, 70% { transform: rotate(-5deg); } 45% { left: -5.5vmin; } 50% { bottom: -5vmin; } 100% { left: -6.5vmin; } }
 
