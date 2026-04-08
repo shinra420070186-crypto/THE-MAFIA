@@ -2,22 +2,20 @@ import React from 'react';
 import './SpookyBackground.css';
 
 export default function SpookyBackground({ phase }) {
-  // Checks the phase from your store to decide if it's night or day
-  const isNight = phase.startsWith('night') || phase === 'night_transition';
+  // Added a safety check to prevent rendering errors
+  const safePhase = phase || '';
+  const isNight = safePhase.startsWith('night') || safePhase === 'night_transition';
   const themeClass = isNight ? 'theme-night' : 'theme-day';
 
   return (
     <div className={`scene-wrapper ${themeClass}`}>
       <div className="sky">
-        
-        {/* The new pivots for the perfect C-Curve arc */}
         <div className="celestial-pivot sun-pivot">
-            <div className="sun"></div>
+          <div className="sun"></div>
         </div>
         <div className="celestial-pivot moon-pivot">
-            <div className="moon"></div>
+          <div className="moon"></div>
         </div>
-
         <div className="clouds">
           <span></span><span></span><span></span><span></span>
         </div>
