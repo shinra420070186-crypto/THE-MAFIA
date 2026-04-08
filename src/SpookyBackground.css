@@ -1,5 +1,3 @@
-/* src/SpookyBackground.css */
-
 /* --- THEME VARIABLES --- */
 .theme-night {
 	--sky-bg: linear-gradient(0deg, #673ab78a, #3c3c3c94);
@@ -36,7 +34,7 @@
 	content: ""; position: absolute; width: 100%; height: 10vmin; z-index: -1; bottom: 0; background: radial-gradient(circle at calc(50% - 33vmin) calc(100% + 31vmin), var(--house) 40vmin, #fff0 calc(40vmin + 1px) ), radial-gradient(circle at calc(50% + 33vmin) calc(100% + 30vmin), var(--house) 40vmin, #fff0 calc(40vmin + 1px) ), radial-gradient(circle at 50% calc(100% + 43vmin), var(--house) 50vmin, #fff0 calc(50vmin + 1px) ); background-repeat: no-repeat; transition: background 2.5s ease-in-out;
 }
 
-/* Proper Scaling so it matches your screen */
+/* FIX: Scaling and Positioning */
 .content {
 	width: 90vmin; height: 90vmin; background-size: cover; position: relative; perspective: 100vmin; perspective-origin: top; bottom: 5vmin; transform-origin: bottom center; transform: scale(1);
 }
@@ -48,71 +46,81 @@
     }
 }
 
+/* FIX: Removed * wildcard transition for extreme performance boost */
 .content * { position: absolute; transform-style: preserve-3d; pointer-events: none; }
+
+/* Targeted transitions only for elements that need color swaps */
 .window, .door, .roof-0 .window { transition: background 2.5s ease-in-out; }
 
-/* ─── NEW HORIZONTAL C-CURVE CELESTIAL ANIMATION ─── */
-
-.sun, .moon {
-    position: absolute;
-    top: 0; left: 0;
-    width: 14vmin; 
-    height: 14vmin;
-    margin-left: -7vmin; 
-    margin-top: -7vmin;
-    border-radius: 50%;
-    transition: opacity 2s ease-in-out;
-    z-index: 2;
-    /* Both run on the same path, taking 50 seconds to cross the screen */
-    animation: celestial-arc 50s linear infinite;
+.sky {
+	background: var(--sky-bg);
+	height: 100vh; z-index: -1; position: absolute; left: 0; width: 100vw; top: 0; transition: background 2.5s ease-in-out;
 }
 
-/* Beautiful Glowing Sun Design */
+.sky:after {
+	content: ""; position: absolute; width: 100vw; height: 100vh; top: 0vh;
+	background-image: radial-gradient(2px 2px at 20px 30px, #484341, transparent), radial-gradient(2px 2px at 43px 75px, #735454, transparent), radial-gradient(2px 1px at 54px 184px, #828282, transparent), radial-gradient(2px 2px at 93px 47px, #654b49, transparent), radial-gradient(1px 1px at 148px 87px, #3a1919, transparent), radial-gradient(2px 2px at 193px 137px, #a26662, transparent), radial-gradient(1px 2px at 210px 154px, #805241, transparent), radial-gradient(2px 2px at 243px 102px, #866356, transparent), radial-gradient(2px 1px at 264px 184px, #794937, transparent), radial-gradient(2px 2px at 293px 44px, #735454, transparent), radial-gradient(1px 1px at 223px 62px, #ad968e, transparent), radial-gradient(2px 2px at 249px 162px, #884228, transparent), radial-gradient(2px 2px at 73px 99px, #442e26, transparent), radial-gradient(1px 1px at 163px 42px, #403433, transparent), linear-gradient(180deg, #fff0 10%, var(--house) 25%, #111 50%, #222 75%, #111 100%);
+	background-repeat: no-repeat, repeat;
+	background-size: 333px 263px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 100% 100%;
+	opacity: var(--sky-overlay-opacity); mix-blend-mode: color-burn; transition: opacity 2.5s ease-in-out;
+}
+
+/* ==========================================================================
+   FIX: STATIC CELESTIAL BODIES (THEY ONLY MOVE ONCE DURING TRANSITION)
+   ========================================================================== */
+.moon, .sun {
+    position: absolute; 
+    z-index: 2; 
+    width: 16vmin; 
+    height: 16vmin; 
+    left: 0; 
+    top: 0; 
+    border-radius: 100%;
+    opacity: 0; 
+    pointer-events: none;
+    transform: translate(-30vw, 60vh); /* Default hidden starting state */
+}
+
+/* NEW: Bright, Glowing Sun Design */
 .sun {
-    background: #fff9c4;
+    background: #FFD700;
     box-shadow: 
-        0 0 3vmin 1vmin #ffeb3b, 
-        0 0 8vmin 3vmin #ff9800, 
-        0 0 15vmin 5vmin #ff572288, 
-        inset 0 0 1.5vmin #ffffff;
+        0 0 8vmin 3vmin rgba(255, 215, 0, 0.6), 
+        0 0 2vmin 1vmin rgba(255, 255, 255, 0.9), 
+        inset 0 0 2vmin #FF8C00;
 }
 
-/* Realistic Moon Design with Craters */
+/* Original Detailed Moon */
 .moon {
-    background: #e0e0e0;
-    box-shadow: 
-        inset -1.5vmin 0 2vmin #9e9e9e,
-        0 0 3vmin 1vmin #81d4fa88,
-        0 0 8vmin 3vmin #29b6f644;
-    /* Offset the moon by exactly half the animation time so they are perfectly synced */
-    animation-delay: -25s; 
+    background: radial-gradient(circle at 50% 50%, #fdfdfd 0% 7vmin, #ffffff00 7.25vmin 100%), #fff;
+    box-shadow: 0 0 8em 4em #6493a9, 0 0 8em -16em #ff660000 inset, 0 0 20px 5px #fdfdfd;
+}
+.moon:before { content: ""; background: radial-gradient(circle at 100% 60%, #ffffff00 0% 60%, #dddddd 75% 100%); width: 100%; height: 100%; position: absolute; top: 0%; left: 0%; border-radius: 100%; }
+.moon:after { content: ""; background: radial-gradient(circle at 0% 40%,#efefef 0% 60%,#ededed 75% 100%); width: 4.5vmin; height: 4.5vmin; position: absolute; top: 20%; left: 20%; border-radius: 100%; filter: blur(2px); }
+
+/* The 'C' Arc Keyframes */
+/* Rising Arc: Bottom Left -> Top Center-ish */
+@keyframes celestial-rise {
+    0%   { opacity: 0; transform: translate(-30vw, 50vh) scale(0.5); }
+    50%  { opacity: 1; transform: translate(5vw, 5vh) scale(0.85); }
+    100% { opacity: 1; transform: translate(25vw, 15vh) scale(1); }
 }
 
-.moon:before {
-    content: ""; background: rgba(0,0,0,0.12); width: 2.5vmin; height: 2.5vmin; position: absolute; top: 20%; left: 30%; border-radius: 50%; box-shadow: inset 0.5vmin 0.5vmin 0.5vmin rgba(0,0,0,0.1);
-}
-.moon:after {
-    content: ""; background: rgba(0,0,0,0.12); width: 3.5vmin; height: 3.5vmin; position: absolute; top: 50%; left: 55%; border-radius: 50%; box-shadow: inset 0.5vmin 0.5vmin 0.5vmin rgba(0,0,0,0.1);
-}
-
-/* Smooth fading based on phase */
-.theme-night .moon { opacity: 1; }
-.theme-night .sun { opacity: 0; }
-
-.theme-day .moon { opacity: 0; }
-.theme-day .sun { opacity: 1; }
-
-/* The Parabolic "C" Arc Path */
-@keyframes celestial-arc {
-    0%   { transform: translate(-15vw, 45vh) scale(0.6); }
-    20%  { transform: translate(15vw, 20vh) scale(0.85); }
-    50%  { transform: translate(50vw, 8vh) scale(1); }
-    80%  { transform: translate(85vw, 20vh) scale(0.85); }
-    100% { transform: translate(115vw, 45vh) scale(0.6); }
+/* Setting Arc: Top Center-ish -> Bottom Right */
+@keyframes celestial-set {
+    0%   { opacity: 1; transform: translate(25vw, 15vh) scale(1); }
+    50%  { opacity: 0; transform: translate(60vw, 30vh) scale(0.85); }
+    100% { opacity: 0; transform: translate(90vw, 60vh) scale(0.5); }
 }
 
+/* Trigger the animations (Using 'forwards' so they STOP and DO NOT loop) */
+.theme-night .moon { animation: celestial-rise 2.5s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.theme-night .sun  { animation: celestial-set 2s ease-in forwards; }
 
-/* ─── REST OF THE SPOOKY HOUSE CSS ─── */
+.theme-day .sun  { animation: celestial-rise 2.5s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.theme-day .moon { animation: celestial-set 2s ease-in forwards; }
+/* ========================================================================== */
+
 .level-0 { width: 30vmin; height: 25vmin; background: var(--house); bottom: 0; left: 22vmin; transform: rotateX(82deg) skewX(5deg); z-index: 1; }
 .level-1 { width: 16vmin; height: 34vmin; background: var(--house); bottom: 3.75vmin; left: 53vmin; transform: perspective(100vmin) rotateX(82deg) skewX(-10deg); }
 .level-2 { width: 19vmin; height: 35vmin; background: var(--house); bottom: 31.5vmin; left: 29vmin; transform: perspective(150vmin) rotateX(45deg) skewX(2deg) rotate(2deg); clip-path: polygon(0% 85%, 0% 0%, 100% 0%, 100% 94%, 48% 57%); z-index: 1; box-shadow: 0.25vmin -0.5vmin 0.5vmin 0 #fff3 inset, 0.5vmin -0.5vmin 1.5vmin 0 #fff2 inset; }
@@ -162,19 +170,6 @@
 }
 .balcony:before { content: ""; position: absolute; width: 100%; height: 80%; top: -78%; }
 .balcony:hover { transform: skewX(-18deg) rotate(25deg); transition-duration: 0.5s; }
-
-.sky {
-	background: var(--sky-bg);
-	height: 100vh; z-index: -1; position: absolute; left: 0; width: 100vw; top: 0; transition: background 2.5s ease-in-out;
-}
-
-.sky:after {
-	content: ""; position: absolute; width: 100vw; height: 100vh; top: 0vh;
-	background-image: radial-gradient(2px 2px at 20px 30px, #484341, transparent), radial-gradient(2px 2px at 43px 75px, #735454, transparent), radial-gradient(2px 1px at 54px 184px, #828282, transparent), radial-gradient(2px 2px at 93px 47px, #654b49, transparent), radial-gradient(1px 1px at 148px 87px, #3a1919, transparent), radial-gradient(2px 2px at 193px 137px, #a26662, transparent), radial-gradient(1px 2px at 210px 154px, #805241, transparent), radial-gradient(2px 2px at 243px 102px, #866356, transparent), radial-gradient(2px 1px at 264px 184px, #794937, transparent), radial-gradient(2px 2px at 293px 44px, #735454, transparent), radial-gradient(1px 1px at 223px 62px, #ad968e, transparent), radial-gradient(2px 2px at 249px 162px, #884228, transparent), radial-gradient(2px 2px at 73px 99px, #442e26, transparent), radial-gradient(1px 1px at 163px 42px, #403433, transparent), linear-gradient(180deg, #fff0 10%, var(--house) 25%, #111 50%, #222 75%, #111 100%);
-	background-repeat: no-repeat, repeat;
-	background-size: 333px 263px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 100% 100%;
-	opacity: var(--sky-overlay-opacity); mix-blend-mode: color-burn; transition: opacity 2.5s ease-in-out;
-}
 
 .bat { width: 15vmin; height: 12vmin; bottom: 30vmin; margin-bottom: 0; left: 13.25vmin; }
 .bat:hover { transition: all 1s linear 0s; }
