@@ -188,13 +188,13 @@ export default function GameBoard() {
       
       {/* ─── PERMANENT BACKGROUND MOUNTS (ZERO FLICKER) ─── */}
       <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out" style={{ backgroundColor: '#e5e5e5', opacity: state.phase === 'splash' ? 1 : 0, zIndex: state.phase === 'splash' ? 0 : -100, visibility: state.phase === 'splash' ? 'visible' : 'hidden' }} />
-      <div className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out" style={{ opacity: isGalaxyPhase ? 1 : 0, zIndex: isGalaxyPhase ? 0 : -50, visibility: isGalaxyPhase ? 'visible' : 'hidden' }}>
+      <div className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out" style={{ opacity: isGalaxyPhase ? 1 : 0, zIndex: isGalaxyPhase ? 10 : -50, visibility: isGalaxyPhase ? 'visible' : 'hidden' }}>
         <MemoizedGalaxy />
       </div>
       
       {/* ─── NEW DETAILED SPOOKY BACKGROUND (Replaces FullScreenSpooky) ─── */}
       <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-700 ease-in-out" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
-        <SpookyBackground phase={state.phase} />
+        {isSpookyPhase && <SpookyBackground phase={state.phase} />}
       </div>
 
       {/* ─── SPLASH PHASE ─── */}
