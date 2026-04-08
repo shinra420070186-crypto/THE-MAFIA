@@ -1,16 +1,16 @@
-// src/SpookyBackground.jsx
 import React from 'react';
 import './SpookyBackground.css';
 
 export default function SpookyBackground({ phase }) {
-  // It checks the phase from your store to decide if it's night or day
+  // Checks the phase from your store to decide if it's night or day
   const isNight = phase.startsWith('night') || phase === 'night_transition';
   const themeClass = isNight ? 'theme-night' : 'theme-day';
 
   return (
     <div className={`scene-wrapper ${themeClass}`}>
       <div className="sky">
-        <div className="celestial-body"></div>
+        <div className="sun"></div>
+        <div className="moon"></div>
         <div className="clouds">
           <span></span><span></span><span></span><span></span>
         </div>
