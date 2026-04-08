@@ -1,10 +1,7 @@
-/* src/SpookyBackground.css */
+/* --- THEME VARIABLES --- */
 .theme-night {
 	--sky-bg: linear-gradient(0deg, #673ab78a, #3c3c3c94);
 	--scene-bg: linear-gradient(238deg, #000, #fff0, #fff0), linear-gradient(180deg, #000, #fff0, #fff0), radial-gradient(circle at 50% 100%, #005eff, #6d006d, #38005e);
-	--celestial-bg: radial-gradient(circle at 50% 50%, #fdfdfd 0% 7vmin, #ffffff00 7.25vmin 100%), #fff;
-	--celestial-shadow: 0 0 8em 4em #6493a9, 0 0 8em -16em #ff660000 inset, 0 0 20px 5px #fdfdfd;
-	--celestial-pseudo: block;
 	--gray: #1a191a;
 	--black: #080708;
 	--dark: #443847;
@@ -18,9 +15,6 @@
 .theme-day {
 	--sky-bg: linear-gradient(0deg, #87CEEB, #e0f6ff);
 	--scene-bg: linear-gradient(180deg, #b3e5fc, #fff0, #fff0), radial-gradient(circle at 50% 100%, #4facfe, #00f2fe, #e0c3fc);
-	--celestial-bg: radial-gradient(circle at 50% 50%, #fff 0%, #ffeb3b 40%, #fbc02d 80%, #fff0 100%);
-	--celestial-shadow: 0 0 8em 4em #ffeb3b66, 0 0 25px 10px #fff;
-	--celestial-pseudo: none;
 	--gray: #6b7280;
 	--black: #1f2937;
 	--dark: #374151;
@@ -31,16 +25,32 @@
 	--bounce: linear(0 0%, 0 2.27%, 0.02 4.53%, 0.04 6.8%, 0.06 9.07%, 0.1 11.33%, 0.14 13.6%, 0.25 18.15%, 0.39 22.7%, 0.56 27.25%, 0.77 31.8%, 1 36.35%, 0.89 40.9%, 0.85 43.18%, 0.81 45.45%, 0.79 47.72%, 0.77 50%, 0.75 52.27%, 0.75 54.55%, 0.75 56.82%, 0.77 59.1%, 0.79 61.38%, 0.81 63.65%, 0.85 65.93%, 0.89 68.2%, 1 72.7%, 0.97 74.98%, 0.95 77.25%, 0.94 79.53%, 0.94 81.8%, 0.94 84.08%, 0.95 86.35%, 0.97 88.63%, 1 90.9%, 0.99 93.18%, 0.98 95.45%, 0.99 97.73%, 1 100%);
 }
 
+/* Base structural CSS mappings */
 .scene-wrapper {
-	margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; align-content: flex-end; background: var(--scene-bg); transition: background 2s ease; position: absolute; inset: 0; pointer-events: none; z-index: -10;
+	margin: 0; padding: 0; width: 100vw; height: 100dvh; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; background: var(--scene-bg); transition: background 2.5s ease-in-out; position: absolute; inset: 0; pointer-events: none; z-index: -10;
 }
 
 .scene-wrapper:after {
-	content: ""; position: absolute; width: 100%; height: 10vmin; z-index: -1; bottom: 0; background: radial-gradient(circle at calc(50% - 33vmin) calc(100% + 31vmin), var(--house) 40vmin, #fff0 calc(40vmin + 1px) ), radial-gradient(circle at calc(50% + 33vmin) calc(100% + 30vmin), var(--house) 40vmin, #fff0 calc(40vmin + 1px) ), radial-gradient(circle at 50% calc(100% + 43vmin), var(--house) 50vmin, #fff0 calc(50vmin + 1px) ); background-repeat: no-repeat; transition: background 2s ease;
+	content: ""; position: absolute; width: 100%; height: 10vmin; z-index: -1; bottom: 0; background: radial-gradient(circle at calc(50% - 33vmin) calc(100% + 31vmin), var(--house) 40vmin, #fff0 calc(40vmin + 1px) ), radial-gradient(circle at calc(50% + 33vmin) calc(100% + 30vmin), var(--house) 40vmin, #fff0 calc(40vmin + 1px) ), radial-gradient(circle at 50% calc(100% + 43vmin), var(--house) 50vmin, #fff0 calc(50vmin + 1px) ); background-repeat: no-repeat; transition: background 2.5s ease-in-out;
 }
 
-.content { width: 90vmin; height: 90vmin; background-size: cover; position: relative; perspective: 100vmin; perspective-origin: top; bottom: 5vmin; }
-.content * { position: absolute; transform-style: preserve-3d; transition: background 2s ease, border-color 2s ease, box-shadow 2s ease, color 2s ease; pointer-events: none; }
+/* FIX: Scaling and Positioning */
+.content {
+	width: 90vmin; height: 90vmin; background-size: cover; position: relative; perspective: 100vmin; perspective-origin: top; bottom: 5vmin; transform-origin: bottom center; transform: scale(1);
+}
+
+@media (max-width: 768px) {
+    .content {
+        transform: scale(0.85); /* Fixes the zoom/clipping issue */
+        bottom: 8vmin;
+    }
+}
+
+/* FIX: Removed * wildcard transition for extreme performance boost */
+.content * { position: absolute; transform-style: preserve-3d; pointer-events: none; }
+
+/* Targeted transitions only for elements that need color swaps */
+.window, .door, .roof-0 .window { transition: background 2.5s ease-in-out; }
 
 .level-0 { width: 30vmin; height: 25vmin; background: var(--house); bottom: 0; left: 22vmin; transform: rotateX(82deg) skewX(5deg); z-index: 1; }
 .level-1 { width: 16vmin; height: 34vmin; background: var(--house); bottom: 3.75vmin; left: 53vmin; transform: perspective(100vmin) rotateX(82deg) skewX(-10deg); }
@@ -48,16 +58,32 @@
 .roof-0 { width: 37vmin; height: 23vmin; bottom: 23.25vmin; left: 18.75vmin; border: 19vmin solid #0000; box-sizing: border-box; border-bottom: 22vmin solid var(--house); transform: skew(-8deg, -1deg) rotate(1.25deg); border-radius: 0.5vmin; }
 .roof-1, .chimney:before { background: radial-gradient(circle at -9vmin 1vmin, #fff0 18vmin, #fff3 calc(18vmin + 1px) 18vmin, #fff0 19vmin 100%), radial-gradient(circle at -9vmin 1vmin, #fff0 18vmin, var(--house) calc(18vmin + 1px) ), radial-gradient(circle at 24.5vmin -5vmin, #fff0 25vmin, var(--house) calc(25vmin + 1px) ), #0000; width: 21vmin; height: 17vmin; bottom: 31.75vmin; left: 52vmin; transform: skew(-8deg, -1deg) rotate(2deg); border-radius: 0.5vmin; background-size: calc(50% - 1vmin) 100%, calc(50% - 1vmin) 100%, calc(50% + 1vmin) 100%; background-repeat: no-repeat; background-position: 0 0, 0 0, 99% 0; }
 .roof-2 { background: radial-gradient(circle at 34vmin -9vmin, #fff0 35vmin, var(--house) calc(35vmin + 1px) ), radial-gradient(circle at -18vmin 4vmin, #fff0 28vmin, #fff4 calc(28vmin + 1px), #fff0 28.75vmin ), radial-gradient(circle at -18vmin 4vmin, #fff0 28vmin, var(--house) calc(28vmin + 1px) ), #0f00; width: 34vmin; height: 25vmin; bottom: 63.9vmin; left: 26vmin; transform: skew(-8deg, -1deg) rotate(1deg); border-radius: 0.5vmin; background-size: calc(50% + 6.5vmin) 100%, calc(50% + 7vmin) 100%, calc(50% - 6.5vmin) 100%, calc(50% - 7vmin) 100%; background-repeat: no-repeat; background-position: 99% 0, 0 0, 0 0; }
-.door { background: linear-gradient(183deg, #fff0 7.5vmin, var(--house) calc(7.5vmin + 1px) 8vmin, #fff0 calc(8vmin + 1px) 0), linear-gradient(94deg, var(--house) 0.75vmin, #fff0 calc(0.75vmin + 1px)), linear-gradient(-94deg, var(--house) 0.75vmin, #fff0 calc(0.75vmin + 1px)), linear-gradient(-5deg, var(--house) 0.5vmin, #fff0 calc(0.5vmin + 1px)), linear-gradient(86deg, #fff0 3.5vmin, var(--house) calc(3.5vmin + 1px) 4vmin, #fff0 calc(4vmin + 1px)), linear-gradient(95deg, #fff0 7vmin, var(--house) calc(7vmin + 1px) 7.5vmin, #fff0 calc(7.5vmin + 1px)), linear-gradient(92deg, #fff0 10vmin, var(--house) calc(10vmin + 1px) 10.5vmin, #fff0 calc(10.5vmin + 1px)), radial-gradient(circle at 50% 87%, #fff0 5.65vmin, var(--house) calc(5.65vmin + 1px)), radial-gradient(circle at 46% 87%, #fff0 5.65vmin, var(--house) calc(5.65vmin + 1px)), linear-gradient(38deg, #fff0 4.25vmin, var(--house) calc(4.25vmin + 1px) 4.75vmin, #fff0 calc(4.75vmin + 1px)), linear-gradient(87deg, #fff0 1vmin, var(--house) calc(1vmin + 1px)), linear-gradient(123deg, #fff0 5vmin, var(--house) calc(5vmin + 1px) 5.5vmin, #fff0 calc(5.5vmin + 1px)), linear-gradient(150deg, #fff0 7vmin, var(--house) calc(7vmin + 1px) 7.5vmin, #fff0 calc(7.5vmin + 1px)), linear-gradient(180deg, var(--window), var(--window)), #fff; width: 13vmin; height: 20vmin; bottom: 1.5vmin; left: 8vmin; transform: skew(2deg, -2deg); border-radius: 100% 100% 0.5vmin 0.5vmin; background-repeat: no-repeat; background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 65%, 100% 64%, 100% 63%, 105% 38%, 105% 38%, 60% 39%, 11% 39%, 58% 39%, 56% 39%; background-position: 0 0, 0 0, 0 0, 0 0, 0 100%, 0 100%, 0 100%, 0 0, 0 0, 0 0, 50% 0, 100% 0, 100% 0; perspective: 10000vmin; perspective-origin: top; }
-.window { width: 8vmin; height: 17vmin; background: linear-gradient(178deg, #fff0 0 12vmin, var(--house) calc(12vmin + 1px) 12.4vmin, #fff0 calc(12.4vmin + 1px)), linear-gradient(183deg, #fff0 0 7vmin, var(--house) calc(7vmin + 1px) 7.45vmin, #fff0 calc(7.45vmin + 1px)), linear-gradient(91deg, #fff0 0 3.65vmin, var(--house) calc(3.65vmin + 1px) 4.1vmin, #fff0 calc(4.1vmin + 1px)), linear-gradient(180deg, var(--window), var(--window)), #fff; left: 3.5vmin; top: 8vmin; border-radius: 4vmin 5vmin 0.1vmin 0.1vmin; overflow: hidden; }
+
+.door {
+	background: linear-gradient(183deg, #fff0 7.5vmin, var(--house) calc(7.5vmin + 1px) 8vmin, #fff0 calc(8vmin + 1px) 0), linear-gradient(94deg, var(--house) 0.75vmin, #fff0 calc(0.75vmin + 1px)), linear-gradient(-94deg, var(--house) 0.75vmin, #fff0 calc(0.75vmin + 1px)), linear-gradient(-5deg, var(--house) 0.5vmin, #fff0 calc(0.5vmin + 1px)), linear-gradient(86deg, #fff0 3.5vmin, var(--house) calc(3.5vmin + 1px) 4vmin, #fff0 calc(4vmin + 1px)), linear-gradient(95deg, #fff0 7vmin, var(--house) calc(7vmin + 1px) 7.5vmin, #fff0 calc(7.5vmin + 1px)), linear-gradient(92deg, #fff0 10vmin, var(--house) calc(10vmin + 1px) 10.5vmin, #fff0 calc(10.5vmin + 1px)), radial-gradient(circle at 50% 87%, #fff0 5.65vmin, var(--house) calc(5.65vmin + 1px)), radial-gradient(circle at 46% 87%, #fff0 5.65vmin, var(--house) calc(5.65vmin + 1px)), linear-gradient(38deg, #fff0 4.25vmin, var(--house) calc(4.25vmin + 1px) 4.75vmin, #fff0 calc(4.75vmin + 1px)), linear-gradient(87deg, #fff0 1vmin, var(--house) calc(1vmin + 1px)), linear-gradient(123deg, #fff0 5vmin, var(--house) calc(5vmin + 1px) 5.5vmin, #fff0 calc(5.5vmin + 1px)), linear-gradient(150deg, #fff0 7vmin, var(--house) calc(7vmin + 1px) 7.5vmin, #fff0 calc(7.5vmin + 1px)), linear-gradient(180deg, var(--window), var(--window)), #fff;
+	width: 13vmin; height: 20vmin; bottom: 1.5vmin; left: 8vmin; transform: skew(2deg, -2deg); border-radius: 100% 100% 0.5vmin 0.5vmin; background-repeat: no-repeat; background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 65%, 100% 64%, 100% 63%, 105% 38%, 105% 38%, 60% 39%, 11% 39%, 58% 39%, 56% 39%; background-position: 0 0, 0 0, 0 0, 0 0, 0 100%, 0 100%, 0 100%, 0 0, 0 0, 0 0, 50% 0, 100% 0, 100% 0; perspective: 10000vmin; perspective-origin: top;
+}
+
+.window {
+	width: 8vmin; height: 17vmin; background: linear-gradient(178deg, #fff0 0 12vmin, var(--house) calc(12vmin + 1px) 12.4vmin, #fff0 calc(12.4vmin + 1px)), linear-gradient(183deg, #fff0 0 7vmin, var(--house) calc(7vmin + 1px) 7.45vmin, #fff0 calc(7.45vmin + 1px)), linear-gradient(91deg, #fff0 0 3.65vmin, var(--house) calc(3.65vmin + 1px) 4.1vmin, #fff0 calc(4.1vmin + 1px)), linear-gradient(180deg, var(--window), var(--window)), #fff; left: 3.5vmin; top: 8vmin; border-radius: 4vmin 5vmin 0.1vmin 0.1vmin; overflow: hidden;
+}
+
 .level-1 .window:before { content: ""; position: absolute; width: 100%; height: 100%; top: -1vmin; max-height: 0; background: repeating-linear-gradient(180deg, var(--house) 0 0.5vmin, #fff0 0 0.85vmin); transition: max-height 2s var(--bounce) 0s; border-bottom: 0.75vmin solid var(--house); }
 .level-1 .window:hover:before { max-height: 100%; top: -0.75vmin; }
 .level-2 .window { transform: scale(0.75) rotateY(180deg) skewY(-2deg); top: 1vmin; left: 4.5vmin; border-radius: 4vmin 5vmin 0.1vmin 0.1vmin; overflow: hidden; border-top: 1px solid var(--house); }
-.roof-0 .window { --window-local: #084461e0; --light: #111; border-radius: 100%; height: 7vmin; width: 7vmin; left: -3vmin; background: linear-gradient(183deg, #fff0 0 3.25vmin, var(--house) calc(3.25vmin + 1px) 3.65vmin, #fff0 calc(3.65vmin + 1px)), linear-gradient(91deg, #fff0 0 3.25vmin, var(--house) calc(3.25vmin + 1px) 3.65vmin, #fff0 calc(3.65vmin + 1px)), linear-gradient(180deg, var(--light), var(--window-local)); }
+
+.roof-0 .window {
+	--window-local: #084461e0;
+	--light: #111;
+	border-radius: 100%; height: 7vmin; width: 7vmin; left: -3vmin;
+	background: linear-gradient(183deg, #fff0 0 3.25vmin, var(--house) calc(3.25vmin + 1px) 3.65vmin, #fff0 calc(3.65vmin + 1px)), linear-gradient(91deg, #fff0 0 3.25vmin, var(--house) calc(3.25vmin + 1px) 3.65vmin, #fff0 calc(3.65vmin + 1px)), linear-gradient(180deg, var(--light), var(--window-local));
+}
 .theme-day .roof-0 .window { --window-local: var(--window); --light: #e0f2fe; }
+
 .chimney { left: 21vmin; top: 8vmin; width: 7vmin; height: 12vmin; }
 .chimney:before { content: ""; position: absolute; transform: scale(0.25) rotate(2deg); left: -7vmin; top: -6vmin; }
 .chimney:after { content: ""; position: absolute; border: 1.5vmin solid #fff0; border-right: 2vmin solid var(--house); border-bottom: 3vmin solid var(--house); border-top: 0; width: 6vmin; height: 6vmin; left: -4.75vmin; bottom: -1.85vmin; border-radius: 5vmin 0vmin 6vmin; }
+
 .fence { background: radial-gradient(circle at 55% 32vmin, var(--house) 16vmin, #fff0 calc(16vmin + 1px)); width: 22vmin; height: 22vmin; bottom: 0; z-index: -1; }
 .fence:before { content: ""; position: absolute; width: 2vmin; height: 18vmin; background: var(--house); left: 5vmin; top: 5vmin; transform: skewY(30deg) rotate(-1deg); box-shadow: 8vmin -5vmin 0 -0.25vmin var(--house); }
 .fence:after { content: ""; position: absolute; width: 1.75vmin; height: 16vmin; background: var(--house); left: 10vmin; top: 4vmin; transform: skewY(-20deg) rotate(1deg); box-shadow: 5vmin 3vmin 0 0.1vmin var(--house); }
@@ -68,18 +94,52 @@
 .fence span + span { width: 15vmin; top: 12.25vmin; left: 2.5vmin; transform: rotate(-8deg) skewX(-18deg); }
 .fence + .fence span { width: 11vmin; top: 8vmin; transform: rotate(3deg) skewX(-4deg); height: 2vmin; left: 2.5vmin; }
 .fence + .fence span + span { top: 12vmin; transform: rotate(-4deg) skewX(17deg); left: 3.2vmin; width: 10.2vmin; }
-.balcony { width: 12vmin; height: 9vmin; z-index: 3; left: 43vmin; top: 34vmin; border-bottom: 2vmin solid var(--house); border-right: 0.75vmin solid var(--house); border-radius: 0.25vmin; transform: skewX(-18deg) rotate(5deg); transition: transform 1s var(--bounce) 0s; transform-origin: 0 100%; background: linear-gradient(-101deg, #fff0 0 1.5vmin, var(--house) calc(1.5vmin + 1px) 2.25vmin, #fff0 calc(2.25vmin + 1px)), linear-gradient(-98deg, #fff0 0 5.5vmin, var(--house) calc(5.5vmin + 1px) 6.25vmin, #fff0 calc(6.25vmin + 1px)), linear-gradient(88deg, #fff0 0 4vmin, var(--house) calc(4vmin + 1px) 4.75vmin, #fff0 calc(4.75vmin + 1px)), linear-gradient(85deg, #fff0 0 9vmin, var(--house) calc(9vmin + 1px) 9.75vmin, #fff0 calc(9.75vmin + 1px)), linear-gradient(177deg, #fff0 1vmin, var(--house) calc(1vmin + 1px) 2vmin, #fff0 calc(2vmin + 1px)), linear-gradient(183deg, #fff0 1vmin, var(--house) calc(1vmin + 1px) 2vmin, #fff0 calc(2vmin + 1px)); }
+
+.balcony {
+	width: 12vmin; height: 9vmin; z-index: 3; left: 43vmin; top: 34vmin; border-bottom: 2vmin solid var(--house); border-right: 0.75vmin solid var(--house); border-radius: 0.25vmin; transform: skewX(-18deg) rotate(5deg); transition: transform 1s var(--bounce) 0s; transform-origin: 0 100%;
+	background: linear-gradient(-101deg, #fff0 0 1.5vmin, var(--house) calc(1.5vmin + 1px) 2.25vmin, #fff0 calc(2.25vmin + 1px)), linear-gradient(-98deg, #fff0 0 5.5vmin, var(--house) calc(5.5vmin + 1px) 6.25vmin, #fff0 calc(6.25vmin + 1px)), linear-gradient(88deg, #fff0 0 4vmin, var(--house) calc(4vmin + 1px) 4.75vmin, #fff0 calc(4.75vmin + 1px)), linear-gradient(85deg, #fff0 0 9vmin, var(--house) calc(9vmin + 1px) 9.75vmin, #fff0 calc(9.75vmin + 1px)), linear-gradient(177deg, #fff0 1vmin, var(--house) calc(1vmin + 1px) 2vmin, #fff0 calc(2vmin + 1px)), linear-gradient(183deg, #fff0 1vmin, var(--house) calc(1vmin + 1px) 2vmin, #fff0 calc(2vmin + 1px));
+}
 .balcony:before { content: ""; position: absolute; width: 100%; height: 80%; top: -78%; }
 .balcony:hover { transform: skewX(-18deg) rotate(25deg); transition-duration: 0.5s; }
 
-.sky { background: var(--sky-bg); height: 100vh; z-index: -1; position: absolute; left: 0; width: 100vw; top: 0; transition: background 2s ease; }
-.sky:after { content: ""; position: absolute; width: 100vw; height: 100vh; top: 0vh; background-image: radial-gradient(2px 2px at 20px 30px, #484341, transparent), radial-gradient(2px 2px at 43px 75px, #735454, transparent), radial-gradient(2px 1px at 54px 184px, #828282, transparent), radial-gradient(2px 2px at 93px 47px, #654b49, transparent), radial-gradient(1px 1px at 148px 87px, #3a1919, transparent), radial-gradient(2px 2px at 193px 137px, #a26662, transparent), radial-gradient(1px 2px at 210px 154px, #805241, transparent), radial-gradient(2px 2px at 243px 102px, #866356, transparent), radial-gradient(2px 1px at 264px 184px, #794937, transparent), radial-gradient(2px 2px at 293px 44px, #735454, transparent), radial-gradient(1px 1px at 223px 62px, #ad968e, transparent), radial-gradient(2px 2px at 249px 162px, #884228, transparent), radial-gradient(2px 2px at 73px 99px, #442e26, transparent), radial-gradient(1px 1px at 163px 42px, #403433, transparent), linear-gradient(180deg, #fff0 10%, var(--house) 25%, #111 50%, #222 75%, #111 100%); background-repeat: no-repeat, repeat; background-size: 333px 263px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 100% 100%; opacity: var(--sky-overlay-opacity); mix-blend-mode: color-burn; transition: opacity 2s ease; }
+.sky {
+	background: var(--sky-bg);
+	height: 100vh; z-index: -1; position: absolute; left: 0; width: 100vw; top: 0; transition: background 2.5s ease-in-out;
+}
 
-.celestial-body { position: absolute; z-index: 2; width: 20vmin; height: 20vmin; border-radius: 100%; background: var(--celestial-bg); box-shadow: var(--celestial-shadow); animation: celestial-arc 35s linear infinite; transition: background 1.5s ease-in-out, box-shadow 1.5s ease-in-out; }
-@keyframes celestial-arc { 0% { transform: translate(-10vw, 20vh); opacity: 0; } 15% { transform: translate(10vw, 5vh); opacity: 1; } 30% { transform: translate(30vw, -2vh); } 50% { transform: translate(50vw, -5vh); } 70% { transform: translate(70vw, -2vh); } 85% { transform: translate(90vw, 5vh); opacity: 1; } 100% { transform: translate(110vw, 20vh); opacity: 0; } }
-.celestial-body:before { content: ""; background: radial-gradient(circle at 100% 60%, #ffffff00 0% 60%, #dddddd 75% 100%); width: 100%; height: 100%; position: absolute; top: 0%; left: 0%; border-radius: 100%; display: var(--celestial-pseudo); }
-.celestial-body:after { content: ""; background: radial-gradient(circle at 0% 40%,#efefef 0% 60%,#ededed 75% 100%); width: 4.5vmin; height: 4.5vmin; position: absolute; top: 20%; left: 20%; border-radius: 100%; filter: blur(2px); display: var(--celestial-pseudo); }
+.sky:after {
+	content: ""; position: absolute; width: 100vw; height: 100vh; top: 0vh;
+	background-image: radial-gradient(2px 2px at 20px 30px, #484341, transparent), radial-gradient(2px 2px at 43px 75px, #735454, transparent), radial-gradient(2px 1px at 54px 184px, #828282, transparent), radial-gradient(2px 2px at 93px 47px, #654b49, transparent), radial-gradient(1px 1px at 148px 87px, #3a1919, transparent), radial-gradient(2px 2px at 193px 137px, #a26662, transparent), radial-gradient(1px 2px at 210px 154px, #805241, transparent), radial-gradient(2px 2px at 243px 102px, #866356, transparent), radial-gradient(2px 1px at 264px 184px, #794937, transparent), radial-gradient(2px 2px at 293px 44px, #735454, transparent), radial-gradient(1px 1px at 223px 62px, #ad968e, transparent), radial-gradient(2px 2px at 249px 162px, #884228, transparent), radial-gradient(2px 2px at 73px 99px, #442e26, transparent), radial-gradient(1px 1px at 163px 42px, #403433, transparent), linear-gradient(180deg, #fff0 10%, var(--house) 25%, #111 50%, #222 75%, #111 100%);
+	background-repeat: no-repeat, repeat;
+	background-size: 333px 263px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 100% 100%;
+	opacity: var(--sky-overlay-opacity); mix-blend-mode: color-burn; transition: opacity 2.5s ease-in-out;
+}
 
+/* FIX: STATIC MOON AND SUN THAT FADE IN/OUT */
+.moon, .sun {
+    position: absolute; z-index: 2; width: 20vmin; height: 20vmin; left: 20vmin; top: 15vmin; border-radius: 100%; transition: transform 2.5s ease-in-out, opacity 2.5s ease-in-out;
+}
+
+.moon {
+    background: radial-gradient(circle at 50% 50%,#fdfdfd 0% 7vmin,#ffffff00 7.25vmin 100%),#fff;
+    box-shadow: 0 0 8em 4em #6493a9, 0 0 8em -16em #ff660000 inset,0 0 20px 5px #fdfdfd;
+}
+.moon:before { content: ""; background: radial-gradient(circle at 100% 60%, #ffffff00 0% 60%, #dddddd 75% 100%); width: 100%; height: 100%; position: absolute; top: 0%; left: 0%; border-radius: 100%; }
+.moon:after { content: ""; background: radial-gradient(circle at 0% 40%,#efefef 0% 60%,#ededed 75% 100%); width: 4.5vmin; height: 4.5vmin; position: absolute; top: 20%; left: 20%; border-radius: 100%; filter: blur(2px); }
+
+.sun {
+    background: radial-gradient(circle at 50% 50%, #fff 0%, #ffeb3b 40%, #fbc02d 80%, #fff0 100%);
+    box-shadow: 0 0 8em 4em #ffeb3b66, 0 0 25px 10px #fff;
+}
+
+/* Logic for smoothly swapping Moon and Sun based on phase */
+.theme-night .moon { opacity: 1; transform: translateY(0) scale(1); }
+.theme-night .sun { opacity: 0; transform: translateY(30vmin) scale(0.8); }
+
+.theme-day .sun { opacity: 1; transform: translateY(0) scale(1); }
+.theme-day .moon { opacity: 0; transform: translateY(30vmin) scale(0.8); }
+
+/* Bat Logic */
 .bat { width: 15vmin; height: 12vmin; bottom: 30vmin; margin-bottom: 0; left: 13.25vmin; }
 .bat:hover { transition: all 1s linear 0s; }
 .bat .head { background: radial-gradient(circle at 50% 100%, #fff0 calc(2vmin - 1px), #5558 calc(2vmin + 0px), var(--bat) calc(2vmin + 2px)); width: 6vmin; height: 9.5vmin; left: 4vmin; top: 0.75vmin; border-radius: 50% 50% 50% 50% / 25% 25% 75% 75%; transform: rotate(-173deg); }
@@ -100,6 +160,7 @@
 .bat .wings:before, .bat .wings:after { content: ""; position: absolute; width: 30%; height: 70%; background: radial-gradient(circle at -2.2vmin 2.2vmin, #fff0 3vmin, var(--bat) calc(3vmin + 1px)), radial-gradient(circle at -1.25vmin 2.35vmin, #fff0 3vmin, var(--bat) calc(3vmin + 1px)); bottom: 2.5vmin; left: 1vmin; transform-origin: 100% 100%; transform: rotate(-150deg); border-radius: 0 3.55vmin 0 0; background-repeat: no-repeat; background-size: 100% 3.2vmin, 100% 2.5vmin; background-position: 0 0, 0 3vmin; }
 .bat .wings:after { bottom: 2.65vmin; left: 3.75vmin; top: 0.25vmin; transform-origin: 100% 100%; transform: rotate(170deg) rotateY(180deg); animation-delay: -0.05s; }
 
+/* Entities */
 .tomb { background: var(--house); width: 5vmin; height: 6vmin; border-radius: 5vmin 5vmin 0 0; bottom: 3vmin; right: 0; transform: rotateX(12deg) skew(-11deg, 20deg); text-align: center; color: #3a1752; padding-top: 2vmin; font-family: serif; font-weight: bold; transition: all 2s ease 0s; z-index: 1; cursor: default; font-size: 1.75vmin; }
 .tomb:after { content: ""; position: absolute; height: 100%; width: 5vmin; border-right: 1vmin solid var(--house); border-top: 0.05vmin solid #fff0; border-radius: 0 3vmin 0 0; right: -1.2vmin; bottom: 0.1vmin; }
 .tomb:hover { transform: rotateX(12deg) skew(-19deg, 25deg) rotateX(-13deg); transform-origin: 50% 100%; }
@@ -119,10 +180,12 @@
 .flying-bat { position: absolute; width: 15vmin; height: 14vmin; bottom: 27vmin; left: 12vmin; z-index: 1; }
 .flying-bat:hover + .fence .bat { animation: bat-fly 4s linear 0s infinite; }
 .flying-bat:hover + .fence .chimney { transform: rotateY(180deg) rotateZ(22deg); transition: transform 1s var(--bounce) 0s; }
+
 .phantom { background: radial-gradient(circle at 60% 23%, #0e1d24 0.25vmin, #fff0 calc(0.25vmin + 1px)), radial-gradient(circle at 35% 25%, #0e1d24  0.25vmin, #fff0 calc(0.25vmin + 1px)), #ffffff10; width: 3vmin; height: 5vmin; border-radius: 2vmin 2vmin 0 0; left: 1vmin; top: 1vmin; transform: skew(10deg, -10deg); clip-path: polygon(6% 90%, 4% 66%, 3% 56%, 3% 48%, 5% 35%, 9% 22%, 15% 13%, 22% 8%, 30% 4%, 36% 3%, 42% 3%, 48% 4%, 56% 6%, 56% 8%, 63% 9%, 63% 9%, 70% 13%, 73% 17%, 78% 24%, 81% 28%, 85% 36%, 85% 38%, 88% 44%, 91% 51%, 93% 62%, 95% 74%, 97% 88%, 96% 89%, 93% 88%, 90% 87%, 84% 88%, 77% 90%, 72% 91%, 67% 93%, 63% 92%, 59% 92%, 56% 91%, 53% 90%, 50% 91%, 45% 94%, 41% 96%, 38% 96%, 32% 96%, 27% 94%, 19% 96%, 13% 97%, 9% 98%, 7% 99%, 5% 98%, 4% 96%, 4% 96%, 4% 93%); animation: move-phantom 2s ease 0s infinite alternate; }
 .phantom + .phantom { transform: skew(-7deg, 9deg) rotateY(180deg); animation-delay: -1s; animation-direction: reverse; animation-duration: 2.1s; margin-top: -0.25vmin; width: 3.5vmin; height: 5.5vmin; animation: move-phantom-2 2.03s ease -1s infinite alternate; }
 .roof-0 .window:hover { animation: light-on 0.75s linear 0s 1; animation-fill-mode: forwards; }
 .roof-0 .window:hover .phantom { opacity: 0.15; }
+
 .zombie-hand { width: 5vmin; height: 8vmin; left: 12.75vmin; bottom: -2vmin; clip-path: polygon(24% 99%, 30% 77%, 32% 69%, 33% 66%, 34% 60%, 32% 56%, 27% 54%, 25% 52%, 22% 44%, 22% 39%, 21% 37%, 16% 36%, 15% 38%, 11% 38%, 6% 36%, 5% 34%, 7% 32%, 10% 32%, 12% 31%, 14% 31%, 16% 32%, 20% 32%, 25% 33%, 28% 33%, 29% 32%, 30% 30%, 28% 28%, 25% 27%, 23% 27%, 20% 27%, 17% 27%, 16% 26%, 17% 24%, 18% 22%, 19% 20%, 24% 20%, 28% 21%, 33% 22%, 35% 24%, 36% 27%, 38% 28%, 42% 26%, 42% 24%, 41% 21%, 38% 20%, 33% 17%, 31% 16%, 28% 16%, 26% 15%, 27% 12%, 29% 11%, 33% 12%, 36% 12%, 37% 13%, 39% 13%, 42% 15%, 45% 17%, 48% 19%, 49% 20%, 50% 23%, 53% 25%, 53% 23%, 53% 21%, 52% 18%, 52% 16%, 52% 14%, 48% 12%, 46% 9%, 44% 6%, 45% 5%, 48% 4%, 49% 4%, 52% 5%, 54% 7%, 58% 9%, 59% 10%, 60% 11%, 61% 13%, 63% 17%, 64% 18%, 66% 19%, 67% 21%, 67% 23%, 67% 25%, 66% 29%, 66% 32%, 68% 34%, 68% 35%, 70% 37%, 72% 37%, 74% 34%, 76% 33%, 77% 32%, 76% 31%, 76% 30%, 77% 27%, 81% 23%, 85% 21%, 88% 21%, 92% 21%, 93% 21%, 94% 21%, 94% 22%, 92% 24%, 92% 25%, 91% 27%, 90% 28%, 92% 29%, 92% 30%, 93% 31%, 94% 33%, 94% 34%, 91% 35%, 89% 36%, 88% 38%, 85% 39%, 84% 42%, 84% 43%, 83% 45%, 80% 47%, 75% 48%, 72% 50%, 68% 53%, 66% 56%, 64% 61%, 64% 65%, 63% 69%, 64% 73%, 64% 76%, 66% 99%); background: var(--house); transform-origin: 75% 100%; transform: rotate(10deg); transition: bottom 1s ease 0s; }
 .tomb:hover + .zombie-hand { animation: move-zombie 0.25s ease 0s infinite; animation-fill-mode: forwards; bottom: 5.25vmin; transition: bottom 3s ease 0.25s; }
 .tomb:hover + .zombie-hand + .stones:before, .tomb:hover + .zombie-hand + .stones:after { content: ""; position: absolute; width: 0.5vmin; height: 0.75vmin; top: 0vmin; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; background: var(--house); animation: move-stone-1 2s ease-out 0s; animation-fill-mode: forwards; }
@@ -146,6 +209,7 @@
 .bat-cat .wing + .wing { transform: rotateY(180deg); left: 7vmin; animation: stop-fly-left 1s linear 0s 1; animation-fill-mode: forwards; }
 .balcony:hover + .bat-cat .wing { opacity: 1; transition: opacity 0.5s ease 0s; animation: fly-right 0.15s ease 0s infinite; }
 .balcony:hover + .bat-cat .wing + .wing { animation-name: fly-left; }
+
 .finger { border-radius: 3vmin 5vmin; width: 0vmin; height: 22vmin; background: #f002; transform: rotate(68deg); top: -6vmin; left: 11vmin; border: 0.85vmin solid var(--black); background: var(--black); z-index: 2; }
 .finger + .finger { transform: rotate(28deg); top: 0vmin; left: 16vmin; height: 19vmin; }
 .finger + .finger + .finger { transform: rotate(-9deg); top: 0vmin; left: 23vmin; height: 23vmin; }
