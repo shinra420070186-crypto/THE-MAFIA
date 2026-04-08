@@ -1,600 +1,289 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useGameStore } from './store';
-import Galaxy from './Galaxy';
+import { Renderer, Program, Mesh, Color, Triangle } from 'ogl';
+import { useEffect, useRef } from 'react';
+import './Galaxy.css';
 
-// ─── CONSTANTS ───────────────────────────────────────
-const TRANSITION_MS = 5000;
-const TAU = Math.PI * 2;
+const vertexShader = `
+attribute vec2 uv;
+attribute vec2 position;
+varying vec2 vUv;
+void main() {
+  vUv = uv;
+  gl_Position = vec4(position, 0, 1);
+}
+`;
 
-// Anti-Glitch Helper for Mobile Taps
-const tapSafeStyle = { 
-  WebkitTapHighlightColor: 'rgba(0,0,0,0)', 
-  WebkitTouchCallout: 'none', 
-  userSelect: 'none', 
-  outline: 'none' 
-};
+const fragmentShader = `
+precision highp float;
+uniform float uTime;
+uniform vec3 uResolution;
+uniform vec2 uFocal;
+uniform vec2 uRotation;
+uniform float uStarSpeed;
+uniform float uDensity;
+uniform float uHueShift;
+uniform float uSpeed;
+uniform vec2 uMouse;
+uniform float uGlowIntensity;
+uniform float uSaturation;
+uniform bool uMouseRepulsion;
+uniform float uTwinkleIntensity;
+uniform float uRotationSpeed;
+uniform float uRepulsionStrength;
+uniform float uMouseActiveFactor;
+uniform float uAutoCenterRepulsion;
+uniform bool uTransparent;
+varying vec2 vUv;
+#define NUM_LAYER 4.0
+#define STAR_COLOR_CUTOFF 0.2
+#define MAT45 mat2(0.7071, -0.7071, 0.7071, 0.7071)
+#define PERIOD 3.0
 
-// ─── NATIVE ANIMATED SCROLL ITEM (ZERO DEPENDENCIES) ─
-const AnimatedItem = ({ children, delay = 0, index }) => {
-  const ref = useRef(null);
-  const [inView, setInView] = useState(false);
-
-  useEffect(() => {
-    // Triggers scale/fade when 20% of the item enters the view
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setInView(entry.isIntersecting);
-      },
-      { threshold: 0.2 } 
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => {
-      if (ref.current) observer.unobserve(ref.current);
-    };
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      data-index={index}
-      style={{ 
-        width: '100%',
-        transition: `transform 0.25s ease-out ${delay}s, opacity 0.25s ease-out ${delay}s`,
-        transform: inView ? 'scale(1)' : 'scale(0.8)',
-        opacity: inView ? 1 : 0
-      }}
-    >
-      {children}
-    </div>
-  );
-};
-
-// ─── PURE ISOLATED BACKGROUND LAYER (ZERO FLICKER) ───
-const MemoizedGalaxy = React.memo(() => (
-  <Galaxy 
-    mouseRepulsion={true}
-    mouseInteraction={true}
-    density={1}
-    glowIntensity={0.3}
-    saturation={0}
-    hueShift={140}
-    twinkleIntensity={0.3}
-    rotationSpeed={0.1}
-    repulsionStrength={2}
-    autoCenterRepulsion={0}
-    starSpeed={0.5}
-    speed={1}
-  />
-));
-
-// ─── FULL SCREEN SPOOKY HOUSE BACKGROUND ─────────────
-const FullScreenSpooky = ({ phase }) => {
-  const isNight = phase.startsWith('night') || phase === 'night_transition';
-  
-  const [angles, setAngles] = useState({ sun: isNight ? 180 : 0, moon: isNight ? 0 : -180 });
-  const prevIsNight = useRef(isNight);
-
-  useEffect(() => {
-    if (isNight !== prevIsNight.current) {
-      setAngles(prev => ({
-        sun: prev.sun + 180,
-        moon: prev.moon + 180
-      }));
-      prevIsNight.current = isNight;
+float Hash21(vec2 p) {
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+float tri(float x) {
+  return abs(fract(x) * 2.0 - 1.0);
+}
+float tris(float x) {
+  float t = fract(x);
+  return 1.0 - smoothstep(0.0, 1.0, abs(2.0 * t - 1.0));
+}
+float trisn(float x) {
+  float t = fract(x);
+  return 2.0 * (1.0 - smoothstep(0.0, 1.0, abs(2.0 * t - 1.0))) - 1.0;
+}
+vec3 hsv2rgb(vec3 c) {
+  vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+  vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+  return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+float Star(vec2 uv, float flare) {
+  float d = length(uv);
+  float m = (0.05 * uGlowIntensity) / d;
+  float rays = smoothstep(0.0, 1.0, 1.0 - abs(uv.x * uv.y * 1000.0));
+  m += rays * flare * uGlowIntensity;
+  uv *= MAT45;
+  rays = smoothstep(0.0, 1.0, 1.0 - abs(uv.x * uv.y * 1000.0));
+  m += rays * 0.3 * flare * uGlowIntensity;
+  m *= smoothstep(1.0, 0.2, d);
+  return m;
+}
+vec3 StarLayer(vec2 uv) {
+  vec3 col = vec3(0.0);
+  vec2 gv = fract(uv) - 0.5; 
+  vec2 id = floor(uv);
+  for (int y = -1; y <= 1; y++) {
+    for (int x = -1; x <= 1; x++) {
+      vec2 offset = vec2(float(x), float(y));
+      vec2 si = id + vec2(float(x), float(y));
+      float seed = Hash21(si);
+      float size = fract(seed * 345.32);
+      float glossLocal = tri(uStarSpeed / (PERIOD * seed + 1.0));
+      float flareSize = smoothstep(0.9, 1.0, size) * glossLocal;
+      float red = smoothstep(STAR_COLOR_CUTOFF, 1.0, Hash21(si + 1.0)) + STAR_COLOR_CUTOFF;
+      float blu = smoothstep(STAR_COLOR_CUTOFF, 1.0, Hash21(si + 3.0)) + STAR_COLOR_CUTOFF;
+      float grn = min(red, blu) * seed;
+      vec3 base = vec3(red, grn, blu);
+      float hue = atan(base.g - base.r, base.b - base.r) / (2.0 * 3.14159) + 0.5;
+      hue = fract(hue + uHueShift / 360.0);
+      float sat = length(base - vec3(dot(base, vec3(0.299, 0.587, 0.114)))) * uSaturation;
+      float val = max(max(base.r, base.g), base.b);
+      base = hsv2rgb(vec3(hue, sat, val));
+      vec2 pad = vec2(tris(seed * 34.0 + uTime * uSpeed / 10.0), tris(seed * 38.0 + uTime * uSpeed / 30.0)) - 0.5;
+      float star = Star(gv - offset - pad, flareSize);
+      vec3 color = base;
+      float twinkle = trisn(uTime * uSpeed + seed * 6.2831) * 0.5 + 1.0;
+      twinkle = mix(1.0, twinkle, uTwinkleIntensity);
+      star *= twinkle;
+      col += star * size * color;
     }
-  }, [isNight]);
-
-  const themeClass = isNight ? 'theme-night' : 'theme-day';
-
-  return (
-    <div className={`full-spooky-bg ${themeClass}`} style={{
-      '--sun-angle': angles.sun,
-      '--moon-angle': angles.moon
-    }}>
-      <style>{`
-        .full-spooky-bg {
-          position: fixed;
-          inset: 0;
-          width: 100vw;
-          height: 100vh;
-          z-index: 0;
-          pointer-events: none;
-          transition: background-color 5s ease-in-out;
-          background-color: var(--sky-color);
-          overflow: hidden;
-          --celestial-scale: 1;
-          --arc-radius: 85vh;
-        }
-        @media (max-width: 768px) {
-          .full-spooky-bg { --celestial-scale: 0.6; --arc-radius: 75vh; }
-        }
-        .full-spooky-bg.theme-night { --sky-color: #212f3c; --window-color: #ffd166; --rain-opacity: 1; }
-        .full-spooky-bg.theme-day { --sky-color: #5b92e5; --window-color: #111; --rain-opacity: 0; }
-
-        .celestial-pivot { position: absolute; top: 100vh; left: 50%; width: 0; height: 0; z-index: 1; }
-        .sun-pivot { transition: transform 5s ease-in-out; transform: rotate(calc(var(--sun-angle) * 1deg)); }
-        .moon-pivot { transition: transform 5s ease-in-out; transform: rotate(calc(var(--moon-angle) * 1deg)); }
-
-        .celestial-body { position: absolute; left: -100px; top: calc(-1 * var(--arc-radius)); width: 200px; height: 200px; border-radius: 50%; }
-        
-        .moon { background-color: #95a5a6; box-shadow: inset 7px -7px 0 rgba(0, 0, 0, 0.09); transition: transform 5s ease-in-out; transform: scale(var(--celestial-scale)) rotate(calc(var(--moon-angle) * -1deg)); }
-        .moon:before, .moon:after { content: ""; position: absolute; border-radius: 50%; background-color: rgba(0, 0, 0, 0.09); box-shadow: inset -5px 5px 0 rgba(0, 0, 0, 0.09); }
-        .moon:before { width: 30px; height: 30px; top: 50px; left: 45px; }
-        .moon:after { width: 40px; height: 40px; top: 100px; left: 30px; }
-
-        .sun { background-color: #FFD700; box-shadow: inset 7px -7px 0 rgba(200, 100, 0, 0.2), 0 0 50px rgba(255, 215, 0, 0.6); transition: transform 5s ease-in-out; transform: scale(var(--celestial-scale)) rotate(calc(var(--sun-angle) * -1deg)); }
-        .sun:before, .sun:after { content: ""; position: absolute; border-radius: 50%; background-color: rgba(255, 255, 255, 0.25); box-shadow: inset -5px 5px 0 rgba(255, 255, 255, 0.1); }
-        .sun:before { width: 30px; height: 30px; top: 50px; left: 45px; }
-        .sun:after { width: 40px; height: 40px; top: 100px; left: 30px; }
-
-        .ground { position: absolute; bottom: 0; left: -10vw; width: 120vw; height: 25vh; background-color: #000; z-index: 9; border-radius: 50% 50% 0 0 / 30px 30px 0 0; }
-        .house-wrapper { position: absolute; bottom: 22vh; left: 50%; transform: translateX(-50%) scale(1.6); z-index: 10; }
-        @media (max-width: 768px) { .house-wrapper { transform: translateX(-50%) scale(1.2); bottom: 23vh; } }
-
-        .house { position: relative; width: 120px; height: 150px; background-color: black; transform: rotate(5deg); }
-        .house:before { content: ""; position: absolute; width: 0; height: 0; border-bottom: 30px solid black; border-right: 50px solid transparent; left: 115px; top: 70px; transform: rotate(5deg); }
-        .house:after { content: ""; position: absolute; width: 5px; height: 65px; background-color: black; left: 145px; top: 95px; }
-        .porch { position: absolute; width: 30px; height: 100px; background-color: black; left: -20px; top: 55px; transform: rotate(-10deg); }
-        .porch:before { content: ""; position: absolute; width: 0; height: 0; border-bottom: 20px solid black; border-left: 40px solid transparent; left: -35px; top: 45px; }
-        .porch:after { content: ""; position: absolute; width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 30px solid black; left: -5px; top: -25px; }
-        .first-floor { position: absolute; transform: rotate(-10deg); background-color: black; width: 5px; height: 45px; left: -37px; top: 125px; }
-        .first-floor:before { content: ""; position: absolute; background-color: #000; width: 85px; height: 90px; top: -150px; left: 50px; }
-        .first-floor:after { content: ""; position: absolute; border-left: 52px solid transparent; border-right: 52px solid transparent; border-bottom: 50px solid black; top: -199px; left: 40px; }
-        .second-floor { position: absolute; background-color: black; width: 35px; height: 100px; transform: rotate(3deg); top: -70px; left: 70px; }
-        .second-floor:before { content: ""; position: absolute; background-color: black; width: 20px; height: 100px; left: 33px; top: 40px; transform: rotate(-3deg); }
-        .second-floor:after { content: ""; position: absolute; width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid black; top: 12px; left: 15px; }
-        .roof { position: absolute; width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid black; left: 65px; top: -95px; }
-        .roof:before { content: ""; position: absolute; width: 6px; height: 20px; background-color: black; top: 5px; left: 10px; box-shadow: 20px 35px black; }
-        .roof:after { content: ""; position: absolute; width: 6px; height: 20px; background-color: black; transform: rotate(-10deg); left: -110px; top: 35px; box-shadow: -27px 97px black; }
-        .door { position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out; width: 30px; height: 50px; transform: rotate(-5deg); border-radius: 30px 30px 0 0; box-shadow: inset -10px 5px rgba(0, 0, 0, 0.5); top: 90px; left: 40px; }
-        .door:before { content: ""; position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out; border-radius: 30px 30px 0 0; box-shadow: inset -5px 2px rgba(0, 0, 0, 0.5); width: 20px; height: 30px; left: -40px; transform: rotate(-3deg); }
-        .door:after { content: ""; position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out; box-shadow: inset -5px 2px rgba(0, 0, 0, 0.5); border-radius: 30px 30px 0 0; width: 20px; height: 30px; left: 45px; transform: rotate(3deg); }
-        .small-windows { position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out; border-radius: 30px 30px 0 0; width: 13px; height: 25px; left: 100px; top: -20px; box-shadow: -19px -40px var(--window-color), inset -4px 2px rgba(0, 0, 0, 0.5); }
-        .small-windows:before { content: ""; position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out; border-radius: 30px 30px 0 0; width: 13px; height: 25px; transform: rotate(-7deg); left: -60px; top: 50px; box-shadow: -60px 20px var(--window-color); }
-        .big-window { position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out; border-radius: 30px 30px 0 0; transform: rotate(-7deg); width: 30px; height: 40px; top: -35px; left: 10px; }
-        .big-window:before, .big-window:after { content: ""; position: absolute; background-color: black; }
-        .big-window:before { height: 40px; width: 2px; left: 15px; box-shadow: 13px 55px black, -47px 80px black, -32px 120px black; }
-        .big-window:after { height: 2px; width: 40px; top: 22px; box-shadow: 10px 58px black, -45px 78px black, -30px 120px black; }
-        .frames { position: absolute; width: 2px; height: 40px; background-color: black; top: -65px; left: 86.5px; box-shadow: 19px 40px black, 7px 150px black; }
-        .frames:before { content: ""; position: absolute; height: 2px; width: 30px; background-color: black; top: 17px; left: -10px; box-shadow: 10px 40px black, 5px 150px black; }
-        .rain-container { position: absolute; inset: 0; z-index: 5; opacity: var(--rain-opacity); transition: opacity 5s ease-in-out; overflow: hidden; }
-        .dropOne, .dropTwo, .dropThree, .dropFour, .dropFive, .dropSix, .dropSeven, .dropEight, .dropNine, .dropTen { position: absolute; background-color: rgba(211, 211, 211, 0.3); height: 10px; width: 1px; top: 0; box-shadow: 0 -270px rgba(211, 211, 211, 0.3), -50px -50px rgba(211, 211, 211, 0.3), -50px -150px rgba(211, 211, 211, 0.3), 50px -395px rgba(211, 211, 211, 0.3), 50px -200px rgba(211, 211, 211, 0.3), 50px -100px rgba(211, 211, 211, 0.3), 100px -400px rgba(211, 211, 211, 0.3), 100px -320px rgba(211, 211, 211, 0.3), 100px -150px rgba(211, 211, 211, 0.3), 150px -200px rgba(211, 211, 211, 0.3), 200px -100px rgba(211, 211, 211, 0.3), 200px -370px rgba(211, 211, 211, 0.3), 250px -330px rgba(211, 211, 211, 0.3), 250px -220px rgba(211, 211, 211, 0.3), 300px -70px rgba(211, 211, 211, 0.3), 300px -140px rgba(211, 211, 211, 0.3), 300px -300px rgba(211, 211, 211, 0.3); }
-        .dropOne { left: 10%; animation: rainAnim 1.5s linear infinite; } .dropTwo { left: 20%; animation: rainAnim 1.2s linear infinite; } .dropThree { left: 30%; animation: rainAnim 1.7s linear infinite; } .dropFour { left: 40%; animation: rainAnim 1.4s linear infinite; } .dropFive { left: 50%; animation: rainAnim 1.3s linear infinite; } .dropSix { left: 60%; animation: rainAnim 1.6s linear infinite; } .dropSeven { left: 70%; animation: rainAnim 1.1s linear infinite; } .dropEight { left: 80%; animation: rainAnim 1.8s linear infinite; } .dropNine { left: 90%; animation: rainAnim 1.4s linear infinite; } .dropTen { left: 95%; animation: rainAnim 1.5s linear infinite; }
-        @keyframes rainAnim { 0% { transform: translateY(-200px); } 100% { transform: translateY(120vh); } }
-      `}</style>
-      <div className="celestial-pivot sun-pivot"><div className="celestial-body sun"></div></div>
-      <div className="celestial-pivot moon-pivot"><div className="celestial-body moon"></div></div>
-      <div className="house-wrapper"><div className="house"><div className="porch"></div><div className="first-floor"></div><div className="second-floor"></div><div className="roof"></div><div className="door"></div><div className="small-windows"></div><div className="big-window"></div><div className="frames"></div></div></div>
-      <div className="ground"></div>
-      <div className="rain-container"><div className="dropOne"></div><div className="dropTwo"></div><div className="dropThree"></div><div className="dropFour"></div><div className="dropFive"></div><div className="dropSix"></div><div className="dropSeven"></div><div className="dropEight"></div><div className="dropNine"></div><div className="dropTen"></div></div>
-    </div>
-  );
-};
-
-// ─── IMAGE PRELOADER & CARD COMPONENTS ───────────────
-const roleImages = { 'Mafia': '/mafia-card.jpg', 'Doctor': '/doctor-card.jpg', 'Detective': '/detective-card.jpg', 'Sheriff': '/sheriff-card.jpg', 'Civilian': '/civilian-card.jpg' };
-const glowColors = { 'Mafia': '#ff003c', 'Doctor': '#00ff75', 'Detective': '#00d2ff', 'Sheriff': '#f2994a', 'Civilian': '#8e44ad' };
-
-const ImagePreloader = () => (
-  <div className="hidden">{Object.values(roleImages).map((src, index) => <img key={index} src={src} alt="preload" fetchpriority="high" />)}</div>
-);
-
-const RoleCard = ({ isFlipped, role }) => {
-  return (
-    <div className="my-6 relative w-[240px] h-[360px] [perspective:1000px] select-none touch-none" style={tapSafeStyle}>
-      <div className="relative w-full h-full transition-transform duration-[600ms] [transform-style:preserve-3d]" style={{ transform: isFlipped ? 'rotateY(180deg) translateZ(0)' : 'rotateY(0deg) translateZ(0)' }}>
-        <div className="absolute inset-0 [backface-visibility:hidden] rounded-[2rem] bg-[#0a0a0a] border border-slate-800 flex flex-col items-center justify-center p-4 shadow-xl">
-           <p className="text-slate-500 font-black tracking-widest uppercase text-center text-xl">Secret Role</p>
-           <p className="text-[10px] text-slate-600 mt-4 tracking-widest uppercase font-bold animate-pulse">Tap & Hold to Reveal</p>
-        </div>
-        <div className="absolute inset-0 [backface-visibility:hidden] rounded-[2rem] bg-black" style={{ transform: 'rotateY(180deg)', backgroundImage: `url(${roleImages[role] || roleImages.Civilian})`, backgroundPosition: 'center', backgroundSize: '105%', backgroundRepeat: 'no-repeat', boxShadow: isFlipped ? `0px 0px 50px 10px ${glowColors[role] || glowColors.Civilian}40` : 'none' }}></div>
-      </div>
-    </div>
-  );
-};
-
-// ─── MAIN GAMEBOARD COMPONENT ────────────────────────
-export default function GameBoard() {
-  const state = useGameStore();
-  const [newPlayerName, setNewPlayerName] = useState('');
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [cardViewed, setCardViewed] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-
-  const alivePlayers = state.players.filter(p => p.isAlive);
-  const availableRecentNames = state.recentNames.filter(n => !state.players.some(p => p.name === n));
+  }
+  return col;
+}
+void main() {
+  vec2 focalPx = uFocal * uResolution.xy;
+  vec2 uv = (vUv * uResolution.xy - focalPx) / uResolution.y;
+  vec2 mouseNorm = uMouse - vec2(0.5);
   
-  const selectedMafiaCount = state.settings?.mafiaCount || 'auto';
-  const selectedSheriffMode = state.settings?.sheriffMode || 'auto';
-  const requestedMafiaCount = selectedMafiaCount === 'auto' ? (state.players.length >= 8 ? 2 : 1) : Number(selectedMafiaCount) || 1;
-  const resolvedMafiaCount = Math.max(1, Math.min(requestedMafiaCount, Math.max(1, state.players.length - 2 || 1)));
-  const sheriffWanted = selectedSheriffMode === 'always' || (selectedSheriffMode === 'auto' && state.players.length >= 8);
-  const hasSheriff = sheriffWanted && (2 + resolvedMafiaCount < state.players.length);
-  const baseRoles = 2 + resolvedMafiaCount + (hasSheriff ? 1 : 0);
-  const civilians = Math.max(state.players.length - baseRoles, 0);
+  if (uAutoCenterRepulsion > 0.0) {
+    vec2 centerUV = vec2(0.0, 0.0);
+    float centerDist = length(uv - centerUV);
+    vec2 repulsion = normalize(uv - centerUV) * (uAutoCenterRepulsion / (centerDist + 0.1));
+    uv += repulsion * 0.05;
+  } else if (uMouseRepulsion) {
+    vec2 mousePosUV = (uMouse * uResolution.xy - focalPx) / uResolution.y;
+    float mouseDist = length(uv - mousePosUV);
+    vec2 repulsion = normalize(uv - mousePosUV) * (uRepulsionStrength / (mouseDist + 0.1));
+    uv += repulsion * 0.05 * uMouseActiveFactor;
+  } else {
+    vec2 mouseOffset = mouseNorm * 0.1 * uMouseActiveFactor;
+    uv += mouseOffset;
+  }
+  float autoRotAngle = uTime * uRotationSpeed;
+  mat2 autoRot = mat2(cos(autoRotAngle), -sin(autoRotAngle), sin(autoRotAngle), cos(autoRotAngle));
+  uv = autoRot * uv;
+  uv = mat2(uRotation.x, -uRotation.y, uRotation.y, uRotation.x) * uv;
+  vec3 col = vec3(0.0);
+  for (float i = 0.0; i < 1.0; i += 1.0 / NUM_LAYER) {
+    float depth = fract(i + uStarSpeed * uSpeed);
+    float scale = mix(20.0 * uDensity, 0.5 * uDensity, depth);
+    float fade = depth * smoothstep(1.0, 0.9, depth);
+    col += StarLayer(uv * scale + i * 453.32) * fade;
+  }
+  if (uTransparent) {
+    float alpha = length(col);
+    alpha = smoothstep(0.0, 0.3, alpha);
+    alpha = min(alpha, 1.0);
+    gl_FragColor = vec4(col, alpha);
+  } else {
+    gl_FragColor = vec4(col, 1.0);
+  }
+}
+`;
+
+export default function Galaxy({
+  focal = [0.5, 0.5],
+  rotation = [1.0, 0.0],
+  starSpeed = 0.5,
+  density = 1,
+  hueShift = 140,
+  disableAnimation = false,
+  speed = 1.0,
+  mouseInteraction = true,
+  glowIntensity = 0.3,
+  saturation = 0.0,
+  mouseRepulsion = true,
+  repulsionStrength = 2,
+  twinkleIntensity = 0.3,
+  rotationSpeed = 0.1,
+  autoCenterRepulsion = 0,
+  transparent = true,
+  ...rest
+}) {
+  const ctnDom = useRef(null);
+  const targetMousePos = useRef({ x: 0.5, y: 0.5 });
+  const smoothMousePos = useRef({ x: 0.5, y: 0.5 });
+  const targetMouseActive = useRef(0.0);
+  const smoothMouseActive = useRef(0.0);
 
   useEffect(() => {
-    let timer;
-    if (state.phase === 'night_transition') { timer = setTimeout(() => { state.startNightRoles(); }, TRANSITION_MS); } 
-    else if (state.phase === 'day_transition') { timer = setTimeout(() => { state.startDayRecap(); }, TRANSITION_MS); }
-    return () => clearTimeout(timer);
-  }, [state.phase]);
+    if (!ctnDom.current) return;
+    const ctn = ctnDom.current;
+    const renderer = new Renderer({ alpha: transparent, premultipliedAlpha: false });
+    const gl = renderer.gl;
 
-  useEffect(() => { setCardViewed(false); }, [state.phase]);
+    if (transparent) {
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.clearColor(0, 0, 0, 0);
+    } else {
+      gl.clearColor(0, 0, 0, 1);
+    }
 
-  const isGalaxyPhase = state.phase === 'lobby' || state.phase === 'role_reveal';
-  const isSpookyPhase = state.phase !== 'splash' && state.phase !== 'lobby' && state.phase !== 'role_reveal';
+    let program;
 
-  const renderBackButton = () => {
-    if (state.phase === 'lobby' || state.phase === 'splash') return null;
-    return (
-      <button 
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={() => { if (window.confirm("Abort current game and go back to Lobby?")) { state.resetToLobby(); } }}
-        className="absolute top-4 left-4 text-slate-400 font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 active:scale-90 z-50 p-3 bg-[#0a0a0a]/80 backdrop-blur-md rounded-lg border border-slate-800 shadow-xl pointer-events-auto"
-        style={tapSafeStyle}
-      ><span>◀</span> LOBBY</button>
-    );
-  };
+    function resize() {
+      const scale = 1;
+      renderer.setSize(ctn.offsetWidth * scale, ctn.offsetHeight * scale);
+      if (program) {
+        program.uniforms.uResolution.value = new Color(
+          gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height
+        );
+      }
+    }
+    window.addEventListener('resize', resize, false);
+    resize();
 
-  // ARCHITECT FIX: Added strict hideCondition logic to permanently erase names from the list.
-  const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
-    const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
-    
-    return (
-      <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={tapSafeStyle}>
-        <div 
-          className="w-full space-y-3 max-h-[280px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
-          style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}
-        >
-          {visiblePlayers.map((p, index) => (
-            <AnimatedItem key={p.id} index={index} delay={0.05}>
-              <button 
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => onSelect(p.id)}
-                className="w-full p-4 bg-[#111] text-white active:scale-95 border border-slate-700 rounded-xl font-bold uppercase transition-all hover:border-slate-500"
-                style={tapSafeStyle}
-              >{p.name}</button>
-            </AnimatedItem>
-          ))}
-          {includeSkip && (
-            <AnimatedItem index={visiblePlayers.length} delay={0.05}>
-              <button 
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => onSelect(null)}
-                className="w-full p-4 bg-transparent border border-slate-700/80 text-slate-400 rounded-xl font-bold uppercase mt-2 active:scale-95 transition-all hover:border-slate-500 hover:text-slate-300"
-                style={tapSafeStyle}
-              >Skip / Nobody</button>
-            </AnimatedItem>
-          )}
-        </div>
-      </div>
-    );
-  };
+    const geometry = new Triangle(gl);
+    program = new Program(gl, {
+      vertex: vertexShader,
+      fragment: fragmentShader,
+      uniforms: {
+        uTime: { value: 0 },
+        uResolution: { value: new Color(gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height) },
+        uFocal: { value: new Float32Array(focal) },
+        uRotation: { value: new Float32Array(rotation) },
+        uStarSpeed: { value: starSpeed },
+        uDensity: { value: density },
+        uHueShift: { value: hueShift },
+        uSpeed: { value: speed },
+        uMouse: { value: new Float32Array([smoothMousePos.current.x, smoothMousePos.current.y]) },
+        uGlowIntensity: { value: glowIntensity },
+        uSaturation: { value: saturation },
+        uMouseRepulsion: { value: mouseRepulsion },
+        uTwinkleIntensity: { value: twinkleIntensity },
+        uRotationSpeed: { value: rotationSpeed },
+        uRepulsionStrength: { value: repulsionStrength },
+        uMouseActiveFactor: { value: 0.0 },
+        uAutoCenterRepulsion: { value: autoCenterRepulsion },
+        uTransparent: { value: transparent }
+      }
+    });
 
-  return (
-    <>
-      <style>{`
-        /* PERMANENT FIX: Root level reset to kill tap highlights and stop whole-page scrolling */
-        html, body, #root { 
-          width: 100vw; height: 100vh; height: 100dvh; 
-          overflow: hidden; position: fixed; overscroll-behavior: none; 
-          background-color: #050505 !important; user-select: none; 
-          margin: 0; padding: 0; 
-          -webkit-tap-highlight-color: transparent !important; 
-          -webkit-touch-callout: none !important; 
-        }
-        * { -webkit-tap-highlight-color: transparent !important; outline: none !important; }
-        input { user-select: auto; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
+    const mesh = new Mesh(gl, { geometry, program });
+    let animateId;
+
+    function update(t) {
+      animateId = requestAnimationFrame(update);
+      if (!disableAnimation) {
+        program.uniforms.uTime.value = t * 0.001;
+        program.uniforms.uStarSpeed.value = (t * 0.001 * starSpeed) / 10.0;
+      }
+      const lerpFactor = 0.05;
+      smoothMousePos.current.x += (targetMousePos.current.x - smoothMousePos.current.x) * lerpFactor;
+      smoothMousePos.current.y += (targetMousePos.current.y - smoothMousePos.current.y) * lerpFactor;
+      smoothMouseActive.current += (targetMouseActive.current - smoothMouseActive.current) * lerpFactor;
       
-      {/* ─── PERMANENT BACKGROUND MOUNTS (ZERO FLICKER) ─── */}
-      <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out" style={{ backgroundColor: '#e5e5e5', opacity: state.phase === 'splash' ? 1 : 0, zIndex: state.phase === 'splash' ? 0 : -100, visibility: state.phase === 'splash' ? 'visible' : 'hidden' }} />
-      <div className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out" style={{ opacity: isGalaxyPhase ? 1 : 0, zIndex: isGalaxyPhase ? 0 : -50, visibility: isGalaxyPhase ? 'visible' : 'hidden' }}>
-        <MemoizedGalaxy />
-      </div>
-      <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-700 ease-in-out" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
-        <FullScreenSpooky phase={state.phase} />
-      </div>
+      program.uniforms.uMouse.value[0] = smoothMousePos.current.x;
+      program.uniforms.uMouse.value[1] = smoothMousePos.current.y;
+      program.uniforms.uMouseActiveFactor.value = smoothMouseActive.current;
+      
+      renderer.render({ scene: mesh });
+    }
+    animateId = requestAnimationFrame(update);
+    ctn.appendChild(gl.canvas);
 
-      {/* ─── SPLASH PHASE ─── */}
-      {state.phase === 'splash' && (
-        <div className="relative h-[100dvh] w-full flex flex-col items-center justify-center p-6 overflow-hidden z-10 transition-opacity duration-1000" style={tapSafeStyle}>
-          <ImagePreloader />
-          <button onPointerDown={(e) => e.stopPropagation()} onClick={() => { setTimeout(() => { state.enterLobby(); }, 800); }} className="splash-batman-btn" style={tapSafeStyle}>
-            <span>PLAY GAME</span>
-          </button>
-        </div>
-      )}
+    // CRITICAL FIX: Handles taps, drags, and mouse clicks identically
+    function handlePointer(e) {
+      const rect = ctn.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width;
+      const y = 1.0 - (e.clientY - rect.top) / rect.height;
+      targetMousePos.current = { x, y };
+      targetMouseActive.current = 1.0;
+    }
 
-      {/* ─── LOBBY PHASE ─── */}
-      {state.phase === 'lobby' && (
-        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center p-6 overflow-hidden pointer-events-none z-10" style={tapSafeStyle}>
-          <button onPointerDown={(e) => e.stopPropagation()} onClick={() => setShowSettings((prev) => !prev)} className="absolute top-4 left-4 z-50 w-12 h-12 rounded-xl border border-cyan-300/40 bg-[#02060a]/80 backdrop-blur-md flex items-center justify-center active:scale-95 transition-all hover:border-cyan-200/70 hover:bg-[#07111a]/85 pointer-events-auto" style={tapSafeStyle}>
-            <svg className={`w-6 h-6 text-cyan-100 ${showSettings ? 'animate-spin' : ''}`} style={{ animationDuration: '0.8s' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3.2" /><path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.9 1.9 0 0 1-2.7 2.7l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 0 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.9 1.9 0 0 1-2.7-2.7l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 0 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0 1.1.2h0a1 1 0 0 0 .6-.9V4a2 2 0 0 1 4 0v.2a1 1 0 0 0 .6.9h0a1 1 0 0 0 1.1-.2l.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0-.2 1.1v0a1 1 0 0 0 .9.6h.2a2 2 0 0 1 0 4h-.2a1 1 0 0 0-.9.6Z" /></svg>
-          </button>
-          
-          <h1 className="text-5xl md:text-6xl font-black uppercase mb-10 tracking-[0.2em] mt-14 relative z-10 shine-text text-center pointer-events-none">THE MAFIA</h1>
+    function handlePointerLeave() {
+      targetMouseActive.current = 0.0;
+    }
 
-          {showSettings && (
-            <div className="w-full max-w-sm mb-8 p-4 rounded-2xl border border-cyan-300/30 bg-[#02060a]/85 backdrop-blur-lg relative z-10 shadow-xl pointer-events-auto">
-              <p className="text-cyan-200 text-[11px] font-black uppercase tracking-[0.2em] mb-4">Game Settings</p>
-              <div className="mb-4">
-                <p className="text-slate-300 text-[10px] uppercase tracking-widest mb-2">Mafia Count</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {['auto', 1, 2].map((mode) => <button key={String(mode)} onPointerDown={(e) => e.stopPropagation()} onClick={() => state.setMafiaCount(mode)} className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${selectedMafiaCount === mode ? 'bg-rose-400/20 text-rose-200 border-rose-300/60' : 'bg-slate-900/70 text-slate-300 border-slate-700/70 hover:border-slate-500'}`} style={tapSafeStyle}>{mode}</button>)}
-                </div>
-              </div>
-              <div className="mb-4">
-                <p className="text-slate-300 text-[10px] uppercase tracking-widest mb-2">Sheriff Role</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {['auto', 'always', 'off'].map((mode) => <button key={mode} onPointerDown={(e) => e.stopPropagation()} onClick={() => state.setSheriffMode(mode)} className={`px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${selectedSheriffMode === mode ? 'bg-violet-400/20 text-violet-200 border-violet-300/60' : 'bg-slate-900/70 text-slate-300 border-slate-700/70 hover:border-slate-500'}`} style={tapSafeStyle}>{mode}</button>)}
-                </div>
-              </div>
-              <div className="mb-4">
-                <div className="flex items-center justify-between bg-[#010201]/50 border border-slate-700/50 p-3 rounded-xl">
-                  <span className="font-bold text-[10px] tracking-widest uppercase text-slate-400">Reveal Roles on Death?</span>
-                  <button onPointerDown={(e) => e.stopPropagation()} onClick={state.toggleRevealRoles} className={`px-3 py-1 rounded text-[10px] uppercase font-black tracking-widest transition-colors ${state.settings?.revealRoles ? 'bg-green-500/20 text-green-500 border border-green-500/50' : 'bg-[#222] text-slate-500 border border-slate-700'}`} style={tapSafeStyle}>{state.settings?.revealRoles ? 'ON' : 'OFF'}</button>
-                </div>
-              </div>
-              <div className="mt-4 p-3 rounded-xl bg-slate-900/70 border border-slate-700/70">
-                <p className="text-[10px] text-slate-300 uppercase tracking-widest font-bold mb-2">Current Match Setup</p>
-                <div className="text-xs text-slate-200 space-y-1">
-                  <p>Mafia: <span className="text-rose-300 font-bold">{resolvedMafiaCount}</span></p>
-                  <p>Doctor: <span className="text-emerald-300 font-bold">1</span></p>
-                  <p>Detective: <span className="text-sky-300 font-bold">1</span></p>
-                  <p>Sheriff: <span className="text-violet-300 font-bold">{hasSheriff ? 1 : 0}</span></p>
-                  <p>Civilians: <span className="text-slate-100 font-bold">{civilians}</span></p>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          <div className="w-full mb-10 flex justify-center relative z-10 pointer-events-auto">
-            <div className="poda-wrapper">
-              <div className="poda-glow"></div><div className="poda-darkBorderBg"></div><div className="poda-darkBorderBg"></div><div className="poda-darkBorderBg"></div><div className="poda-white"></div><div className="poda-border"></div>
-              <div className="poda-main">
-                <input placeholder="Add Player..." type="text" value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && newPlayerName.trim()) { state.addPlayer(newPlayerName.trim()); setNewPlayerName(''); } }} className="poda-input" />
-                <div className="poda-input-mask"></div><div className="poda-pink-mask"></div><div className="poda-filterBorder"></div>
-                <div className="poda-filter-icon" onPointerDown={(e) => e.stopPropagation()} onClick={() => { if(newPlayerName.trim()) { state.addPlayer(newPlayerName.trim()); setNewPlayerName(''); } }} style={tapSafeStyle}>
-                  <svg preserveAspectRatio="none" height="27" width="27" viewBox="4.8 4.56 14.832 15.408" fill="none"><path d="M8.16 6.65002H15.83C16.47 6.65002 16.99 7.17002 16.99 7.81002V9.09002C16.99 9.56002 16.7 10.14 16.41 10.43L13.91 12.64C13.56 12.93 13.33 13.51 13.33 13.98V16.48C13.33 16.83 13.1 17.29 12.81 17.47L12 17.98C11.24 18.45 10.2 17.92 10.2 16.99V13.91C10.2 13.5 9.97 12.98 9.73 12.69L7.52 10.36C7.23 10.08 7 9.55002 7 9.20002V7.87002C7 7.17002 7.52 6.65002 8.16 6.65002Z" stroke="#d6d6e6" strokeWidth="1" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"></path></svg>
-                </div>
-              </div>
-            </div>
-          </div>
+    if (mouseInteraction) {
+      ctn.addEventListener('pointermove', handlePointer);
+      ctn.addEventListener('pointerdown', handlePointer);
+      ctn.addEventListener('pointerup', handlePointerLeave);
+      ctn.addEventListener('pointerleave', handlePointerLeave);
+      ctn.addEventListener('pointercancel', handlePointerLeave);
+    }
 
-          {availableRecentNames.length > 0 && (
-            <div className="w-full mb-6 relative z-10 pointer-events-auto" style={tapSafeStyle}>
-              <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-3 pl-2 text-center drop-shadow-md">Recent Players</p>
-              <div className="flex flex-wrap justify-center gap-2">
-                {availableRecentNames.slice(0, 6).map(name => (
-                  <button key={name} onPointerDown={(e) => e.stopPropagation()} onClick={() => state.addPlayer(name)} className="px-4 py-2 bg-[#222] text-[#e81cff] border border-[#e81cff]/30 rounded-full text-xs font-bold tracking-wider active:scale-95 transition-all shadow-md" style={tapSafeStyle}>
-                    + {name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+    return () => {
+      cancelAnimationFrame(animateId);
+      window.removeEventListener('resize', resize);
+      if (mouseInteraction) {
+        ctn.removeEventListener('pointermove', handlePointer);
+        ctn.removeEventListener('pointerdown', handlePointer);
+        ctn.removeEventListener('pointerup', handlePointerLeave);
+        ctn.removeEventListener('pointerleave', handlePointerLeave);
+        ctn.removeEventListener('pointercancel', handlePointerLeave);
+      }
+      ctn.removeChild(gl.canvas);
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+    };
+  }, [
+    focal, rotation, starSpeed, density, hueShift, disableAnimation, speed, 
+    mouseInteraction, glowIntensity, saturation, mouseRepulsion, twinkleIntensity, 
+    rotationSpeed, repulsionStrength, autoCenterRepulsion, transparent
+  ]);
 
-          <div className="w-full max-w-sm relative z-10 pointer-events-auto mb-10" style={tapSafeStyle}>
-            <div 
-              className="w-full space-y-2 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
-              style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)' }}
-            >
-              {state.players.map((p, index) => (
-                <AnimatedItem key={p.id} index={index} delay={0.05}>
-                  <div className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all">
-                    <span className="font-bold tracking-widest text-white">{p.name}</span>
-                    <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6" style={tapSafeStyle}>✕</button>
-                  </div>
-                </AnimatedItem>
-              ))}
-            </div>
-          </div>
-
-          <div className="w-full flex justify-center relative z-10 mb-6 pointer-events-auto">
-            <button disabled={state.players.length < 4} onPointerDown={(e) => e.stopPropagation()} onClick={() => { setTimeout(() => { state.startGame(); }, 250); }} className="stealth-btn" style={tapSafeStyle}>
-              <strong className="stealth-strong">BEGIN GAME ({state.players.length})</strong>
-              <div className="stealth-container-stars"><div className="stealth-stars"></div></div>
-              <div className="stealth-glow"><div className="stealth-circle"></div><div className="stealth-circle"></div></div>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ─── ROLE REVEAL ─── */}
-      {state.phase === 'role_reveal' && (
-        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
-          {renderBackButton()}
-          <p className="text-slate-300 font-bold uppercase tracking-widest text-[10px] mb-2 relative z-10 pointer-events-none">Pass phone to</p>
-          <h2 className="text-4xl font-black text-white uppercase mb-8 drop-shadow-md relative z-10 pointer-events-none">{state.players[state.revealIndex]?.name}</h2>
-          
-          <div 
-            onPointerDown={(e) => e.stopPropagation()}
-            onMouseDown={() => setIsFlipped(true)}
-            onMouseUp={() => { setIsFlipped(false); setCardViewed(true); }}
-            onMouseLeave={() => setIsFlipped(false)}
-            onTouchStart={() => setIsFlipped(true)}
-            onTouchEnd={() => { setIsFlipped(false); setCardViewed(true); }}
-            className="cursor-pointer relative z-10 pointer-events-auto"
-            style={tapSafeStyle}
-          >
-            <RoleCard isFlipped={isFlipped} role={state.players[state.revealIndex]?.role} />
-          </div>
-
-          {/* ARCHITECT FIX: Fading the text instead of removing it prevents the layout jump! */}
-          <div className="relative w-full max-w-sm flex justify-center mt-12 z-10 pointer-events-none h-[80px]">
-            <p className={`absolute top-0 text-slate-400 font-bold text-sm transition-opacity duration-500 pointer-events-none ${cardViewed ? 'opacity-0' : 'opacity-100 animate-pulse'}`}>
-              👆 Tap the card to view your role
-            </p>
-            <button 
-              onPointerDown={(e) => e.stopPropagation()} 
-              onClick={() => { setIsFlipped(false); setCardViewed(false); state.nextRoleReveal(); }} 
-              disabled={!cardViewed} 
-              className={`absolute top-0 p-5 w-full rounded-xl font-black uppercase tracking-widest transition-all duration-500 pointer-events-auto ${!cardViewed ? 'opacity-0 translate-y-4 scale-95 pointer-events-none' : 'opacity-100 translate-y-0 scale-100 bg-[#0a0a0a]/90 backdrop-blur-md text-white border border-slate-800 hover:border-slate-500 active:scale-95'}`} 
-              style={tapSafeStyle}
-            >
-              {state.revealIndex === state.players.length - 1 ? 'Give to Moderator' : 'Next Player'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ─── NIGHT PHASES ─── */}
-      {state.phase === 'night_transition' && (
-        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
-          {renderBackButton()}
-          <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none">
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="w-96 h-96 bg-black/30 rounded-full blur-3xl animate-pulse"></div></div>
-            <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] relative z-20 animate-in fade-in duration-1000">EVERYONE</h2>
-            <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] relative z-20 mt-4 animate-in fade-in duration-1000 delay-500">CLOSE YOUR EYES</h2>
-            <p className="text-slate-300 mt-8 text-lg tracking-widest font-bold relative z-20 animate-pulse">Get ready for the night...</p>
-          </div>
-        </div>
-      )}
-
-      {state.phase === 'night_mafia' && (
-        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
-          {renderBackButton()}
-          <h2 className="text-3xl md:text-4xl font-black text-red-500 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
-          <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🌙 Moderator: Ask the Mafia to wake up and point.</p>
-          <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(220,38,38,0.4)] tracking-[0.1em] pointer-events-none">Who does the Mafia kill?</h3>
-          {renderPlayerList((id) => state.submitNightAction('Mafia', id), true, (p) => p.role === 'Mafia')}
-        </div>
-      )}
-
-      {state.phase === 'night_doctor' && (
-        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
-          {renderBackButton()}
-          <h2 className="text-3xl md:text-4xl font-black text-green-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(34,197,94,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
-          <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🌙 Moderator: Ask the Doctor to wake up and point.</p>
-          <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(34,197,94,0.4)] tracking-[0.1em] pointer-events-none">Who does the Doctor save?</h3>
-          {renderPlayerList((id) => state.submitNightAction('Doctor', id), true, (p) => p.id === state.doctorLastSaved || (p.role === 'Doctor' && state.doctorHasSelfSaved))}
-        </div>
-      )}
-
-      {state.phase === 'night_detective' && (
-        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
-          {renderBackButton()}
-          {state.investigationResult ? (
-            <>
-              {/* ARCHITECT FIX: Detective alignment perfectly matches other screens now */}
-              <h2 className="text-3xl md:text-4xl font-black text-blue-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(96,165,250,0.6)] tracking-[0.15em] pointer-events-none">Investigation</h2>
-              <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">{state.investigationResult === 'DEAD_ROLE' ? "🔍 Moderator: Pretend to give an answer!" : "🔍 Moderator: Nod or shake your head."}</p>
-              <h3 className={`text-5xl md:text-6xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(96,165,250,0.4)] tracking-[0.1em] pointer-events-none ${state.investigationResult === 'DEAD_ROLE' ? 'text-slate-500 drop-shadow-[0_0_20px_rgba(107,114,128,0.5)]' : state.investigationResult === 'MAFIA' ? 'text-red-600 drop-shadow-[0_0_30px_rgba(220,38,38,0.7)]' : 'text-green-400 drop-shadow-[0_0_30px_rgba(34,197,94,0.7)]'}`}>
-                {state.investigationResult === 'DEAD_ROLE' ? 'ROLE DEAD' : state.investigationResult}
-              </h3>
-              <div className="relative w-full max-w-sm flex justify-center mt-12 z-10 pointer-events-none">
-                <button onPointerDown={(e) => e.stopPropagation()} onClick={state.advanceFromDetective} className="p-5 w-full rounded-xl font-black tracking-widest uppercase active:scale-95 bg-[#0a0a0a]/90 backdrop-blur-md border border-slate-700 hover:border-slate-500 transition-colors shadow-lg pointer-events-auto" style={tapSafeStyle}>Continue →</button>
-              </div>
-            </>
-          ) : (
-            <>
-              <h2 className="text-3xl md:text-4xl font-black text-blue-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(96,165,250,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
-              <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🔍 Moderator: Ask the Detective to wake up and point.</p>
-              <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(96,165,250,0.4)] tracking-[0.1em] pointer-events-none">Who is investigated?</h3>
-              {renderPlayerList((id) => state.submitNightAction('Detective', id), false, (p) => p.role === 'Detective')}
-            </>
-          )}
-        </div>
-      )}
-
-      {state.phase === 'night_sheriff' && (
-        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
-          {renderBackButton()}
-          <h2 className="text-3xl md:text-4xl font-black text-purple-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(168,85,247,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
-          <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">⚔️ Moderator: Ask the Sheriff to wake up and point.</p>
-          <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(168,85,247,0.4)] tracking-[0.1em] pointer-events-none">Who does the Sheriff execute?</h3>
-          {renderPlayerList((id) => state.submitNightAction('Sheriff', id), true, (p) => p.role === 'Sheriff')}
-        </div>
-      )}
-
-      {/* ─── DAY PHASES ─── */}
-      {state.phase === 'day_transition' && (
-        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
-          {renderBackButton()}
-          <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none">
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="w-96 h-96 bg-yellow-300/20 rounded-full blur-3xl animate-pulse"></div></div>
-            <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_40px_rgba(255,210,0,0.8)] relative z-20 animate-in fade-in duration-1000">EVERYONE</h2>
-            <h2 className="text-5xl md:text-6xl font-black text-white uppercase tracking-[0.3em] drop-shadow-[0_0_40px_rgba(255,210,0,0.8)] relative z-20 mt-4 animate-in fade-in duration-1000 delay-500">OPEN YOUR EYES</h2>
-            <p className="text-yellow-100 mt-8 text-lg tracking-widest font-bold relative z-20 animate-pulse">The sun is rising...</p>
-          </div>
-        </div>
-      )}
-
-      {(state.phase === 'day_recap' || state.phase === 'day_recap_post_vote') && (
-        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center p-6 text-center justify-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
-          {renderBackButton()}
-          <h2 className="text-4xl md:text-5xl font-black uppercase mb-12 text-white tracking-[0.2em] drop-shadow-[0_0_20px_rgba(255,255,255,0.6)] mt-14 relative z-10 animate-in fade-in duration-1000 pointer-events-none">The Town Awakens</h2>
-          <div className="w-full max-w-2xl space-y-4 relative z-10 pointer-events-none">
-            {state.dayRecap.map((msg, i) => (
-              <div key={i} className="p-6 bg-slate-900/50 backdrop-blur-md rounded-xl text-lg font-bold border-l-4 border-amber-400 shadow-xl animate-in fade-in duration-1000 transition-colors pointer-events-auto hover:bg-slate-900/70" style={{ animationDelay: `${i * 200}ms` }}><span className="text-amber-300">▸ </span>{msg}</div>
-            ))}
-          </div>
-          <button onPointerDown={(e) => e.stopPropagation()} onClick={state.phase === 'day_recap' ? state.startVoting : state.advanceToNight} className="mt-12 p-5 w-full max-w-sm bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 rounded-xl font-black tracking-widest uppercase active:scale-95 transition-transform shadow-xl relative z-10 hover:shadow-[0_0_30px_rgba(255,193,7,0.5)] pointer-events-auto" style={tapSafeStyle}>{state.phase === 'day_recap' ? '→ Begin Voting' : '→ Go To Sleep (Next Night)'}</button>
-        </div>
-      )}
-
-      {state.phase === 'day_voting' && (
-        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
-          {renderBackButton()}
-          <h2 className="text-slate-300 font-bold uppercase tracking-widest text-[12px] mt-14 mb-3 relative z-10 drop-shadow-md pointer-events-none">⚖️ Town Voting Phase</h2>
-          <h3 className="text-5xl md:text-6xl font-black text-amber-300 my-4 uppercase relative z-10 drop-shadow-[0_0_20px_rgba(255,193,7,0.5)] pointer-events-none">{alivePlayers[state.votingState.currentVoterIndex]?.name}</h3>
-          <p className="text-lg font-bold text-red-400 tracking-widest uppercase relative z-10 drop-shadow-md pointer-events-none">Who do you exile?</p>
-          
-          <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-6 mb-6" style={tapSafeStyle}>
-            <div 
-              className="w-full space-y-3 max-h-[280px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
-              style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}
-            >
-              {alivePlayers.filter(p => p.id !== alivePlayers[state.votingState.currentVoterIndex]?.id).map((p, index) => (
-                <AnimatedItem key={p.id} index={index} delay={0.05}>
-                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.submitVote(p.id)} className="w-full p-4 bg-slate-900/70 backdrop-blur-md text-white border-2 border-slate-700/70 rounded-lg font-bold uppercase active:scale-95 transition-all hover:border-slate-500 hover:bg-slate-900" style={tapSafeStyle}>→ Vote {p.name}</button>
-                </AnimatedItem>
-              ))}
-              {/* ARCHITECT FIX: Voting skip completely unlocked for everyone, including Player 1 */}
-              <AnimatedItem index={999} delay={0.05}>
-                <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.submitVote(null)} className="w-full p-4 border-2 rounded-lg font-bold uppercase mt-2 active:scale-95 transition-all bg-transparent border-slate-600/50 backdrop-blur-sm text-slate-300 hover:border-slate-400 hover:text-slate-200" style={tapSafeStyle}>⊘ Pass / No Vote</button>
-              </AnimatedItem>
-            </div>
-          </div>
-          <p className="mt-10 text-slate-400 font-bold text-[11px] uppercase tracking-wider relative z-10 bg-slate-900/40 px-4 py-2 rounded-full backdrop-blur-md border border-slate-700/50 pointer-events-none">Vote {state.votingState.currentVoterIndex + 1} of {alivePlayers.length}</p>
-        </div>
-      )}
-
-      {/* ─── GAME OVER PHASE ─── */}
-      {state.phase === 'gameover' && (
-        <div className="relative h-[100dvh] w-full text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
-          {renderBackButton()}
-          <div className="relative z-10 flex flex-col items-center pointer-events-none">
-            <h1 className={`text-6xl md:text-7xl font-black uppercase mb-2 mt-14 ${state.winner === 'Mafia' ? 'text-red-600 drop-shadow-[0_0_40px_rgba(220,38,38,0.8)]' : 'text-blue-400 drop-shadow-[0_0_40px_rgba(96,165,250,0.8)]'}`}>{state.winner} WIN!</h1>
-            <p className={`text-sm tracking-[0.2em] font-bold ${state.winner === 'Mafia' ? 'text-red-400' : 'text-blue-300'}`}>{state.winner === 'Mafia' ? '🔴 THE MAFIA HAS TAKEN OVER THE TOWN' : '✓ THE TOWN HAS ELIMINATED THE THREAT'}</p>
-          </div>
-          
-          <div className="w-full max-w-2xl mt-12 text-left bg-gradient-to-b from-slate-900/60 to-slate-950/60 backdrop-blur-md p-8 rounded-2xl border border-slate-700/50 relative z-10 shadow-2xl pointer-events-auto">
-            <p className="text-slate-300 uppercase text-[11px] tracking-[0.15em] font-bold mb-6 text-center">Final Standings</p>
-            <div className="space-y-3">
-              {state.players.map((p, idx) => (
-                <div key={p.id} className={`flex justify-between items-center py-3 px-4 rounded-lg border transition-all ${p.isAlive ? 'bg-slate-800/50 border-slate-600/50' : 'bg-slate-900/50 border-slate-700/50'}`}>
-                  <div className="flex items-center gap-3">
-                    <span className="text-slate-500 font-bold">{idx + 1}.</span>
-                    <span className={`font-bold tracking-wide ${p.isAlive ? 'text-white' : 'text-slate-600 line-through'}`}>{p.name}</span>
-                  </div>
-                  <span className={`font-black text-xs px-3 py-1 rounded-full tracking-wider ${p.role === 'Mafia' ? 'bg-red-900/40 text-red-400' : p.role === 'Doctor' ? 'bg-green-900/40 text-green-400' : p.role === 'Detective' ? 'bg-blue-900/40 text-blue-400' : p.role === 'Sheriff' ? 'bg-purple-900/40 text-purple-400' : 'bg-slate-800/40 text-slate-400'}`}>{p.role}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="w-full flex justify-center mt-14 mb-6 relative z-10 pointer-events-auto">
-            <button onPointerDown={(e) => e.stopPropagation()} onClick={() => { setTimeout(() => { state.playAgain(); }, 1500); }} className="splash-batman-btn" style={tapSafeStyle}>
-              <span>PLAY AGAIN</span>
-            </button>
-          </div>
-        </div>
-      )}
-    </>
-  );
+  return <div ref={ctnDom} className="galaxy-container" {...rest} />;
 }
