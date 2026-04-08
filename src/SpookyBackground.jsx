@@ -1,22 +1,11 @@
 import React from 'react';
 import './SpookyBackground.css';
 
-export default function SpookyBackground({ phase = 'night' }) {
-  // Checks the phase from your store to decide if it's night or day
-  const isNight = phase.startsWith('night') || phase === 'night_transition';
-  const themeClass = isNight ? 'theme-night' : 'theme-day';
-
+export default function SpookyBackground() {
   return (
-    <div className={`scene-wrapper ${themeClass}`}>
+    <div className="scene-wrapper">
       <div className="sky">
-        {/* NEW DAY/NIGHT ARC ANIMATION PIVOTS */}
-        <div className="celestial-pivot sun-pivot">
-          <div className="sun"></div>
-        </div>
-        <div className="celestial-pivot moon-pivot">
-          <div className="moon"></div>
-        </div>
-
+        <div className="moon"></div>
         <div className="clouds">
           <span></span><span></span><span></span><span></span>
         </div>
@@ -53,18 +42,29 @@ export default function SpookyBackground({ phase = 'night' }) {
           <div className="tail"></div>
           <div className="wings">
             <div className="wing">
-              <div className="finger"></div><div className="finger"></div><div className="finger"></div><div className="finger"></div>
-              <div className="membrane"></div><div className="membrane"></div><div className="membrane"></div>
+              <div className="finger"></div>
+              <div className="finger"></div>
+              <div className="finger"></div>
+              <div className="finger"></div>
+              <div className="membrane"></div>
+              <div className="membrane"></div>
+              <div className="membrane"></div>
             </div>
             <div className="wing">
-              <div className="finger"></div><div className="finger"></div><div className="finger"></div><div className="finger"></div>
-              <div className="membrane"></div><div className="membrane"></div><div className="membrane"></div>
+              <div className="finger"></div>
+              <div className="finger"></div>
+              <div className="finger"></div>
+              <div className="finger"></div>
+              <div className="membrane"></div>
+              <div className="membrane"></div>
+              <div className="membrane"></div>
             </div>
           </div>
         </div>
         <div className="roof-0">
           <div className="window">
-            <div className="phantom"></div><div className="phantom"></div>
+            <div className="phantom"></div>
+            <div className="phantom"></div>
           </div>
           <div className="shining"></div>
         </div>
@@ -84,7 +84,10 @@ export default function SpookyBackground({ phase = 'night' }) {
               <div className="mouth"></div>
             </div>
             <div className="wings"></div>
-            <div className="legs"><div className="leg"></div><div className="leg"></div></div>
+            <div className="legs">
+              <div className="leg"></div>
+              <div className="leg"></div>
+            </div>
           </div>
           <div className="chimney"></div>
         </div>
@@ -97,43 +100,88 @@ export default function SpookyBackground({ phase = 'night' }) {
         <div className="skeleton-floating"></div>
         <div className="skeleton">
           <div className="head">
-            <div className="cranium"></div><div className="nose"></div><div className="mouth"></div>
+            <div className="cranium"></div>
+            <div className="nose"></div>
+            <div className="mouth"></div>
           </div>
           <div className="neck"></div>
           <div className="torso">
-            <div className="pelvis"></div><div className="column"></div><div className="rib"></div><div className="rib"></div><div className="clavicle"></div>
+            <div className="pelvis"></div>
+            <div className="column"></div>
+            <div className="rib"></div>
+            <div className="rib"></div>
+            <div className="clavicle"></div>
           </div>
           <div className="arms">
             <div className="arm">
-              <div className="bone"></div><div className="bone"></div>
-              <div className="hand"><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div></div>
+              <div className="bone"></div>
+              <div className="bone"></div>
+              <div className="hand">
+                <div className="bone"></div>
+                <div className="bone"></div>
+                <div className="bone"></div>
+                <div className="bone"></div>
+                <div className="bone"></div>
+                <div className="bone"></div>
+              </div>
             </div>
             <div className="arm">
-              <div className="bone"></div><div className="bone"></div>
-              <div className="hand"><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div></div>
+              <div className="bone"></div>
+              <div className="bone"></div>
+              <div className="hand">
+                <div className="bone"></div>
+                <div className="bone"></div>
+                <div className="bone"></div>
+                <div className="bone"></div>
+                <div className="bone"></div>
+                <div className="bone"></div>
+              </div>
             </div>
           </div>
           <div className="legs">
             <div className="leg">
-              <div className="bone"></div><div className="bone"></div><div className="bone ball"></div>
-              <div className="foot"><div className="bone"></div><div className="bone"></div><div className="bone"></div></div>
+              <div className="bone"></div>
+              <div className="bone"></div>
+              <div className="bone ball"></div>
+              <div className="foot">
+                <div className="bone"></div>
+                <div className="bone"></div>
+                <div className="bone"></div>
+              </div>
             </div>
             <div className="leg">
-              <div className="bone"></div><div className="bone"></div><div className="bone ball"></div>
-              <div className="foot"><div className="bone"></div><div className="bone"></div><div className="bone"></div></div>
+              <div className="bone"></div>
+              <div className="bone"></div>
+              <div className="bone ball"></div>
+              <div className="foot">
+                <div className="bone"></div>
+                <div className="bone"></div>
+                <div className="bone"></div>
+              </div>
             </div>
           </div>
         </div>
         <div className="electricity">
-          <div className="pole"></div><div className="bar"><span></span></div><div className="bar"><span></span></div>
-          <div className="cable"><span></span><span></span><span></span></div>
+          <div className="pole"></div>
+          <div className="bar"><span></span></div>
+          <div className="bar"><span></span></div>
+          <div className="cable">
+            <span></span><span></span><span></span>
+          </div>
           <div className="cable"></div>
-          <div className="box"><div className="sparks"><span></span><span></span><span></span><span></span><span></span></div></div>
+          <div className="box">
+            <div className="sparks">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+          </div>
         </div>
         <div className="pumpkin">
           <span></span><span></span><span></span><span></span><span></span>
-          <div className="eyes"></div><div className="nose"></div>
-          <div className="mouth"><div className="teeth"></div></div>
+          <div className="eyes"></div>
+          <div className="nose"></div>
+          <div className="mouth">
+            <div className="teeth"></div>
+          </div>
         </div>
       </div>
     </div>
