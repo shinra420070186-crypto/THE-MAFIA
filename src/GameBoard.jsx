@@ -41,23 +41,38 @@ const MemoizedGalaxy = React.memo(() => (
 // ─── FULL SCREEN SPOOKY HOUSE BACKGROUND ─────────────
 const FullScreenSpooky = ({ phase }) => {
   const isNight = phase.startsWith('night') || phase === 'night_transition';
+  
+  // Controls Day/Night Rotation
+  const [angles, setAngles] = useState({ sun: isNight ? 180 : 0, moon: isNight ? 0 : -180 });
+  const prevIsNight = useRef(isNight);
+  
   const [activeZone, setActiveZone] = useState(null);
 
-  // ARCHITECT FIX: Single active zone controller. Resets anything else that was animating.
+  // Trigger Sun/Moon rotation when phase changes
+  useEffect(() => {
+    if (isNight !== prevIsNight.current) {
+      setAngles(prev => ({ sun: prev.sun + 180, moon: prev.moon + 180 }));
+      prevIsNight.current = isNight;
+    }
+  }, [isNight]);
+
+  // Single active zone controller
   const handleTrigger = (zone, e) => {
     if (e) e.stopPropagation();
     setActiveZone(prev => prev === zone ? null : zone);
   };
 
   return (
-    <div className="spooky-container" onClick={() => setActiveZone(null)}>
+    <div className="spooky-container" onClick={() => setActiveZone(null)} style={{ '--sun-angle': angles.sun, '--moon-angle': angles.moon }}>
       <div className="sky">
-        <div className="moon"></div>
+        <div className="celestial-pivot moon-pivot"><div className="moon"></div></div>
+        <div className="celestial-pivot sun-pivot"><div className="sun"></div></div>
         <div className="clouds">
           <span></span><span></span><span></span><span></span>
         </div>
       </div>
       <div className="content">
+        <div className="ground-fill"></div> {/* FILLS THE GAP */}
         <div className="level-0">
           <div className={`door ${activeZone === 'door' ? 'active' : ''}`} onClick={(e) => handleTrigger('door', e)}>
             <div className="nosferatu"></div>
@@ -89,22 +104,12 @@ const FullScreenSpooky = ({ phase }) => {
           <div className="tail"></div>
           <div className="wings">
             <div className="wing">
-              <div className="finger"></div>
-              <div className="finger"></div>
-              <div className="finger"></div>
-              <div className="finger"></div>
-              <div className="membrane"></div>
-              <div className="membrane"></div>
-              <div className="membrane"></div>
+              <div className="finger"></div><div className="finger"></div><div className="finger"></div><div className="finger"></div>
+              <div className="membrane"></div><div className="membrane"></div><div className="membrane"></div>
             </div>
             <div className="wing">
-              <div className="finger"></div>
-              <div className="finger"></div>
-              <div className="finger"></div>
-              <div className="finger"></div>
-              <div className="membrane"></div>
-              <div className="membrane"></div>
-              <div className="membrane"></div>
+              <div className="finger"></div><div className="finger"></div><div className="finger"></div><div className="finger"></div>
+              <div className="membrane"></div><div className="membrane"></div><div className="membrane"></div>
             </div>
           </div>
         </div>
@@ -161,49 +166,29 @@ const FullScreenSpooky = ({ phase }) => {
           </div>
           <div className="arms">
             <div className="arm">
-              <div className="bone"></div>
-              <div className="bone"></div>
+              <div className="bone"></div><div className="bone"></div>
               <div className="hand">
-                <div className="bone"></div>
-                <div className="bone"></div>
-                <div className="bone"></div>
-                <div className="bone"></div>
-                <div className="bone"></div>
-                <div className="bone"></div>
+                <div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div>
               </div>
             </div>
             <div className="arm">
-              <div className="bone"></div>
-              <div className="bone"></div>
+              <div className="bone"></div><div className="bone"></div>
               <div className="hand">
-                <div className="bone"></div>
-                <div className="bone"></div>
-                <div className="bone"></div>
-                <div className="bone"></div>
-                <div className="bone"></div>
-                <div className="bone"></div>
+                <div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div>
               </div>
             </div>
           </div>
           <div className="legs">
             <div className="leg">
-              <div className="bone"></div>
-              <div className="bone"></div>
-              <div className="bone ball"></div>
+              <div className="bone"></div><div className="bone"></div><div className="bone ball"></div>
               <div className="foot">
-                <div className="bone"></div>
-                <div className="bone"></div>
-                <div className="bone"></div>
+                <div className="bone"></div><div className="bone"></div><div className="bone"></div>
               </div>
             </div>
             <div className="leg">
-              <div className="bone"></div>
-              <div className="bone"></div>
-              <div className="bone ball"></div>
+              <div className="bone"></div><div className="bone"></div><div className="bone ball"></div>
               <div className="foot">
-                <div className="bone"></div>
-                <div className="bone"></div>
-                <div className="bone"></div>
+                <div className="bone"></div><div className="bone"></div><div className="bone"></div>
               </div>
             </div>
           </div>
