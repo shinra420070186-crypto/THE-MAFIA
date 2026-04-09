@@ -2485,3 +2485,64 @@
     animation-delay: -33s;
     animation-duration: 65s;
 }
+
+/* Fixes the bottom PWA gap */
+.ground-fill {
+    position: absolute;
+    width: 200vw;
+    height: 50vh;
+    bottom: -49vh;
+    left: calc(50% - 100vw);
+    background: var(--house);
+    z-index: -1;
+}
+
+/* Restores Sun and Moon Day/Night Rotation */
+.celestial-pivot { 
+    position: absolute; 
+    top: 100%; 
+    left: 50%; 
+    width: 0; 
+    height: 0; 
+    z-index: 2; 
+}
+.sun-pivot { 
+    transition: transform 5s ease-in-out; 
+    transform: rotate(calc(var(--sun-angle) * 1deg)); 
+}
+.moon-pivot { 
+    transition: transform 5s ease-in-out; 
+    transform: rotate(calc(var(--moon-angle) * 1deg)); 
+}
+.sun { 
+    position: absolute; 
+    width: 20vmin; 
+    height: 20vmin; 
+    left: -10vmin; 
+    top: -85vmin; 
+    background-color: #FFD700; 
+    box-shadow: 0 0 50px rgba(255, 215, 0, 0.8), inset 2vmin -2vmin 0 rgba(200, 100, 0, 0.2); 
+    border-radius: 50%; 
+}
+.sun:before, .sun:after { 
+    content: ""; 
+    position: absolute; 
+    border-radius: 50%; 
+    background-color: rgba(255, 255, 255, 0.25); 
+    box-shadow: inset -5px 5px 0 rgba(255, 255, 255, 0.1); 
+}
+.sun:before { width: 3vmin; height: 3vmin; top: 5vmin; left: 4.5vmin; }
+.sun:after { width: 4vmin; height: 4vmin; top: 10vmin; left: 3vmin; }
+
+/* Overrides the broken static moon from earlier */
+.moon {
+    position: absolute; 
+    width: 20vmin; 
+    height: 20vmin; 
+    left: -10vmin; 
+    top: -85vmin; 
+    border-radius: 100%; 
+    background: radial-gradient(circle at 50% 50%,#fdfdfd 0% 7vmin,#ffffff00 7.25vmin 100%),#fff; 
+    box-shadow: 0 0 8em 4em #6493a9, 0 0 8em -16em #ff660000 inset,0 0 20px 5px #fdfdfd;
+    animation: none; /* Stops it from freezing in place */
+}
