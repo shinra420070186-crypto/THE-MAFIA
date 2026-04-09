@@ -12,6 +12,9 @@
 
 .theme-day {
   --sky-bg: linear-gradient(0deg, #87ceeb, #e0f6ff);
+  --scene-bg: linear-gradient(238deg, rgba(0, 0, 0, 0), transparent, transparent), 
+              linear-gradient(180deg, rgba(0, 0, 0, 0), transparent, transparent), 
+              radial-gradient(circle at 50% 100%, #ffeb3b, #87ceeb, #e0f6ff);
   --stars-opacity: 0.05;
   --window: rgba(147, 197, 253, 0.6);
   --clouds: rgba(255, 255, 255, 0.53);
@@ -19,6 +22,9 @@
 
 .theme-night {
   --sky-bg: linear-gradient(0deg, rgba(103, 58, 183, 0.54), rgba(60, 60, 60, 0.58));
+  --scene-bg: linear-gradient(238deg, #000, transparent, transparent), 
+              linear-gradient(180deg, #000, transparent, transparent), 
+              radial-gradient(circle at 50% 100%, #005eff, #6d006d, #38005e);
   --stars-opacity: 0.5;
   --window: rgba(255, 141, 0, 0.81);
   --clouds: rgba(255, 255, 255, 0.33);
@@ -34,10 +40,8 @@
   align-items: flex-end;
   justify-content: center;
   align-content: flex-end;
-  background: 
-    linear-gradient(238deg, #000, transparent, transparent), 
-    linear-gradient(180deg, #000, transparent, transparent), 
-    radial-gradient(circle at 50% 100%, #005eff, #6d006d, #38005e);
+  background: var(--scene-bg);
+  transition: background 3s ease-in-out;
   position: absolute;
   inset: 0;
   z-index: -10;
