@@ -1,26 +1,93 @@
 /* PERMANENT MOBILE FULL-SCREEN FIXES APPLIED (100dvh) */
-.full-spooky-bg { --gray: #1a191a; --black: #080708; --dark: #443847; --house: #000000; --bat: #070707; --bounce: linear(0 0%, 0 2.27%, 0.02 4.53%, 0.04 6.8%, 0.06 9.07%, 0.1 11.33%, 0.14 13.6%, 0.25 18.15%, 0.39 22.7%, 0.56 27.25%, 0.77 31.8%, 1 36.35%, 0.89 40.9%, 0.85 43.18%, 0.81 45.45%, 0.79 47.72%, 0.77 50%, 0.75 52.27%, 0.75 54.55%, 0.75 56.82%, 0.77 59.1%, 0.79 61.38%, 0.81 63.65%, 0.85 65.93%, 0.89 68.2%, 1 72.7%, 0.97 74.98%, 0.95 77.25%, 0.94 79.53%, 0.94 81.8%, 0.94 84.08%, 0.95 86.35%, 0.97 88.63%, 1 90.9%, 0.99 93.18%, 0.98 95.45%, 0.99 97.73%, 1 100%); position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; z-index: 0; pointer-events: none; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; align-content: flex-end; background: var(--sky-bg); transition: background 5s ease-in-out; }
+.full-spooky-bg { 
+  --gray: #1a191a; --black: #080708; --dark: #443847; --house: #000000; --bat: #070707; --bounce: linear(0 0%, 0 2.27%, 0.02 4.53%, 0.04 6.8%, 0.06 9.07%, 0.1 11.33%, 0.14 13.6%, 0.25 18.15%, 0.39 22.7%, 0.56 27.25%, 0.77 31.8%, 1 36.35%, 0.89 40.9%, 0.85 43.18%, 0.81 45.45%, 0.79 47.72%, 0.77 50%, 0.75 52.27%, 0.75 54.55%, 0.75 56.82%, 0.77 59.1%, 0.79 61.38%, 0.81 63.65%, 0.85 65.93%, 0.89 68.2%, 1 72.7%, 0.97 74.98%, 0.95 77.25%, 0.94 79.53%, 0.94 81.8%, 0.94 84.08%, 0.95 86.35%, 0.97 88.63%, 1 90.9%, 0.99 93.18%, 0.98 95.45%, 0.99 97.73%, 1 100%); 
+  position: relative; 
+  width: 100vmin; 
+  height: 100vmin; 
+  max-width: 800px;
+  max-height: 800px;
+  z-index: 0; 
+  pointer-events: auto; 
+  overflow: hidden; 
+  display: flex; 
+  align-items: flex-end; 
+  justify-content: center; 
+  align-content: flex-end; 
+  background: var(--sky-bg); 
+  transition: background 5s ease-in-out; 
+  border-radius: 20px;
+  box-shadow: 0 0 50px rgba(0,0,0,0.8);
+}
 .full-spooky-bg.theme-night { --sky-bg: linear-gradient(238deg, #000, #fff0, #fff0), linear-gradient(180deg, #000, #fff0, #fff0), radial-gradient(circle at 50% 100%, #005eff, #6d006d, #38005e ); --window: #ff8d00cf; --stars-opacity: 0.5; --monster-opacity: 0.5; --bat-opacity: 1; --skeleton-opacity: 0.965; }
 .full-spooky-bg.theme-day { --sky-bg: linear-gradient(238deg, #fff0, #fff0, #fff0), linear-gradient(180deg, #87ceeb, #5b92e5, #87ceeb), radial-gradient(circle at 50% 100%, #5b92e5, #5b92e5, #5b92e5 ); --window: #111; --stars-opacity: 0; --monster-opacity: 0; --bat-opacity: 0; --skeleton-opacity: 0; }
 .full-spooky-bg:after { content: ""; position: absolute; width: 100%; height: 10vmin; z-index: -1; bottom: 0; background: radial-gradient(circle at calc(50% - 33vmin) calc(100% + 31vmin), var(--house) 40vmin, #fff0 calc(40vmin + 1px) ), radial-gradient(circle at calc(50% + 33vmin) calc(100% + 30vmin), var(--house) 40vmin, #fff0 calc(40vmin + 1px) ), radial-gradient(circle at 50% calc(100% + 43vmin), var(--house) 50vmin, #fff0 calc(50vmin + 1px) ); background-repeat: no-repeat; }
-.celestial-pivot { position: absolute; top: 100vh; top: 100dvh; left: 50%; width: 0; height: 0; z-index: 2; }
+.celestial-pivot { position: absolute; top: 100%; left: 50%; width: 0; height: 0; z-index: 2; }
 .sun-pivot { transition: transform 5s ease-in-out; transform: rotate(calc(var(--sun-angle) * 1deg)); }
 .moon-pivot { transition: transform 5s ease-in-out; transform: rotate(calc(var(--moon-angle) * 1deg)); }
-.sun { position: absolute; width: 20vmin; height: 20vmin; left: -10vmin; top: -85vh; background-color: #FFD700; box-shadow: 0 0 50px rgba(255, 215, 0, 0.8), inset 2vmin -2vmin 0 rgba(200, 100, 0, 0.2); border-radius: 50%; }
+.sun { position: absolute; width: 20vmin; height: 20vmin; left: -10vmin; top: -85vmin; background-color: #FFD700; box-shadow: 0 0 50px rgba(255, 215, 0, 0.8), inset 2vmin -2vmin 0 rgba(200, 100, 0, 0.2); border-radius: 50%; }
 .sun:before, .sun:after { content: ""; position: absolute; border-radius: 50%; background-color: rgba(255, 255, 255, 0.25); box-shadow: inset -5px 5px 0 rgba(255, 255, 255, 0.1); }
 .sun:before { width: 3vmin; height: 3vmin; top: 5vmin; left: 4.5vmin; }
 .sun:after { width: 4vmin; height: 4vmin; top: 10vmin; left: 3vmin; }
-.moon { position: absolute; width: 20vmin; height: 20vmin; left: -10vmin; top: -85vh; border-radius: 100%; background: radial-gradient(circle at 50% 50%,#fdfdfd 0% 7vmin,#ffffff00 7.25vmin 100%),#fff; box-shadow: 0 0 8em 4em #6493a9, 0 0 8em -16em #ff660000 inset,0 0 20px 5px #fdfdfd; }
+.moon { position: absolute; width: 20vmin; height: 20vmin; left: -10vmin; top: -85vmin; border-radius: 100%; background: radial-gradient(circle at 50% 50%,#fdfdfd 0% 7vmin,#ffffff00 7.25vmin 100%),#fff; box-shadow: 0 0 8em 4em #6493a9, 0 0 8em -16em #ff660000 inset,0 0 20px 5px #fdfdfd; }
 .moon:before { content: ""; background: radial-gradient(circle at 100% 60%, #ffffff00 0% 60%, #dddddd 75% 100%); width: 100%; height: 100%; position: absolute; top: 0%; left: 0%; border-radius: 100%; }
 .moon:after { content: ""; background: radial-gradient(circle at 0% 40%,#efefef 0% 60%,#ededed 75% 100%); width: 4.5vmin; height: 4.5vmin; position: absolute; top: 20%; left: 20%; border-radius: 100%; filter: blur(2px); }
-.sky { height: 100vh; height: 100dvh; width: 100vw; z-index: -1; position: absolute; left: 0; top: 0; overflow: hidden; }
-.sky:after { content: ""; position: absolute; width: 100vw; height: 100vh; height: 100dvh; top: 0vh; background-image: radial-gradient(2px 2px at 20px 30px, #484341, transparent), radial-gradient(2px 2px at 43px 75px, #735454, transparent), radial-gradient(2px 1px at 54px 184px, #828282, transparent), radial-gradient(2px 2px at 93px 47px, #654b49, transparent), radial-gradient(1px 1px at 148px 87px, #3a1919, transparent), radial-gradient(2px 2px at 193px 137px, #a26662, transparent), radial-gradient(1px 2px at 210px 154px, #805241, transparent), radial-gradient(2px 2px at 243px 102px, #866356, transparent), radial-gradient(2px 1px at 264px 184px, #794937, transparent), radial-gradient(2px 2px at 293px 44px, #735454, transparent), radial-gradient(1px 1px at 223px 62px, #ad968e, transparent), radial-gradient(2px 2px at 249px 162px, #884228, transparent), radial-gradient(2px 2px at 73px 99px, #442e26, transparent), radial-gradient(1px 1px at 163px 42px, #403433, transparent), linear-gradient(180deg, #fff0 10%, var(--house) 25%, #111 50%, #222 75%, #111 100%); background-repeat: no-repeat, repeat; background-size: 333px 263px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 100% 100%; opacity: var(--stars-opacity); mix-blend-mode: color-burn; transition: opacity 5s ease-in-out; }
-.content { width: 90vmin; height: 90vmin; background-size: cover; position: relative; perspective: 100vmin; perspective-origin: top; bottom: 5vmin; transform: scale(1); }
+.sky { height: 100%; width: 100%; z-index: -1; position: absolute; left: 0; top: 0; overflow: hidden; }
+.sky:after { content: ""; position: absolute; width: 100%; height: 100%; top: 0; background-image: radial-gradient(2px 2px at 20px 30px, #484341, transparent), radial-gradient(2px 2px at 43px 75px, #735454, transparent), radial-gradient(2px 1px at 54px 184px, #828282, transparent), radial-gradient(2px 2px at 93px 47px, #654b49, transparent), radial-gradient(1px 1px at 148px 87px, #3a1919, transparent), radial-gradient(2px 2px at 193px 137px, #a26662, transparent), radial-gradient(1px 2px at 210px 154px, #805241, transparent), radial-gradient(2px 2px at 243px 102px, #866356, transparent), radial-gradient(2px 1px at 264px 184px, #794937, transparent), radial-gradient(2px 2px at 293px 44px, #735454, transparent), radial-gradient(1px 1px at 223px 62px, #ad968e, transparent), radial-gradient(2px 2px at 249px 162px, #884228, transparent), radial-gradient(2px 2px at 73px 99px, #442e26, transparent), radial-gradient(1px 1px at 163px 42px, #403433, transparent), linear-gradient(180deg, #fff0 10%, var(--house) 25%, #111 50%, #222 75%, #111 100%); background-repeat: no-repeat, repeat; background-size: 333px 263px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 100% 100%; opacity: var(--stars-opacity); mix-blend-mode: color-burn; transition: opacity 5s ease-in-out; }
+.content { width: 90vmin; height: 90vmin; background-size: cover; position: relative; perspective: 100vmin; perspective-origin: top; bottom: 5vmin; transform: scale(1); pointer-events: none; }
 @media (max-width: 768px) { .content { transform: scale(1.15); bottom: 12vmin; } }
 .content * { position: absolute; transform-style: preserve-3d; }
 .nosferatu, .frankenstein, .witch { opacity: var(--monster-opacity); transition: opacity 5s ease-in-out; }
 .bat-cat, .flying-bat, .bat, .phantom, .zombie-hand, .skeleton-floating { opacity: var(--bat-opacity); transition: opacity 5s ease-in-out; }
 .skeleton { opacity: var(--skeleton-opacity); transition: opacity 5s ease-in-out; }
+
+/* ==============================================
+   INTERACTIVE TRIGGER SYSTEM (NEW ADDITION)
+   ============================================== */
+.trigger-zone {
+    cursor: pointer;
+    pointer-events: auto; /* Re-enable clicks inside .content */
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Pause all major animations and hide characters by default */
+.nosferatu, .frankenstein, .witch, .phantom, .zombie-hand, .bat-cat, .bat, .skeleton {
+    animation-play-state: paused !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+}
+.pumpkin {
+    animation-play-state: paused !important;
+}
+.skeleton * {
+    animation-play-state: paused !important;
+}
+
+/* Play animations and show when the trigger zone is active */
+.is-animating .nosferatu,
+.is-animating .frankenstein,
+.is-animating .witch { 
+    animation-play-state: running !important;
+    opacity: var(--monster-opacity) !important;
+}
+.is-animating .phantom,
+.is-animating .zombie-hand,
+.is-animating.bat-cat,
+.is-animating .bat { 
+    animation-play-state: running !important;
+    opacity: var(--bat-opacity) !important;
+}
+.is-animating.skeleton { 
+    animation-play-state: running !important;
+    opacity: var(--skeleton-opacity) !important;
+}
+.is-animating.skeleton * {
+    animation-play-state: running !important;
+}
+.is-animating.pumpkin {
+    animation-play-state: running !important;
+}
+
 .level-0 { width: 30vmin; height: 25vmin; background: var(--house); bottom: 0; left: 22vmin; transform: rotateX(82deg) skewX(5deg); z-index: 1; }
 .level-1 { width: 16vmin; height: 34vmin; background: var(--house); bottom: 3.75vmin; left: 53vmin; transform: perspective(100vmin) rotateX(82deg) skewX(-10deg); }
 .level-2 { width: 19vmin; height: 35vmin; background: var(--house); bottom: 31.5vmin; left: 29vmin; transform: perspective(150vmin) rotateX(45deg) skewX(2deg) rotate(2deg); clip-path: polygon(0% 85%, 0% 0%, 100% 0%, 100% 94%, 48% 57%); z-index: 1; box-shadow: 0.25vmin -0.5vmin 0.5vmin 0 #fff3 inset, 0.5vmin -0.5vmin 1.5vmin 0 #fff2 inset; }
@@ -164,8 +231,6 @@
 @keyframes swinging-left { 0% { transform: rotate(-5deg); } 100% { transform: rotate(5deg); } }
 @keyframes swinging-right { 0% { transform: rotateY(180deg) rotate(5deg); } 100% { transform: rotateY(180deg) rotate(-5deg); } }
 .skeleton { --bone: var(--house); opacity: var(--skeleton-opacity); width: 32vmin; height: 60vmin; position: absolute; z-index: 1; display: flex; justify-content: center; transform: scale(0.375); left: -7vmin; bottom: -19.5vmin; transition: opacity 5s ease-in-out; animation: floating-down 2s cubic-bezier(0.46, 0.03, 0.52, 0.96) 0s 1; }
-.skeleton * { animation-play-state: paused !important; }
-.theme-night .skeleton-floating + .skeleton * { animation-play-state: running !important; }
 .theme-night .skeleton-floating + .skeleton { animation: floating 3s cubic-bezier(0.46, 0.03, 0.52, 0.96) 0s infinite alternate; bottom: -6vmin; }
 .skeleton div { position: absolute; }
 .skeleton-floating { width: 8vmin; height: 20vmin; bottom: 0vmin; left: 5vmin; z-index: 3; }
