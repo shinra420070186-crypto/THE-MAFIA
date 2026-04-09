@@ -18,13 +18,14 @@
 /* FIX LAG: Removed heavy mix-blend-mode: color-burn, relied on native opacity and will-change */
 .sky:after { content: ""; position: absolute; width: 100vw; height: 100vh; height: 100dvh; top: 0vh; background-image: radial-gradient(2px 2px at 20px 30px, #484341, transparent), radial-gradient(2px 2px at 43px 75px, #735454, transparent), radial-gradient(2px 1px at 54px 184px, #828282, transparent), radial-gradient(2px 2px at 93px 47px, #654b49, transparent), radial-gradient(1px 1px at 148px 87px, #3a1919, transparent), radial-gradient(2px 2px at 193px 137px, #a26662, transparent), radial-gradient(1px 2px at 210px 154px, #805241, transparent), radial-gradient(2px 2px at 243px 102px, #866356, transparent), radial-gradient(2px 1px at 264px 184px, #794937, transparent), radial-gradient(2px 2px at 293px 44px, #735454, transparent), radial-gradient(1px 1px at 223px 62px, #ad968e, transparent), radial-gradient(2px 2px at 249px 162px, #884228, transparent), radial-gradient(2px 2px at 73px 99px, #442e26, transparent), radial-gradient(1px 1px at 163px 42px, #403433, transparent), linear-gradient(180deg, #fff0 10%, var(--house) 25%, #111 50%, #222 75%, #111 100%); background-repeat: no-repeat, repeat; background-size: 333px 263px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 100% 100%; opacity: var(--stars-opacity); transition: opacity 5s ease-in-out; will-change: opacity; }
 
-/* FIX: ZOOMED OUT FOR MOBILE TO PREVENT CUTTING OFF */
 .content { width: 90vmin; height: 90vmin; background-size: cover; position: relative; perspective: 100vmin; perspective-origin: top; bottom: 5vmin; transform: scale(1); }
-@media (max-width: 768px) { .content { transform: scale(0.65); bottom: 15vmin; } }
+
+/* FIX: Set scale to 0.65 to fit mobile screens properly */
+@media (max-width: 768px) { .content { transform: scale(0.65); bottom: 12vmin; } }
 .content * { position: absolute; transform-style: preserve-3d; }
 
-/* FIX INTERACTION: Enable pointer events ONLY on interactive triggers so they catch taps */
-.door, .level-1, .level-2, .balcony, .flying-bat, .tomb, .skeleton-floating, .box, .pumpkin, .bat-cat { pointer-events: auto; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+/* FIX INTERACTION: Allow touch highlights to be invisible so taps act as pure toggles */
+.door, .level-1, .level-2, .balcony, .flying-bat, .tomb, .skeleton-floating, .box, .pumpkin, .bat-cat, .cable { pointer-events: auto; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 
 /* MONSTER FADE IN DAY/NIGHT */
 .nosferatu, .frankenstein, .witch { opacity: var(--monster-opacity); transition: opacity 5s ease-in-out; will-change: transform; }
@@ -63,7 +64,7 @@
 .level-2 .window:before { content: ""; position: absolute; width: 1.5vmin; height: 20vmin; background: hsla(0, 100%, 50%, 0.75); border-radius: 0 0 1vmin 1vmin; top: -22vmin; left: 50%; z-index: 1; transition: all 4s ease-out 0s; box-shadow: -1.5vmin -3vmin 0 -0.1vmin hsla(0, 100%, 50%, 0.625), -2.875vmin -2vmin 0 -0.1vmin hsla(0, 100%, 50%, 0.65), -3.875vmin -5.5vmin 0 -0.4vmin hsla(0, 100%, 50%, 0.75), -4.875vmin -4vmin 0 -0.1vmin hsla(0, 100%, 50%, 0.725), 1.35vmin -1.5vmin 0 -0.1vmin hsla(0, 100%, 50%, 0.625), 2.5vmin -2.5vmin 0 -0.3vmin hsla(0, 100%, 50%, 0.725), 3.35vmin -5.5vmin 0 -0.4vmin hsla(0, 100%, 50%, 0.65); }
 .theme-night .level-2 .window:before { top: 0vmin; box-shadow: -1.5vmin -1vmin 0 -0.1vmin hsla(0, 100%, 50%, 0.625), -2.875vmin -3vmin 0 -0.1vmin hsla(0, 100%, 50%, 0.65), -3.875vmin -2.5vmin 0 -0.4vmin hsla(0, 100%, 50%, 0.75), -4.875vmin -4vmin 0 -0.1vmin hsla(0, 100%, 50%, 0.725), 1.35vmin -2.5vmin 0 -0.1vmin hsla(0, 100%, 50%, 0.625), 2.5vmin -1.5vmin 0 -0.3vmin hsla(0, 100%, 50%, 0.725), 3.35vmin -3.5vmin 0 -0.4vmin hsla(0, 100%, 50%, 0.65); }
 
-/* --- INTERACTIVE ANIMATIONS RESTORED --- */
+/* --- INTERACTIVE ANIMATIONS --- */
 
 @keyframes bat-fly { 25% { transform: translateX(-1.5vmin) translateY(-5vmin) scale(0.6); } 33% { margin-bottom: 5vmin; } 50% { margin-bottom: 5vmin; transform: translateX(0.5vmin) scale(0.7);} 66% { margin-bottom: 5vmin; } 75% { transform: translateX(1vmin) scale(0.6); } }
 .bat { width: 15vmin; height: 12vmin; bottom: 30vmin; margin-bottom: 0; left: 13.25vmin; }
@@ -88,10 +89,10 @@
 @keyframes bat-fly-l { 0%, 100% { transform: rotate(33deg) rotateY(180deg); } 50% { transform: rotate(63deg) rotateY(180deg); } }
 .bat .wings:after { bottom: 2.65vmin; left: 3.75vmin; top: 0.25vmin; transform-origin: 100% 100%; transform: rotate(170deg) rotateY(180deg); animation-delay: -0.05s; }
 
-/* FIX: Changed + to ~ to ensure React siblings trigger */
-.theme-night .flying-bat:hover ~ .fence .bat, .theme-night .flying-bat:active ~ .fence .bat { animation: bat-fly 4s linear 0s infinite;  }
-.theme-night .flying-bat:hover ~ .fence .bat .wings:before, .theme-night .flying-bat:active ~ .fence .bat .wings:before { animation: bat-fly-r 0.125s ease 0s infinite; }
-.theme-night .flying-bat:hover ~ .fence .bat .wings:after, .theme-night .flying-bat:active ~ .fence .bat .wings:after { animation: bat-fly-l 0.125s ease 0s infinite; }
+/* FIX: Restored the original "+" state trigger */
+.theme-night .flying-bat:hover + .fence .bat, .theme-night .flying-bat:active + .fence .bat { animation: bat-fly 4s linear 0s infinite;  }
+.theme-night .flying-bat:hover + .fence .bat .wings:before, .theme-night .flying-bat:active + .fence .bat .wings:before { animation: bat-fly-r 0.125s ease 0s infinite; }
+.theme-night .flying-bat:hover + .fence .bat .wings:after, .theme-night .flying-bat:active + .fence .bat .wings:after { animation: bat-fly-l 0.125s ease 0s infinite; }
 
 .tomb { background: var(--house); width: 5vmin; height: 6vmin; border-radius: 5vmin 5vmin 0 0; bottom: 3vmin; right: 0; transform: rotateX(12deg) skew(-11deg, 20deg); text-align: center; color: #3a1752; padding-top: 2vmin; font-family: serif; font-weight: bold; transition: all 2s ease 0s; z-index: 1; font-size: 1.75vmin; }
 .tomb:after { content: ""; position: absolute; height: 100%; width: 5vmin; border-right: 1vmin solid var(--house); border-top: 0.05vmin solid #fff0; border-radius: 0 3vmin 0 0; right: -1.2vmin; bottom: 0.1vmin; }
@@ -120,8 +121,8 @@
 .bat + .chimney:after { border-radius: 5vmin 0vmin 8vmin; filter: drop-shadow(-1px 0px 1px #fff3); }
 .flying-bat { position: absolute; width: 15vmin; height: 14vmin; bottom: 27vmin; left: 12vmin; z-index: 1; }
 
-/* FIX: Changed + to ~ to ensure React siblings trigger */
-.theme-night .flying-bat:hover ~ .fence .chimney, .theme-night .flying-bat:active ~ .fence .chimney { transform: rotateY(180deg) rotateZ(22deg); transition: transform 1s var(--bounce) 0s; }
+/* FIX: Restored original '+' logic */
+.theme-night .flying-bat:hover + .fence .chimney, .theme-night .flying-bat:active + .fence .chimney { transform: rotateY(180deg) rotateZ(22deg); transition: transform 1s var(--bounce) 0s; }
 
 .phantom { background: radial-gradient(circle at 60% 23%, #0e1d24 0.25vmin, #fff0 calc(0.25vmin + 1px)), radial-gradient(circle at 35% 25%, #0e1d24  0.25vmin, #fff0 calc(0.25vmin + 1px)), #ffffff10; width: 3vmin; height: 5vmin; border-radius: 2vmin 2vmin 0 0; left: 1vmin; top: 1vmin; transform: skew(10deg, -10deg); clip-path: polygon(6% 90%, 4% 66%, 3% 56%, 3% 48%, 5% 35%, 9% 22%, 15% 13%, 22% 8%, 30% 4%, 36% 3%, 42% 3%, 48% 4%, 56% 6%, 56% 8%, 63% 9%, 63% 9%, 70% 13%, 73% 17%, 78% 24%, 81% 28%, 85% 36%, 85% 38%, 88% 44%, 91% 51%, 93% 62%, 95% 74%, 97% 88%, 96% 89%, 93% 88%, 90% 87%, 84% 88%, 77% 90%, 72% 91%, 67% 93%, 63% 92%, 59% 92%, 56% 91%, 53% 90%, 50% 91%, 45% 94%, 41% 96%, 38% 96%, 32% 96%, 27% 94%, 19% 96%, 13% 97%, 9% 98%, 7% 99%, 5% 98%, 4% 96%, 4% 96%, 4% 93%); }
 @keyframes move-phantom { 0% { left: 0.5vmin; transform: skew(10deg, -10deg) } 20%, 60%, 80% { transform: rotate(8deg) skew(10deg, -10deg); } 0%, 40%, 70% { transform: rotate(-7deg) skew(10deg, -10deg); } 45% { left: 3.5vmin; } 50% { bottom: -5vmin; } 100% { left: 0.5vmin; transform: skew(10deg, -10deg) } }
@@ -134,13 +135,13 @@
 
 .zombie-hand { width: 5vmin; height: 8vmin; left: 12.75vmin; bottom: -2vmin; clip-path: polygon(24% 99%, 30% 77%, 32% 69%, 33% 66%, 34% 60%, 32% 56%, 27% 54%, 25% 52%, 22% 44%, 22% 39%, 21% 37%, 16% 36%, 15% 38%, 11% 38%, 6% 36%, 5% 34%, 7% 32%, 10% 32%, 12% 31%, 14% 31%, 16% 32%, 20% 32%, 25% 33%, 28% 33%, 29% 32%, 30% 30%, 28% 28%, 25% 27%, 23% 27%, 20% 27%, 17% 27%, 16% 26%, 17% 24%, 18% 22%, 19% 20%, 24% 20%, 28% 21%, 33% 22%, 35% 24%, 36% 27%, 38% 28%, 42% 26%, 42% 24%, 41% 21%, 38% 20%, 33% 17%, 31% 16%, 28% 16%, 26% 15%, 27% 12%, 29% 11%, 33% 12%, 36% 12%, 37% 13%, 39% 13%, 42% 15%, 45% 17%, 48% 19%, 49% 20%, 50% 23%, 53% 25%, 53% 23%, 53% 21%, 52% 18%, 52% 16%, 52% 14%, 48% 12%, 46% 9%, 44% 6%, 45% 5%, 48% 4%, 49% 4%, 52% 5%, 54% 7%, 58% 9%, 59% 10%, 60% 11%, 61% 13%, 63% 17%, 64% 18%, 66% 19%, 67% 21%, 67% 23%, 67% 25%, 66% 29%, 66% 32%, 68% 34%, 68% 35%, 70% 37%, 72% 37%, 74% 34%, 76% 33%, 77% 32%, 76% 31%, 76% 30%, 77% 27%, 81% 23%, 85% 21%, 88% 21%, 92% 21%, 93% 21%, 94% 21%, 94% 22%, 92% 24%, 92% 25%, 91% 27%, 90% 28%, 92% 29%, 92% 30%, 93% 31%, 94% 33%, 94% 34%, 91% 35%, 89% 36%, 88% 38%, 85% 39%, 84% 42%, 84% 43%, 83% 45%, 80% 47%, 75% 48%, 72% 50%, 68% 53%, 66% 56%, 64% 61%, 64% 65%, 63% 69%, 64% 73%, 64% 76%, 66% 99%); background: var(--house); transform-origin: 75% 100%; transform: rotate(10deg); transition: bottom 1s ease 0s; }
 
-/* FIX: Changed + to ~ to ensure React siblings trigger */
-.theme-night .tomb:hover ~ .zombie-hand, .theme-night .tomb:active ~ .zombie-hand { animation: move-zombie 0.25s ease 0s infinite; animation-fill-mode: forwards; bottom: 5.25vmin; transition: bottom 3s ease 0.25s; }
+/* FIX: Restored original '+' logic */
+.theme-night .tomb:hover + .zombie-hand, .theme-night .tomb:active + .zombie-hand { animation: move-zombie 0.25s ease 0s infinite; animation-fill-mode: forwards; bottom: 5.25vmin; transition: bottom 3s ease 0.25s; }
 
 @keyframes move-zombie { 0%, 50%, 100% { left: 12.75vmin;} 50% { margin-bottom: 0.15vmin;} 25%, 75% { left: 12.85vmin;} }
-.theme-night .tomb:hover ~ .stones:before, .theme-night .tomb:active ~ .stones:before, .theme-night .tomb:hover ~ .stones:after, .theme-night .tomb:active ~ .stones:after { content: ""; position: absolute; width: 0.5vmin; height: 0.75vmin; top: 0vmin; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; background: var(--house); animation: move-stone-1 2s ease-out 0s infinite; }
-.theme-night .tomb:hover ~ .stones:after, .theme-night .tomb:active ~ .stones:after { animation: move-stone-2 2s ease-out 0.5s infinite; transform: rotateZ(180deg); }
-.theme-night .tomb:hover ~ .stones, .theme-night .tomb:active ~ .stones { bottom: 3vmin; }
+.theme-night .tomb:hover + .zombie-hand + .stones:before, .theme-night .tomb:active + .zombie-hand + .stones:before, .theme-night .tomb:hover + .zombie-hand + .stones:after, .theme-night .tomb:active + .zombie-hand + .stones:after { content: ""; position: absolute; width: 0.5vmin; height: 0.75vmin; top: 0vmin; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; background: var(--house); animation: move-stone-1 2s ease-out 0s infinite; }
+.theme-night .tomb:hover + .zombie-hand + .stones:after, .theme-night .tomb:active + .zombie-hand + .stones:after { animation: move-stone-2 2s ease-out 0.5s infinite; transform: rotateZ(180deg); }
+.theme-night .tomb:hover + .zombie-hand + .stones, .theme-night .tomb:active + .zombie-hand + .stones { bottom: 3vmin; }
 .stones { right: 1.75vmin; bottom: -3vmin; width: 8vmin; height: 8vmin; transform: rotate(45deg); transition: bottom 1.5s ease 0s; border-radius: 0 5vmin; z-index: -3; pointer-events: none; }
 @keyframes move-stone-1 { 10% { top: 1vmin; left: 0.25vmin;} 20% { top: 2vmin; left: 0.5vmin; } 30% { top: 3vmin; left: 1vmin; } 50% { top: 5vmin; left: 2.5vmin; transform: rotate(0deg); } 60%, 100% { top: 6vmin; left: 2.5vmin; transform: rotate(30deg);} }
 @keyframes move-stone-2 { 10% { left: 1vmin;} 20% { left: 2vmin; } 30% { left: 3vmin; top: 0.75vmin; } 50% { left: 5vmin; top: 2.25vmin; transform: rotate(0deg); } 60%, 100% { left: 5.25vmin; top: 4.5vmin; transform: rotate(30deg);} }
@@ -150,11 +151,11 @@
 @keyframes fly-move { 25% { transform: translateX(-0.5vmin) scale(0.2); } 53% { margin-top: 0.5vmin; } 86% { margin-top: -0.5vmin; } 75% { transform: translateX(0.5vmin) scale(0.2); } }
 .bat-cat * { position: absolute; box-sizing: border-box; }
 
-/* FIX: Changed + to ~ to ensure React siblings trigger */
-.theme-night .balcony:hover ~ .bat-cat, .theme-night .balcony:active ~ .bat-cat { animation: fly 1.5s ease 0s infinite; }
+/* FIX: Restored original '+' logic */
+.theme-night .balcony:hover + .bat-cat, .theme-night .balcony:active + .bat-cat { animation: fly 1.5s ease 0s infinite; }
 .bat-cat:hover, .bat-cat:active { animation: fly-move 1s ease 0s infinite; }
 .bat-cat .body { width: 20vmin; height: 20vmin; background: var(--black); border-radius: 1vmin 100%; top: 15vmin; left: 30vmin; transform: rotate(45deg) skew(-5deg, -5deg); box-shadow: 1vmin -0.15vmin 0 0 var(--gray) inset; z-index: 2; transition: all 1s ease 0s; border-radius: 8vmin 100%; top: 16.5vmin; }
-.theme-night .balcony:hover ~ .bat-cat .body, .theme-night .balcony:active ~ .bat-cat .body { border-radius: 1vmin 100%; top: 15vmin; }
+.theme-night .balcony:hover + .bat-cat .body, .theme-night .balcony:active + .bat-cat .body { border-radius: 1vmin 100%; top: 15vmin; }
 .bat-cat .head { width: 14vmin; height: 13vmin; background: var(--black); border-radius: 90% 90% 100% 100%; top: 7.25vmin; left: 33vmin; box-shadow: 1.2vmin 0.5vmin 0 0 inset var(--gray); z-index: 3; }
 .bat-cat .head:before, .bat-cat .head:after { content: ""; position: absolute; width: 3.75vmin; height: 4.25vmin; background: radial-gradient(circle at 60% 50%, var(--house) 1.15vmin, #fff0 calc(1.15vmin + 1px)), #fff; border-radius: 100%; bottom: 4vmin; left: 2.15vmin; transform: rotate(-10deg); }
 .bat-cat:hover .head:before, .bat-cat:hover .head:after, .bat-cat:active .head:before, .bat-cat:active .head:after { animation: eye-blink 5s ease 0s infinite; }
@@ -166,8 +167,8 @@
 .bat-cat .wings { width: 80vmin; height: 40vmin; z-index: -1; }
 .bat-cat .wing { background: #ffc10700; width: 40vmin; height: 23vmin; top: 8vmin; transform-origin: 90% 50%; opacity: 1; transform: rotateZ(-90deg) scaleX(0.5) scaleY(0.75); opacity: 0; }
 .bat-cat .wing + .wing { transform: rotateY(180deg) rotateZ(-90deg) scaleX(0.5) scaleY(0.75); left: 7vmin; opacity: 0; }
-.theme-night .balcony:hover ~ .bat-cat .wing, .theme-night .bat-cat:hover .wing { opacity: 1; transition: opacity 0.5s ease 0s; animation: fly-right 0.15s ease 0s infinite; }
-.theme-night .balcony:hover ~ .bat-cat .wing + .wing, .theme-night .bat-cat:hover .wing + .wing { opacity: 1; transition: opacity 0.5s ease 0s; animation: fly-left 0.15s ease 0s infinite; }
+.theme-night .balcony:hover + .bat-cat .wing, .theme-night .bat-cat:hover .wing { opacity: 1; transition: opacity 0.5s ease 0s; animation: fly-right 0.15s ease 0s infinite; }
+.theme-night .balcony:hover + .bat-cat .wing + .wing, .theme-night .bat-cat:hover .wing + .wing { opacity: 1; transition: opacity 0.5s ease 0s; animation: fly-left 0.15s ease 0s infinite; }
 @keyframes fly-right { 49% { transform: rotate(-25deg); } }
 @keyframes fly-left { 51% { transform: rotateY(180deg) rotate(-25deg); } }
 
@@ -181,12 +182,12 @@
 .membrane + .membrane + .membrane { left: 24.5vmin; transform: rotate(-8deg) rotateY(180deg); top: 2.5vmin; clip-path: polygon(97% 0%, -50% 100%, 100% 100%); background: radial-gradient(circle at 70% 141%, #fff0 10vmin, var(--dark) calc(10vmin + 1px)); }
 .bat-cat .leg { height: 5vmin; background: var(--black); box-shadow: 0.75vmin 0 0 0 var(--gray) inset; transition: all 0.4s ease 0.25s; width: 6vmin; border-radius: 1vmin 1vmin 2.5vmin 2.5vmin; left: 34vmin; top: 32.5vmin; z-index: 1; transform: rotate(5deg); }
 .bat-cat .leg + .leg { border-radius: 2vmin 1vmin; left: 41vmin; transform: rotate(-5deg); }
-.theme-night .balcony:hover ~ .bat-cat .leg, .theme-night .bat-cat:hover .leg { z-index: 1; width: 2vmin; height: 5vmin; background: var(--black); top: 35vmin; left: 37vmin; transform: rotate(15deg); border-radius: 1vmin 2vmin; box-shadow: 0.75vmin 0 0 0 var(--gray) inset; transition: all 0.4s ease 0.25s; }
-.theme-night .balcony:hover ~ .bat-cat .leg + .leg, .theme-night .bat-cat:hover .leg + .leg { left: 41vmin; border-radius: 2vmin 1vmin; transform: rotate(-13deg); }
+.theme-night .balcony:hover + .bat-cat .leg, .theme-night .bat-cat:hover .leg { z-index: 1; width: 2vmin; height: 5vmin; background: var(--black); top: 35vmin; left: 37vmin; transform: rotate(15deg); border-radius: 1vmin 2vmin; box-shadow: 0.75vmin 0 0 0 var(--gray) inset; transition: all 0.4s ease 0.25s; }
+.theme-night .balcony:hover + .bat-cat .leg + .leg, .theme-night .bat-cat:hover .leg + .leg { left: 41vmin; border-radius: 2vmin 1vmin; transform: rotate(-13deg); }
 .bat-cat .leg:before { content: ""; width: 2vmin; height: 4vmin; background: var(--black); top: 3.25vmin; transform-origin: 50% 0; left: -0.35vmin; border-radius: 1vmin 3vmin 3vmin 1vmin; border-left: 1.1vmin solid var(--gray); transition: all 0.4s ease 0.25s; position: absolute; transform: rotate(-160deg); opacity: 0; }
 .bat-cat .leg + .leg:before { top: 3.25vmin; left: 0.25vmin; transform: rotate(18deg); border-radius: 3vmin 1vmin 1vmin 3vmin; border-left: 0; background: var(--gray); border-right: 1.35vmin solid var(--black); border-top: 1px solid var(--black); }
-.theme-night .balcony:hover ~ .bat-cat .leg:before, .theme-night .bat-cat:hover .leg:before { transform: rotate(-25deg); opacity: 1; width: 1vmin; }
-.theme-night .balcony:hover ~ .bat-cat .leg + .leg:before, .theme-night .bat-cat:hover .leg + .leg:before { transform: rotate(18deg); }
+.theme-night .balcony:hover + .bat-cat .leg:before, .theme-night .bat-cat:hover .leg:before { transform: rotate(-25deg); opacity: 1; width: 1vmin; }
+.theme-night .balcony:hover + .bat-cat .leg + .leg:before, .theme-night .bat-cat:hover .leg + .leg:before { transform: rotate(18deg); }
 .tail { width: 10vmin; height: 11vmin; border-radius: 1vmin 9vmin; left: 30vmin; top: 24vmin; transform: rotate(23deg); transform-origin: 100% 100%; border: 1vmin solid #fff0; border-bottom: 1vmin solid var(--black); border-left: 1.55vmin solid var(--black); filter: drop-shadow(-0.25vmin 0vmin 0px var(--gray)) drop-shadow(-0.25vmin 0vmin 0px var(--gray)); z-index: 1; left: 25vmin; transition: all 0.4s ease 0.5s; }
 .bat-cat:hover .tail, .bat-cat:active .tail { animation: tail-move 2s ease-in-out 0s infinite alternate; left: 25vmin; }
 .tail:before { content: ""; width: 2vmin; height: 2vmin; background: var(--black); border-radius: 3vmin 1vmin; left: -1.75vmin; top: -1.125vmin; transform: rotate(-36deg); }
@@ -204,18 +205,17 @@
 .skeleton { --bone: var(--house); opacity: var(--skeleton-opacity); width: 32vmin; height: 60vmin; position: absolute; z-index: 1; display: flex; justify-content: center; transform: scale(0.375); left: -7vmin; bottom: -19.5vmin; transition: opacity 5s ease-in-out; }
 .skeleton * { animation-play-state: paused !important; }
 
-/* FIX: Changed + to ~ to ensure React siblings trigger */
-.theme-night .skeleton-floating:hover ~ .skeleton *, .theme-night .skeleton-floating:active ~ .skeleton * { animation-play-state: running !important; }
-.theme-night .skeleton-floating:hover ~ .skeleton, .theme-night .skeleton-floating:active ~ .skeleton { animation: floating 3s cubic-bezier(0.46, 0.03, 0.52, 0.96) 0s infinite alternate; bottom: -6vmin; }
-
+/* FIX: Restored original '+' logic */
+.theme-night .skeleton-floating:hover + .skeleton *, .theme-night .skeleton-floating:active + .skeleton * { animation-play-state: running !important; }
+.theme-night .skeleton-floating:hover + .skeleton, .theme-night .skeleton-floating:active + .skeleton { animation: floating 3s cubic-bezier(0.46, 0.03, 0.52, 0.96) 0s infinite alternate; bottom: -6vmin; }
 .skeleton div { position: absolute; }
 .skeleton-floating { width: 8vmin; height: 20vmin; bottom: 0vmin; left: 5vmin; z-index: 3; cursor: pointer; pointer-events: auto; }
 @keyframes shadow { 0% { margin-left: 2vmin; } 100% { margin-left: -2vmin; } }
 .skeleton .head { width: 13vmin; height: 17vmin; top: 4.25vmin; animation: swinging-right 0.55s ease-in-out 0s infinite alternate; transform-origin: 50% 75%; }
 .cranium { width: 12vmin; height: 13vmin; left: 0.5vmin; top: 0.25vmin; border-radius: 6vmin 6vmin 4.5vmin 4.5vmin; background: radial-gradient(circle at 50% 74%, #fff0 9vmin, #fff6 100%), conic-gradient(from -24deg at 100% 75%, var(--bone) 0 45deg, #fff0 0 100%), conic-gradient(from -24deg at 0% 75%, var(--bone) 0 45deg, #fff0 0 100%), conic-gradient(from -24deg at 50% 75%, var(--bone) 0 45deg, #fff0 0 100%), linear-gradient(180deg, var(--bone) 0 59%, #fff0 0 90%, var(--bone) 0 100%), radial-gradient(circle at 75% 73%, #fff0 0 1.75vmin, var(--bone) calc(1.75vmin + 1px) 3vmin, #fff0 0 100%), radial-gradient(circle at 25% 73%, #fff0 0 1.75vmin, var(--bone) calc(1.75vmin + 1px) 3vmin, #fff0 0 100%); }
 
-/* FIX: Changed + to ~ to ensure React siblings trigger */
-.theme-night .skeleton-floating:hover ~ .skeleton .cranium { box-shadow: 0 1vmin 1vmin 0 #fff2 inset; }
+/* FIX: Restored original '+' logic */
+.theme-night .skeleton-floating:hover + .skeleton .cranium { box-shadow: 0 1vmin 1vmin 0 #fff2 inset; }
 
 .cranium:before { content: ""; position: absolute; width: 1.25vmin; height: 1.25vmin; bottom: -0.75vmin; left: 4.85vmin; background: var(--bone); border-radius: 100%; box-shadow: 1.25vmin 0 0 0 var(--bone); }
 .cranium:after { content: ""; position: absolute; width: 5.25vmin; height: 1.5vmin; bottom: -0.95vmin; left: 3.5vmin; background: radial-gradient(circle at 90% 10%, var(--bone) 0 1vmin, #fff0 calc(1vmin + 1px) 100%), radial-gradient(circle at 10% 10%, var(--bone) 0 1vmin, #fff0 calc(1vmin + 1px) 100%); border-radius: 1vmin; }
@@ -299,22 +299,363 @@
 .box { background: var(--house); width: 2vmin; height: 4vmin; right: 15vmin; transform: rotate(9deg); top: -2vmin; }
 .box:before { content: ""; position: absolute; background: var(--house); width: 2vmin; height: 3vmin; left: -1.25vmin; top: 0.5vmin; transform: rotateX(-12deg) rotateY(77deg) rotate(45deg); }
 
-/* FIX: Changed + to ~ to ensure React siblings trigger */
-.theme-night .cable ~ .box:hover:before, .theme-night .cable ~ .box:active:before { animation: box-move 0.5s ease 0s infinite; }
+/* FIX: Restored original '+' logic */
+.theme-night .cable + .box:hover:before, .theme-night .cable + .box:active:before { animation: box-move 0.5s ease 0s infinite; }
 
 @keyframes box-move { 50% { transform: rotateX(12deg) rotateY(74deg) rotate(45deg); } }
 .cable { width: 34vmin; height: 8vmin; --cables: #fff0 30vmin, var(--house) calc(30vmin + 1px) calc(30vmin + 2px), #fff0 calc(30vmin + 3px) 100%; background: radial-gradient(circle at 50% -25vmin, var(--cables)), radial-gradient(circle at 55% -25vmin, var(--cables)), radial-gradient(circle at 42% -23.5vmin, var(--cables)), radial-gradient(circle at 53% -26vmin, var(--cables)), radial-gradient(circle at 36% -27vmin, var(--cables)); top: -2vmin; background-repeat: no-repeat; background-size: 100% 100%, 100% 100%, 100% 100%, 81% 100%, 81% 100%; background-position: 100% 0, 100% 0, 100% 0, 100% 1vmin, 100% 3vmin; transition: all 0.25s var(--bounce) 0s; animation: move-cable 0.5s var(--bounce) 0s 2; }
 .cable + .cable { transform: rotate(113deg) rotateX(180deg) scaleX(3); transform-origin: 0 0%; left: 6vmin; top: -17vmin; clip-path: polygon(16% 0, 100% 0, 100% 100%, 15% 100%); border-bottom: 2px solid var(--house); border-radius: 0 100% 100% 100%; }
 
-/* FIX: Changed + to ~ to ensure React siblings trigger */
-.theme-night .box:hover ~ .cable, .theme-night .box:active ~ .cable { animation-iteration-count: infinite; }
+.theme-night .box:hover + .cable, .theme-night .box:active + .cable { animation-iteration-count: infinite; }
 
 @keyframes move-cable { 50% { top: -1.75vmin; } }
 .cable + .cable { animation: none; }
 .cable span { width: 3vmin; height: 5vmin; background: var(--house); left: 9.5vmin; top: 6.25vmin; transform-origin: 50% 0; animation: hanging 0.01s ease 0s infinite alternate, hanging-2 1s ease 0s infinite alternate; animation-iteration-count: 80, 1; animation-fill-mode: forwards; clip-path: polygon(35% 4%, 35% 4%, 37% 7%, 37% 7%, 40% 10%, 40% 10%, 41% 15%, 41% 15%, 32% 37%, 32% 37%, 30% 33%, 30% 33%, 22% 52%, 22% 52%, 19% 58%, 19% 58%, 19% 62%, 19% 62%, 19% 66%, 19% 66%, 20% 85%, 20% 85%, 17% 84%, 17% 84%, 21% 87%, 21% 87%, 22% 88%, 22% 88%, 24% 87%, 24% 87%, 28% 82%, 28% 82%, 30% 80%, 30% 80%, 33% 78%, 33% 78%, 35% 81%, 35% 81%, 37% 83%, 37% 83%, 39% 88%, 39% 88%, 34% 90%, 34% 90%, 32% 94%, 32% 94%, 31% 97%, 31% 97%, 35% 96%, 35% 96%, 39% 94%, 39% 94%, 41% 92%, 41% 92%, 45% 93%, 45% 93%, 49% 93%, 49% 93%, 49% 93%, 49% 93%, 51% 93%, 51% 93%, 55% 93%, 55% 93%, 58% 92%, 58% 92%, 60% 94%, 60% 94%, 64% 96%, 64% 96%, 68% 96%, 68% 96%, 68% 94%, 68% 94%, 66% 91%, 66% 91%, 62% 89%, 62% 89%, 61% 88%, 61% 88%, 62% 85%, 62% 85%, 64% 81%, 64% 81%, 66% 79%, 66% 79%, 66% 78%, 66% 78%, 69% 81%, 69% 81%, 76% 87%, 76% 87%, 78% 87%, 78% 87%, 79% 87%, 79% 87%, 81% 85%, 81% 85%, 79% 86%, 79% 86%, 78% 85%, 78% 85%, 79% 84%, 79% 84%, 80% 79%, 80% 79%, 81% 65%, 81% 61%, 81% 59%, 81% 59%, 78% 53%, 78% 49%, 69% 33%, 69% 37%, 58% 16%, 58% 11%, 59% 11%, 59% 15%, 62% 8%, 62% 8%, 63% 6%, 63% 11%, 63% 4%, 63% 4%, 58% 3%, 58% 3%, 55% 3%, 55% 3%, 55% 8%, 55% 8%, 54% 13%, 54% 13%, 49% 23%, 49% 23%, 45% 14%, 45% 14%, 44% 9%, 44% 9%, 44% 7%, 44% 7%, 45% 4%, 45% 4%, 36% 4%, 36% 4%); }
-
-/* FIX: Changed + to ~ to ensure React siblings trigger */
-.theme-night .box:hover ~ .cable span, .theme-night .box:active ~ .cable span { animation-iteration-count: infinite; }
+.theme-night .box:hover + .cable span, .theme-night .box:active + .cable span { animation-iteration-count: infinite; }
 
 @keyframes hanging { 50% { clip-path: polygon(35% 4%, 35% 4%, 37% 7%, 37% 7%, 40% 10%, 40% 10%, 41% 15%, 41% 15%, 32% 37%, 32% 37%, 8% 33%, 16% 52%, 16% 52%, 17% 58%, 17% 58%, 18% 62%, 18% 62%, 18% 66%, 18% 66%, 20% 85%, 20% 85%, 17% 84%, 17% 84%, 21% 87%, 21% 87%, 22% 88%, 22% 88%, 24% 87%, 24% 87%, 28% 82%, 28% 82%, 30% 80%, 30% 80%, 33% 78%, 33% 78%, 35% 81%, 35% 81%, 37% 83%, 37% 83%, 39% 88%, 39% 88%, 34% 90%, 34% 90%, 32% 94%, 32% 94%, 31% 97%, 31% 97%, 35% 96%, 35% 96%, 39% 94%, 39% 94%, 41% 92%, 41% 92%, 45% 93%, 45% 93%, 49% 93%, 49% 93%, 49% 93%, 49% 93%, 51% 93%, 51% 93%, 55% 93%, 55% 93%, 58% 92%, 58% 92%, 60% 94%, 60% 94%, 64% 96%, 64% 96%, 68% 96%, 68% 96%, 68% 94%, 68% 94%, 66% 91%, 66% 91%, 62% 89%, 62% 89%, 61% 88%, 61% 88%, 62% 85%, 62% 85%, 64% 81%, 64% 81%, 66% 79%, 66% 79%, 66% 78%, 66% 78%, 69% 81%, 69% 81%, 76% 87%, 76% 87%, 78% 87%, 78% 87%, 79% 87%, 79% 87%, 81% 85%, 81% 85%, 79% 86%, 79% 86%, 78% 85%, 78% 85%, 79% 84%, 79% 84%, 81% 79%, 81% 79%, 83% 65%, 83% 61%, 83% 59%, 83% 59%, 85% 53%, 86% 49%, 96% 33%, 69% 37%, 58% 16%, 58% 11%, 58% 11%, 60% 9%, 61% 8%, 63% 5%, 63% 11%, 63% 4%, 63% 4%, 58% 3%, 58% 3%, 55% 3%, 55% 3%, 55% 8%, 55% 8%, 54% 13%, 54% 13%, 49% 23%, 49% 23%, 45% 14%, 45% 14%, 44% 9%, 44% 9%, 44% 7%, 44% 7%, 45% 4%, 45% 4%, 36% 4%, 36% 4%); } }
-@keyframes hanging-2 { 25% { transform: rotate(2deg); } 75% { transform: rotate(-2deg); } 100% { transform: rotate(0deg); } }
+
+@keyframes hanging-2 { 
+	25% { transform: rotate(-5deg); }
+	0%, 50% { transform: rotate(0deg); }
+	75% { transform: rotate(5deg); }
+}
+
+/* FIX: ADDED BACK THE MISSING BOTTOM SECTION FROM STYLE.CSS */
+
+.theme-night .cable:hover span:before,
+.theme-night .cable:hover span:after {
+	content: "";
+	position: absolute;
+	width: 0.1vmin;
+	height: 0.1vmin;
+	background: #ff0000;
+	bottom: 13%;
+	border-radius: 100%;
+	left: 44%;
+}
+
+.theme-night .cable:hover span:after {
+	left: 56%;
+}
+
+.cable span + span {
+	left: 12vmin;
+	top: 5.75vmin;
+	width: 3.5vmin;
+	height: 5.83vmin;
+	animation-delay: 0.27s, 0.35s;
+	animation-duration: 0.015s, 0.85s;
+}
+
+.cable span + span + span {
+	width: 2.75vmin;
+	height: 4.58vmin;
+	left: 14.5vmin;
+	top: 5vmin;
+	animation-delay: 0.45s, 0.75s;
+}
+
+.sparks {
+	width: 10vmin;
+	height: 10vmin;
+	right: 0vmin;
+	top: -3vmin;
+}
+
+.sparks span {
+	background: #fc0c;
+	width: 0.25vmin;
+	height: 0.25vmin;
+	right: 2vmin;
+	top: 3vmin;
+	animation: sparking 0.75s ease-out infinite;
+	animation-iteration-count: 2;
+	animation-fill-mode: forwards;
+}
+
+@keyframes sparking {
+	25% { right: 3vmin; top: 1vmin; }
+	85% { opacity: 0; top: 0vmin; }
+	100% { right: 5vmin; top: 2vmin;  opacity: 0; }
+}
+
+.sparks span:nth-child(2){
+	margin-top: 1vmin;
+	margin-left: 0.5vmin;
+	animation-duration: 0.65s;
+}
+
+.sparks span:nth-child(3){
+	margin-top: -0.5vmin;
+	margin-left: 0.75vmin;
+	animation-duration: 0.55s;
+}
+
+.sparks span:nth-child(4){
+	margin-top: -1.5vmin;
+	margin-left: 1.75vmin;
+	animation-duration: 0.8s;
+}
+
+.sparks span:nth-child(5){
+	margin-top: 1.5vmin;
+	margin-left: 2.5vmin;
+	animation-duration: 1.1s;
+}
+
+.theme-night .cable:hover + .box .sparks span {
+	animation-iteration-count: infinite;
+}
+
+.theme-night:has(.cable:hover) .window,
+.theme-night:has(.cable:hover) .door {
+	animation: light-off 4s ease 0s infinite;
+}
+
+.theme-night:has(.cable:hover) .level-1 .window {
+	animation-duration: 2.25s;
+}
+.theme-night:has(.cable:hover) .level-2 .window {
+	animation-duration: 1.7s;
+}
+
+@keyframes light-off {
+	5%, 20% {--window: rgb(6, 6, 48);}
+	12.5% { --window: inherit; }
+}
+
+.pumpkin {
+	width: 8vmin;
+	height: 6vmin;
+	right: 9.15vmin;
+	bottom: 15.125vmin;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transform: rotate(5deg);
+	animation: move-pumpkin 3s ease 0s 1; 
+}
+
+.pumpkin:before {
+	content: "";
+	position: absolute;
+	border: 0.51vmin solid var(--house);
+	width: 0.75vmin;
+	height: 1vmin;
+	top: -0.5vmin;
+	left: calc(50% - 0.25vmin);
+	border-right: 0.25vmin solid #fff0;
+	border-bottom-color: #fff0;
+	border-top-width: 0.25vmin;
+	border-radius: 0.75vmin;
+}
+
+.theme-night .pumpkin:hover, .theme-night .pumpkin:active {
+	animation: move-pumpkin 3s ease 0s infinite alternate; 
+}
+
+@keyframes move-pumpkin {
+	25% { transform: rotate(-9deg);}
+	75% { transform: rotate(8deg); }
+}
+
+.pumpkin span {
+	width: 2.5vmin;
+	height: 5.25vmin;
+	background: var(--house);
+	border-radius: 100%;
+}
+
+.pumpkin span + span {
+	height: 5vmin;
+	margin-left: 2.25vmin;
+}
+
+.pumpkin span + span + span {
+	margin-left: -2.25vmin;
+}
+
+.pumpkin span + span + span + span {
+	height: 4.5vmin;
+	margin-left: 4.5vmin;
+}
+
+.pumpkin span + span + span + span + span {
+	height: 4.5vmin;
+	margin-left: -4.5vmin;
+}
+
+.pumpkin .eyes {
+	width: 3.5vmin;
+	height: 1.5vmin;
+	top: 1.5vmin;
+}
+
+.pumpkin .eyes:before, .pumpkin .eyes:after {
+	content: "";
+	position: absolute;
+	width: 1.25vmin;
+	height: 1.25vmin;
+	background: radial-gradient(circle at 50% 100%, #f60,#fc0, #fff 30%, #0f0f41 40%);
+	clip-path: polygon(1% 99%, 11% 73%, 22% 48%, 33% 23%, 47% 0%, 61% 23%, 73% 49%, 86% 73%, 99% 99%, 75% 97%, 58% 95%, 50% 95%, 40% 95%, 22% 97%);
+	transform: rotate(-10deg);
+	background-size: 100% 200%;
+	background-repeat: no-repeat;
+	background-position: 0 0%;
+	transition: background-position 0.5s ease 0s;
+}
+
+.pumpkin .eyes:after {
+	left: 2.25vmin;
+	transform: rotate(10deg);
+}
+
+.theme-night .pumpkin:hover .eyes:before,
+.theme-night .pumpkin:hover .eyes:after,
+.theme-night .pumpkin:hover .nose {
+	animation: pumpkin-eyes 0.5s ease 0s 1, pumpkin-eyes-2 0.25s ease 0s infinite alternate;
+}
+
+.theme-night .pumpkin:hover .nose {
+	animation-duration: 0.5s, 0.35s;
+}
+
+@keyframes pumpkin-eyes {
+	100% { background-position: 0 100%;}
+}
+
+@keyframes pumpkin-eyes-2 {
+	0%, 100% { background-position: 0 100%;}
+	66% { background-position: 0 115%;}
+}
+
+.pumpkin .nose {
+	width: 1vmin;
+	height: 1vmin;
+	background: radial-gradient(circle at 50% 100%, #f60,#fc0, #fff 30%, #0f0f41 40%);
+	clip-path: polygon(1% 99%, 11% 73%, 22% 48%, 33% 23%, 47% 0%, 61% 23%, 73% 49%, 86% 73%, 99% 99%, 75% 97%, 58% 95%, 50% 95%, 40% 95%, 22% 97%);
+	transform: rotate(1deg);
+	background-size: 100% 200%;
+	background-repeat: no-repeat;
+	background-position: 0 0%;
+	transition: background-position 0.5s ease 0s;
+}
+
+.pumpkin .mouth {
+	width: 3.5vmin;
+	height: 1.5vmin;
+	top: 3.1vmin;
+	border-radius: 0 0 10vmin 10vmin;
+	background: radial-gradient(circle at 50% -1.25vmin, var(--house) 2vmin, #fff0 2vmin ), radial-gradient(circle at 50% 100%, #f60,#fc0, #fbff00 40%, #0f0f41 60%);
+	transform: rotate(1deg);
+	background-size: 100% 100%, 100% 300%;
+	background-repeat: no-repeat;
+	background-position: 0 0, 0 0%;
+	transition: background-position 0.5s ease 0s;
+}
+
+@keyframes pumpkin-mouth {
+	100% { background-position: 0 0, 0 150%;}
+}
+
+@keyframes pumpkin-mouth-2 {
+	0%, 100% { background-position: 0 0, 0 100%;}
+	66% { background-position: 0 0, 0 75%;}
+}
+
+.theme-night .pumpkin:hover .mouth, .theme-night .pumpkin:active .mouth {
+	animation: pumpkin-mouth 0.5s ease 0s 1, pumpkin-mouth-2 0.25s ease 0s infinite alternate;
+}
+
+.pumpkin .teeth {
+	width: 100%;
+	height: 100%;
+}
+
+.pumpkin .teeth:before {
+	content: "";
+	position: absolute;
+	width: 0.35vmin;
+	height: 0.5vmin;
+	background: var(--house);
+	left: 0.75vmin;
+	top: 0.2vmin;
+	box-shadow: 
+		1vmin 0.2vmin 0 0 var(--house), 
+		2vmin 0.01vmin 0 0 var(--house), 
+		1.5vmin 0.95vmin 0 0 var(--house), 
+		0.35vmin 0.85vmin 0 0 var(--house), 
+		-0.5vmin 0.5vmin 0 0 var(--house), 
+		2.45vmin 0.15vmin 0 0 var(--house) 
+}
+
+.clouds {
+    width: 100%;
+    height: 40vmin;
+    position: fixed;
+    z-index: 2;
+}
+
+.clouds span {
+    position: absolute;
+    margin-left: -40vmin;
+    width: 30vmin;
+    height: 18vmin;
+    background: #fff5;
+    filter: blur(4vmin);
+    border-radius: 70% 100% 93% 80% / 100% 69% 87% 82% ;
+    animation: move-clouds 40s linear infinite;
+}
+
+@keyframes move-clouds {
+    0% { margin-left: -40vmin; }
+    33% {transform: rotate(3deg); }
+    66% {transform: rotate(4deg); }
+    100% { margin-left: calc(100% + 40vmin);}
+}
+
+.clouds span:before,
+.clouds span:after{
+    content: "";
+    left: -4vmin;
+    position: absolute;
+    width: 14vmin;
+    height: 11vmin;
+    background: #fff2;
+    filter: blur(1vmin);
+    border-radius: 70% 100% 93% 80% / 100% 69% 87% 82% ;
+    box-shadow: -4vmin 2vmin 1vmin 0 #fff9;
+}
+
+.clouds span:after {
+    content: "";
+    left: 24vmin;
+    top: 10vmin;
+    position: absolute;
+    width: 12vmin;
+    height: 10vmin;
+    background: #fff2;
+    filter: blur(1vmin);
+    border-radius: 100% 69% 87% 82% / 70% 100% 93% 80% ;
+}
+
+.clouds span:nth-child(2) {
+    transform: scale(0.7) rotate(170deg);
+    animation-delay: -15s;
+    animation-duration: 50s;
+    height: 12vmin;
+    width: 40vmin;
+}
+
+.clouds span:nth-child(3) {
+    transform: scale(0.6) rotate(180deg);
+    animation-delay: -26s;
+    animation-duration: 35s;
+}
+
+.clouds span:nth-child(4) {
+    transform: scale(1.1) rotate(-10deg);
+    animation-delay: -33s;
+    animation-duration: 65s;
+}
