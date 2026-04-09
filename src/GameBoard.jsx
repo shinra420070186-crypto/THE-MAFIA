@@ -43,6 +43,7 @@ const FullScreenSpooky = ({ phase }) => {
   const isNight = phase.startsWith('night') || phase === 'night_transition';
   const [angles, setAngles] = useState({ sun: isNight ? 180 : 0, moon: isNight ? 0 : -180 });
   const prevIsNight = useRef(isNight);
+  const [activeZone, setActiveZone] = useState(null);
 
   useEffect(() => {
     if (isNight !== prevIsNight.current) {
@@ -50,6 +51,11 @@ const FullScreenSpooky = ({ phase }) => {
       prevIsNight.current = isNight;
     }
   }, [isNight]);
+
+  const handleTrigger = (zone, e) => {
+    if (e) e.stopPropagation();
+    setActiveZone(prev => prev === zone ? null : zone);
+  };
 
   const themeClass = isNight ? 'theme-night' : 'theme-day';
 
@@ -64,7 +70,7 @@ const FullScreenSpooky = ({ phase }) => {
       </div>
       <div className="content">
         <div className="level-0">
-          <div className="door">
+          <div className={`door trigger-zone ${activeZone === 'door' ? 'is-animating' : ''}`} onClick={(e) => handleTrigger('door', e)}>
             <div className="nosferatu"></div>
             <div className="logs">
               <span></span><span></span><span></span>
@@ -73,19 +79,19 @@ const FullScreenSpooky = ({ phase }) => {
           <div className="shining"></div>
         </div>
         <div className="level-1">
-          <div className="window">
+          <div className={`window trigger-zone ${activeZone === 'window1' ? 'is-animating' : ''}`} onClick={(e) => handleTrigger('window1', e)}>
             <div className="frankenstein"></div>
           </div>
           <div className="shining"></div>
         </div>
         <div className="level-2">
-          <div className="window">
+          <div className={`window trigger-zone ${activeZone === 'window2' ? 'is-animating' : ''}`} onClick={(e) => handleTrigger('window2', e)}>
             <div className="witch"></div>
           </div>
           <div className="shining"></div>
         </div>	
         <div className="balcony"></div>
-        <div className="bat-cat">
+        <div className={`bat-cat trigger-zone ${activeZone === 'batcat' ? 'is-animating' : ''}`} onClick={(e) => handleTrigger('batcat', e)}>
           <div className="body"></div>
           <div className="leg"></div>
           <div className="leg"></div>
@@ -114,7 +120,7 @@ const FullScreenSpooky = ({ phase }) => {
           </div>
         </div>
         <div className="roof-0">
-          <div className="window">
+          <div className={`window trigger-zone ${activeZone === 'roof0' ? 'is-animating' : ''}`} onClick={(e) => handleTrigger('roof0', e)}>
             <div className="phantom"></div>
             <div className="phantom"></div>
           </div>
@@ -128,7 +134,7 @@ const FullScreenSpooky = ({ phase }) => {
           </div>
         </div>
         <div className="flying-bat"></div>
-        <div className="fence">
+        <div className={`fence trigger-zone ${activeZone === 'fence1' ? 'is-animating' : ''}`} onClick={(e) => handleTrigger('fence1', e)}>
           <span></span><span></span>
           <div className="bat">
             <div className="head">
@@ -143,14 +149,14 @@ const FullScreenSpooky = ({ phase }) => {
           </div>
           <div className="chimney"></div>
         </div>
-        <div className="fence">
+        <div className={`fence trigger-zone ${activeZone === 'fence2' ? 'is-animating' : ''}`} onClick={(e) => handleTrigger('fence2', e)}>
           <span></span><span></span>
           <div className="tomb">RIP</div>
           <div className="zombie-hand"></div>
           <div className="stones"></div>
         </div>
         <div className="skeleton-floating"></div>
-        <div className="skeleton">
+        <div className={`skeleton trigger-zone ${activeZone === 'skeleton' ? 'is-animating' : ''}`} onClick={(e) => handleTrigger('skeleton', e)}>
           <div className="head">
             <div className="cranium"></div>
             <div className="nose"></div>
@@ -227,7 +233,7 @@ const FullScreenSpooky = ({ phase }) => {
             </div>
           </div>
         </div>
-        <div className="pumpkin">
+        <div className={`pumpkin trigger-zone ${activeZone === 'pumpkin' ? 'is-animating' : ''}`} onClick={(e) => handleTrigger('pumpkin', e)}>
           <span></span><span></span><span></span><span></span><span></span>
           <div className="eyes"></div>
           <div className="nose"></div>
@@ -356,7 +362,8 @@ export default function GameBoard() {
       <div className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out" style={{ opacity: isGalaxyPhase ? 1 : 0, zIndex: isGalaxyPhase ? 0 : -50, visibility: isGalaxyPhase ? 'visible' : 'hidden' }}>
         <MemoizedGalaxy />
       </div>
-      <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-700 ease-in-out" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
+      {/* Spooky Container Wrapper uses Flex layout to Perfectly Center the Fixed-Ratio Scene */}
+      <div className="fixed inset-0 w-full h-full flex items-center justify-center pointer-events-none transition-opacity duration-700 ease-in-out" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
         <FullScreenSpooky phase={state.phase} />
       </div>
 
