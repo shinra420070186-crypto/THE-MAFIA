@@ -5,7 +5,12 @@ export default function SpookyBackground() {
   return (
     <div className="scene-wrapper">
       <div className="sky">
-        <div className="moon"></div>
+        <div className="celestial-pivot sun-pivot">
+          <div className="sun"></div>
+        </div>
+        <div className="celestial-pivot moon-pivot">
+          <div className="moon"></div>
+        </div>
         <div className="clouds">
           <span></span><span></span><span></span><span></span>
         </div>
