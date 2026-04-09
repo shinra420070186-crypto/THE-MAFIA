@@ -70,7 +70,7 @@ const MemoizedGalaxy = React.memo(() => (
 // ─── FULL SCREEN SPOOKY HOUSE BACKGROUND ─────────────
 const FullScreenSpooky = ({ phase }) => {
   const isNight = phase.startsWith('night') || phase === 'night_transition';
-
+  
   const [angles, setAngles] = useState({ sun: isNight ? 180 : 0, moon: isNight ? 0 : -180 });
   const prevIsNight = useRef(isNight);
 
@@ -84,478 +84,89 @@ const FullScreenSpooky = ({ phase }) => {
     }
   }, [isNight]);
 
+  const themeClass = isNight ? 'theme-night' : 'theme-day';
+
   return (
-    <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+    <div className={`full-spooky-bg ${themeClass}`} style={{
+      '--sun-angle': angles.sun,
+      '--moon-angle': angles.moon
+    }}>
       <style>{`
-        /* ── SHARED RESET ── */
-        .bg-root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
-
-        /* ══════════════════════════════════════
-           NIGHT BACKGROUND  (haunted house party)
-        ══════════════════════════════════════ */
-        .night-bg {
-          position: absolute; inset: 0; width: 100%; height: 100%;
-          display: flex; align-items: flex-end; justify-content: center; align-content: flex-end;
-          background:
-            linear-gradient(238deg, #000, #fff0, #fff0),
-            linear-gradient(180deg, #000, #fff0, #fff0),
-            radial-gradient(circle at 50% 100%, #005eff, #6d006d, #38005e);
-          transition: opacity 5s ease-in-out;
-        }
-        .night-bg:after {
-          content: "";
-          position: fixed; width: 100%; height: 10vmin; z-index: -1; bottom: 0;
-          background:
-            radial-gradient(circle at calc(50% - 33vmin) calc(100% + 31vmin), #000000 40vmin, #fff0 calc(40vmin + 1px)),
-            radial-gradient(circle at calc(50% + 33vmin) calc(100% + 30vmin), #000000 40vmin, #fff0 calc(40vmin + 1px)),
-            radial-gradient(circle at 50% calc(100% + 43vmin), #000000 50vmin, #fff0 calc(50vmin + 1px));
-          background-repeat: no-repeat;
-        }
-
-        /* night sky stars */
-        .night-sky {
-          background: linear-gradient(0deg, #673ab78a, #3c3c3c94);
-          height: 100vh; z-index: -1; position: absolute; left: 0; width: 100vw;
-        }
-        .night-sky:after {
-          content: ""; position: absolute; width: 100vw; height: 100vh; top: 0;
-          background-image:
-            radial-gradient(2px 2px at 20px 30px, #484341, transparent),
-            radial-gradient(2px 2px at 43px 75px, #735454, transparent),
-            radial-gradient(2px 1px at 54px 184px, #828282, transparent),
-            radial-gradient(2px 2px at 93px 47px, #654b49, transparent),
-            radial-gradient(1px 1px at 148px 87px, #3a1919, transparent),
-            radial-gradient(2px 2px at 193px 137px, #a26662, transparent),
-            radial-gradient(1px 2px at 210px 154px, #805241, transparent),
-            radial-gradient(2px 2px at 243px 102px, #866356, transparent),
-            radial-gradient(2px 1px at 264px 184px, #794937, transparent),
-            radial-gradient(2px 2px at 293px 44px, #735454, transparent),
-            radial-gradient(1px 1px at 223px 62px, #ad968e, transparent),
-            radial-gradient(2px 2px at 249px 162px, #884228, transparent),
-            radial-gradient(2px 2px at 73px 99px, #442e26, transparent),
-            radial-gradient(1px 1px at 163px 42px, #403433, transparent),
-            linear-gradient(180deg, #fff0 10%, #000000 25%, #111 50%, #222 75%, #111 100%);
-          background-repeat: no-repeat, repeat;
-          background-size: 333px 263px, 333px 163px, 333px 163px, 333px 163px,
-            333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px, 333px 163px,
-            333px 163px, 333px 163px, 333px 163px, 333px 163px, 100% 100%;
-          opacity: 0.5; mix-blend-mode: color-burn;
-        }
-
-        /* night moon */
-        .nh-moon {
-          position: absolute; z-index: 2;
-          width: 20vmin; height: 20vmin;
-          left: 20vmin; top: 10vmin;
-          border-radius: 100%;
-          background: radial-gradient(circle at 50% 50%,#fdfdfd 0% 7vmin,#ffffff00 7.25vmin 100%),#fff;
-          box-shadow: 0 0 8em 4em #6493a9, 0 0 20px 5px #fdfdfd;
-        }
-        .nh-moon:before {
-          content: ""; background: radial-gradient(circle at 100% 60%,#ffffff00 0% 60%,#dddddd 75% 100%);
-          width: 100%; height: 100%; position: absolute; top: 0; left: 0; border-radius: 100%;
-        }
-        .nh-moon:after {
-          content: ""; background: radial-gradient(circle at 0% 40%,#efefef 0% 60%,#ededed 75% 100%);
-          width: 4.5vmin; height: 4.5vmin; position: absolute;
-          top: 20%; left: 20%; border-radius: 100%; filter: blur(2px);
-        }
-
-        /* night clouds */
-        .nh-clouds { width: 100%; height: 40vmin; position: fixed; z-index: 2; top: 0; }
-        .nh-clouds span {
-          position: absolute; margin-left: -40vmin; width: 30vmin; height: 18vmin;
-          background: #fff5; filter: blur(4vmin);
-          border-radius: 70% 100% 93% 80% / 100% 69% 87% 82%;
-          animation: nh-move-clouds 40s linear infinite;
-        }
-        @keyframes nh-move-clouds {
-          0% { margin-left: -40vmin; }
-          33% { transform: rotate(3deg); }
-          66% { transform: rotate(4deg); }
-          100% { margin-left: calc(100% + 40vmin); }
-        }
-        .nh-clouds span:before,.nh-clouds span:after {
-          content: ""; left: -4vmin; position: absolute;
-          width: 14vmin; height: 11vmin; background: #fff2; filter: blur(1vmin);
-          border-radius: 70% 100% 93% 80% / 100% 69% 87% 82%;
-          box-shadow: -4vmin 2vmin 1vmin 0 #fff9;
-        }
-        .nh-clouds span:after { content: ""; left: 24vmin; top: 10vmin; width: 12vmin; height: 10vmin; background: #fff2; filter: blur(1vmin); border-radius: 100% 69% 87% 82% / 70% 100% 93% 80%; }
-        .nh-clouds span:nth-child(2) { transform: scale(0.7) rotate(170deg); animation-delay: -15s; animation-duration: 50s; height: 12vmin; width: 40vmin; }
-        .nh-clouds span:nth-child(3) { transform: scale(0.6) rotate(180deg); animation-delay: -26s; animation-duration: 35s; }
-        .nh-clouds span:nth-child(4) { transform: scale(1.1) rotate(-10deg); animation-delay: -33s; animation-duration: 65s; }
-
-        /* haunted house content wrapper */
-        .nh-content {
-          width: 90vmin; height: 90vmin;
-          position: relative; perspective: 100vmin; perspective-origin: top;
-          bottom: 5vmin; flex-shrink: 0;
-        }
-        .nh-content * { position: absolute; transform-style: preserve-3d; }
-
-        /* CSS variables for house */
-        .nh-content {
-          --nh-gray: #1a191a; --nh-black: #080708; --nh-dark: #443847;
-          --nh-window: #ff8d00cf; --nh-house: #000000; --nh-bat: #070707;
-          --nh-bounce: linear(0 0%, 0 2.27%, 0.02 4.53%, 0.04 6.8%, 0.06 9.07%, 0.1 11.33%, 0.14 13.6%, 0.25 18.15%, 0.39 22.7%, 0.56 27.25%, 0.77 31.8%, 1 36.35%, 0.89 40.9%, 0.85 43.18%, 0.81 45.45%, 0.79 47.72%, 0.77 50%, 0.75 52.27%, 0.75 54.55%, 0.75 56.82%, 0.77 59.1%, 0.79 61.38%, 0.81 63.65%, 0.85 65.93%, 0.89 68.2%, 1 72.7%, 0.97 74.98%, 0.95 77.25%, 0.94 79.53%, 0.94 81.8%, 0.94 84.08%, 0.95 86.35%, 0.97 88.63%, 1 90.9%, 0.99 93.18%, 0.98 95.45%, 0.99 97.73%, 1 100%);
-        }
-
-        .nh-level-0 { width:30vmin;height:25vmin;background:var(--nh-house);bottom:0;left:22vmin;transform:rotateX(82deg) skewX(5deg);z-index:1; }
-        .nh-level-1 { width:16vmin;height:34vmin;background:var(--nh-house);bottom:3.75vmin;left:53vmin;transform:perspective(100vmin) rotateX(82deg) skewX(-10deg); }
-        .nh-level-2 { width:19vmin;height:35vmin;background:var(--nh-house);bottom:31.5vmin;left:29vmin;transform:perspective(150vmin) rotateX(45deg) skewX(2deg) rotate(2deg);clip-path:polygon(0% 85%,0% 0%,100% 0%,100% 94%,48% 57%);z-index:1;box-shadow:0.25vmin -0.5vmin 0.5vmin 0 #fff3 inset,0.5vmin -0.5vmin 1.5vmin 0 #fff2 inset; }
-        .nh-roof-0 { width:37vmin;height:23vmin;bottom:23.25vmin;left:18.75vmin;border:19vmin solid #0000;box-sizing:border-box;border-bottom:22vmin solid var(--nh-house);transform:skew(-8deg,-1deg) rotate(1.25deg);border-radius:0.5vmin; }
-        .nh-roof-1 { background:radial-gradient(circle at -9vmin 1vmin,#fff0 18vmin,#fff3 calc(18vmin + 1px) 18vmin,#fff0 19vmin 100%),radial-gradient(circle at -9vmin 1vmin,#fff0 18vmin,var(--nh-house) calc(18vmin + 1px)),radial-gradient(circle at 24.5vmin -5vmin,#fff0 25vmin,var(--nh-house) calc(25vmin + 1px)),#0000;width:21vmin;height:17vmin;bottom:31.75vmin;left:52vmin;transform:skew(-8deg,-1deg) rotate(2deg);border-radius:0.5vmin;background-size:calc(50% - 1vmin) 100%,calc(50% - 1vmin) 100%,calc(50% + 1vmin) 100%;background-repeat:no-repeat;background-position:0 0,0 0,99% 0; }
-        .nh-roof-2 { background:radial-gradient(circle at 34vmin -9vmin,#fff0 35vmin,var(--nh-house) calc(35vmin + 1px)),radial-gradient(circle at -18vmin 4vmin,#fff0 28vmin,#fff4 calc(28vmin + 1px),#fff0 28.75vmin),radial-gradient(circle at -18vmin 4vmin,#fff0 28vmin,var(--nh-house) calc(28vmin + 1px)),#0f00;width:34vmin;height:25vmin;bottom:63.9vmin;left:26vmin;transform:skew(-8deg,-1deg) rotate(1deg);border-radius:0.5vmin;background-size:calc(50% + 6.5vmin) 100%,calc(50% + 7vmin) 100%,calc(50% - 6.5vmin) 100%,calc(50% - 7vmin) 100%;background-repeat:no-repeat;background-position:99% 0,0 0,0 0; }
-
-        .nh-door { background:linear-gradient(183deg,#fff0 7.5vmin,var(--nh-house) calc(7.5vmin + 1px) 8vmin,#fff0 calc(8vmin + 1px) 0),linear-gradient(94deg,var(--nh-house) 0.75vmin,#fff0 calc(0.75vmin + 1px)),linear-gradient(-94deg,var(--nh-house) 0.75vmin,#fff0 calc(0.75vmin + 1px)),linear-gradient(-5deg,var(--nh-house) 0.5vmin,#fff0 calc(0.5vmin + 1px)),linear-gradient(86deg,#fff0 3.5vmin,var(--nh-house) calc(3.5vmin + 1px) 4vmin,#fff0 calc(4vmin + 1px)),linear-gradient(95deg,#fff0 7vmin,var(--nh-house) calc(7vmin + 1px) 7.5vmin,#fff0 calc(7.5vmin + 1px)),linear-gradient(92deg,#fff0 10vmin,var(--nh-house) calc(10vmin + 1px) 10.5vmin,#fff0 calc(10.5vmin + 1px)),radial-gradient(circle at 50% 87%,#fff0 5.65vmin,var(--nh-house) calc(5.65vmin + 1px)),radial-gradient(circle at 46% 87%,#fff0 5.65vmin,var(--nh-house) calc(5.65vmin + 1px)),linear-gradient(38deg,#fff0 4.25vmin,var(--nh-house) calc(4.25vmin + 1px) 4.75vmin,#fff0 calc(4.75vmin + 1px)),linear-gradient(87deg,#fff0 1vmin,var(--nh-house) calc(1vmin + 1px)),linear-gradient(123deg,#fff0 5vmin,var(--nh-house) calc(5vmin + 1px) 5.5vmin,#fff0 calc(5.5vmin + 1px)),linear-gradient(150deg,#fff0 7vmin,var(--nh-house) calc(7vmin + 1px) 7.5vmin,#fff0 calc(7.5vmin + 1px)),linear-gradient(180deg,var(--nh-window),var(--nh-window)),#fff;width:13vmin;height:20vmin;bottom:1.5vmin;left:8vmin;transform:skew(2deg,-2deg);border-radius:100% 100% 0.5vmin 0.5vmin;background-repeat:no-repeat;background-size:100% 100%,100% 100%,100% 100%,100% 100%,100% 65%,100% 64%,100% 63%,105% 38%,105% 38%,60% 39%,11% 39%,58% 39%,56% 39%;background-position:0 0,0 0,0 0,0 0,0 100%,0 100%,0 100%,0 0,0 0,0 0,50% 0,100% 0,100% 0;perspective:10000vmin;perspective-origin:top; }
-
-        .nh-window { width:8vmin;height:17vmin;background:linear-gradient(178deg,#fff0 0 12vmin,var(--nh-house) calc(12vmin + 1px) 12.4vmin,#fff0 calc(12.4vmin + 1px)),linear-gradient(183deg,#fff0 0 7vmin,var(--nh-house) calc(7vmin + 1px) 7.45vmin,#fff0 calc(7.45vmin + 1px)),linear-gradient(91deg,#fff0 0 3.65vmin,var(--nh-house) calc(3.65vmin + 1px) 4.1vmin,#fff0 calc(4.1vmin + 1px)),linear-gradient(180deg,var(--nh-window),var(--nh-window)),#fff;left:3.5vmin;top:8vmin;border-radius:4vmin 5vmin 0.1vmin 0.1vmin;overflow:hidden; }
-        .nh-level-1 .nh-window { --nh-window:#ff9900cf; }
-        .nh-level-2 .nh-window { --nh-window:#ff8100cf;transform:scale(0.75) rotateY(180deg) skewY(-2deg);top:1vmin;left:4.5vmin;border-radius:4vmin 5vmin 0.1vmin 0.1vmin;overflow:hidden;border-top:1px solid var(--nh-house); }
-        .nh-roof-0 .nh-window { --nh-window:#084461e0;--nh-light:#111;border-radius:100%;height:7vmin;width:7vmin;background:linear-gradient(183deg,#fff0 0 3.25vmin,var(--nh-house) calc(3.25vmin + 1px) 3.65vmin,#fff0 calc(3.65vmin + 1px)),linear-gradient(91deg,#fff0 0 3.25vmin,var(--nh-house) calc(3.25vmin + 1px) 3.65vmin,#fff0 calc(3.65vmin + 1px)),linear-gradient(180deg,var(--nh-light),var(--nh-window));left:-3vmin; }
-
-        .nh-balcony { width:12vmin;height:9vmin;background:linear-gradient(-101deg,#fff0 0 1.5vmin,var(--nh-house) calc(1.5vmin + 1px) 2.25vmin,#fff0 calc(2.25vmin + 1px)),linear-gradient(-98deg,#fff0 0 5.5vmin,var(--nh-house) calc(5.5vmin + 1px) 6.25vmin,#fff0 calc(6.25vmin + 1px)),linear-gradient(88deg,#fff0 0 4vmin,var(--nh-house) calc(4vmin + 1px) 4.75vmin,#fff0 calc(4.75vmin + 1px)),linear-gradient(85deg,#fff0 0 9vmin,var(--nh-house) calc(9vmin + 1px) 9.75vmin,#fff0 calc(9.75vmin + 1px)),linear-gradient(177deg,#fff0 1vmin,var(--nh-house) calc(1vmin + 1px) 2vmin,#fff0 calc(2vmin + 1px)),linear-gradient(183deg,#fff0 1vmin,var(--nh-house) calc(1vmin + 1px) 2vmin,#fff0 calc(2vmin + 1px));z-index:3;left:43vmin;top:34vmin;border-bottom:2vmin solid var(--nh-house);border-right:0.75vmin solid var(--nh-house);border-radius:0.25vmin;transform:skewX(-18deg) rotate(5deg);transition:transform 1s var(--nh-bounce) 0s;transform-origin:0 100%; }
-
-        .nh-shining { width:28.75vmin;height:2vmin;left:-28.8vmin;top:0.015vmin;transform:rotate(-49.3deg);transform-origin:100% 0;border-radius:0 0 2.5vmin 500%;box-shadow:0.5vmin 0.5vmin 0.5vmin 0 #fff2 inset; }
-        .nh-door + .nh-shining { transform:rotate(-90deg);filter:blur(2px);width:21.5vmin;left:-21.5vmin; }
-        .nh-level-1 .nh-shining { transform:rotate(-91deg);filter:blur(4px); }
-        .nh-level-2 .nh-shining { transform:rotate(-91deg);filter:blur(5px); }
-
-        .nh-chimney { left:21vmin;top:8vmin;width:7vmin;height:12vmin; }
-        .nh-chimney:after { content:"";position:absolute;border:1.5vmin solid #fff0;border-right:2vmin solid var(--nh-house);border-bottom:3vmin solid var(--nh-house);border-top:0;width:6vmin;height:6vmin;left:-4.75vmin;bottom:-1.85vmin;border-radius:5vmin 0vmin 6vmin; }
-
-        .nh-smoke { background:#f000;width:30vmin;height:75vmin;top:-62vmin;z-index:-1;overflow:hidden;left:11vmin;clip-path:polygon(42% 100%,24% 91%,0% 80%,0% 0%,100% 0%,100% 80%,78% 90%,48.5% 100%); }
-        .nh-smoke span { background:#fff2;width:5vmin;height:6vmin;border-radius:100%;bottom:-10vmin;filter:blur(1vmin);animation:nh-smoke-up 20s ease 0s infinite;left:10vmin; }
-        .nh-smoke span:nth-child(2){animation-delay:0.75s;animation-duration:16s;}
-        .nh-smoke span:nth-child(3){animation-delay:1.5s;animation-duration:12s;width:3vmin;height:4vmin;}
-        .nh-smoke span:nth-child(4){animation-delay:2.25s;animation-duration:18s;}
-        .nh-smoke span:nth-child(5){animation-delay:3.1s;animation-duration:21s;}
-        .nh-smoke span:nth-child(6){animation-delay:3.85s;animation-duration:23s;}
-        @keyframes nh-smoke-up { 0%{bottom:-10vmin;transform:scale(0.25);margin-left:1vmin;} 20%{transform:scale(0.5);} 100%{margin-left:5vmin;bottom:35vmin;transform:scale(4) rotate(1080deg);opacity:0;} }
-
-        .nh-fence { background:radial-gradient(circle at 55% 32vmin,var(--nh-house) 16vmin,#fff0 calc(16vmin + 1px));width:22vmin;height:22vmin;bottom:0;z-index:-1; }
-        .nh-fence:before { content:"";position:absolute;width:2vmin;height:18vmin;background:var(--nh-house);left:5vmin;top:5vmin;transform:skewY(30deg) rotate(-1deg);box-shadow:8vmin -5vmin 0 -0.25vmin var(--nh-house); }
-        .nh-fence:after { content:"";position:absolute;width:1.75vmin;height:16vmin;background:var(--nh-house);left:10vmin;top:4vmin;transform:skewY(-20deg) rotate(1deg);box-shadow:5vmin 3vmin 0 0.1vmin var(--nh-house); }
-        .nh-fence + .nh-fence { right:0; }
-        .nh-fence + .nh-fence:before { left:4vmin;top:6vmin;height:12vmin;transform:skewY(30deg) rotate(-7deg);box-shadow:5vmin -2vmin 0 -0.25vmin var(--nh-house); }
-        .nh-fence + .nh-fence:after { left:6.5vmin;top:7vmin;height:10vmin;transform:skewY(-23deg) rotate(-1deg);width:1.5vmin;box-shadow:5vmin 2vmin 0 -0.25vmin var(--nh-house),4.75vmin 3vmin 0 -0.25vmin var(--nh-house); }
-        .nh-fence span { background:var(--nh-house);width:15vmin;height:1.85vmin;top:7vmin;left:3vmin;transform:skewX(15deg) rotate(-10deg); }
-        .nh-fence span + span { width:15vmin;top:12.25vmin;left:2.5vmin;transform:rotate(-8deg) skewX(-18deg); }
-        .nh-fence + .nh-fence span { width:11vmin;top:8vmin;transform:rotate(3deg) skewX(-4deg);height:2vmin;left:2.5vmin; }
-        .nh-fence + .nh-fence span + span { top:12vmin;transform:rotate(-4deg) skewX(17deg);left:3.2vmin;width:10.2vmin; }
-
-        .nh-pumpkin { width:8vmin;height:6vmin;right:9.15vmin;bottom:15.125vmin;display:flex;align-items:center;justify-content:center;transform:rotate(5deg);animation:nh-move-pumpkin 3s ease 0s 1; }
-        .nh-pumpkin:before { content:"";position:absolute;border:0.51vmin solid var(--nh-house);width:0.75vmin;height:1vmin;top:-0.5vmin;left:calc(50% - 0.25vmin);border-right:0.25vmin solid #fff0;border-bottom-color:#fff0;border-top-width:0.25vmin;border-radius:0.75vmin; }
-        @keyframes nh-move-pumpkin { 25%{transform:rotate(-9deg);}75%{transform:rotate(8deg);} }
-        .nh-pumpkin span { width:2.5vmin;height:5.25vmin;background:var(--nh-house);border-radius:100%; }
-        .nh-pumpkin span+span{height:5vmin;margin-left:2.25vmin;}
-        .nh-pumpkin span+span+span{margin-left:-2.25vmin;}
-        .nh-pumpkin span+span+span+span{height:4.5vmin;margin-left:4.5vmin;}
-        .nh-pumpkin span+span+span+span+span{height:4.5vmin;margin-left:-4.5vmin;}
-
-        .nh-flying-bat { position:absolute;width:15vmin;height:14vmin;bottom:27vmin;left:12vmin;z-index:1; }
-
-        .nh-bat-cat { width:80vmin;height:40vmin;animation:nh-fly-move 1s ease 0s 1;z-index:2;transform:scale(0.2);left:18vmin;top:12vmin; }
-        @keyframes nh-fly-move { 25%{transform:translateX(-0.5vmin) scale(0.2);}53%{margin-top:0.5vmin;}86%{margin-top:-0.5vmin;}75%{transform:translateX(0.5vmin) scale(0.2);} }
-        .nh-bat-cat * { position:absolute;box-sizing:border-box; }
-        .nh-bat-cat .nh-bc-body { width:20vmin;height:20vmin;background:var(--nh-black);border-radius:8vmin 100%;top:16.5vmin;left:30vmin;transform:rotate(45deg) skew(-5deg,-5deg);box-shadow:1vmin -0.15vmin 0 0 var(--nh-gray) inset;z-index:2;transition:all 1s ease 0s; }
-        .nh-bat-cat .nh-bc-head { width:14vmin;height:13vmin;background:var(--nh-black);border-radius:90% 90% 100% 100%;top:7.25vmin;left:33vmin;box-shadow:1.2vmin 0.5vmin 0 0 inset var(--nh-gray);z-index:3; }
-        .nh-bat-cat .nh-bc-head:before,.nh-bat-cat .nh-bc-head:after { content:"";position:absolute;width:3.75vmin;height:4.25vmin;background:radial-gradient(circle at 60% 50%,var(--nh-house) 1.15vmin,#fff0 calc(1.15vmin + 1px)),#fff;border-radius:100%;bottom:4vmin;left:2.15vmin;transform:rotate(-10deg);animation:nh-eye-blink 5s ease 0s infinite; }
-        @keyframes nh-eye-blink { 0%,95%{max-height:4.25vmin;bottom:4vmin;}100%{max-height:0.25vmin;bottom:5vmin;} }
-        .nh-bat-cat .nh-bc-head::after { transform:rotate(10deg) rotateY(180deg);left:8vmin; }
-        .nh-bc-ears { width:18.25vmin;height:15vmin;left:31vmin;top:2vmin; }
-        .nh-bc-ears:before,.nh-bc-ears:after { content:"";position:absolute;width:13vmin;height:13vmin;left:-2.1vmin;top:1.5vmin;background:var(--nh-black);border-radius:0.5vmin 100%;transform:skew(-5deg,-5deg) rotate(19deg);box-shadow:1.25vmin -0.2vmin 0 0 var(--nh-gray) inset; }
-        .nh-bc-ears:after { left:7vmin;transform:rotate(69deg) skew(-5deg,-5deg);box-shadow:0.125vmin -1.5vmin 0 0 var(--nh-gray) inset; }
-        .nh-bat-cat .nh-bc-tail { width:10vmin;height:11vmin;border-radius:1vmin 9vmin;left:25vmin;top:24vmin;transform:rotate(23deg);transform-origin:100% 100%;border:1vmin solid #fff0;border-bottom:1vmin solid var(--nh-black);border-left:1.55vmin solid var(--nh-black);z-index:1;animation:nh-tail-move 2s ease-in-out 0s infinite alternate;transition:all 0.4s ease 0.5s; }
-        @keyframes nh-tail-move { 20%{transform:rotate(11deg);}72%{transform:rotate(7deg);} }
-        .nh-bat-cat .nh-bc-wings { width:80vmin;height:40vmin;z-index:-1; }
-        .nh-bat-cat .nh-bc-wing { background:#ffc10700;width:40vmin;height:23vmin;top:8vmin;transform-origin:90% 50%;opacity:1;animation:nh-stop-fly-right 1s linear 0s 1;animation-fill-mode:forwards; }
-        .nh-bat-cat .nh-bc-wing + .nh-bc-wing { transform:rotateY(180deg);left:7vmin;animation:nh-stop-fly-left 1s linear 0s 1;animation-fill-mode:forwards; }
-        @keyframes nh-stop-fly-right { 90%{opacity:1;}100%{transform:rotateZ(-90deg) scaleX(0.5) scaleY(0.75);opacity:0;} }
-        @keyframes nh-stop-fly-left { 90%{opacity:1;}100%{transform:rotateY(180deg) rotateZ(-90deg) scaleX(0.5) scaleY(0.75);opacity:0;} }
-        .nh-bc-leg { height:5vmin;background:var(--nh-black);box-shadow:0.75vmin 0 0 0 var(--nh-gray) inset;width:6vmin;border-radius:1vmin 1vmin 2.5vmin 2.5vmin;left:34vmin;top:32.5vmin;z-index:1;transform:rotate(5deg);transition:all 0.4s ease 0.25s; }
-        .nh-bc-leg + .nh-bc-leg { border-radius:2vmin 1vmin;left:41vmin;transform:rotate(-5deg); }
-
-        .nh-phantom { background:radial-gradient(circle at 60% 23%,#0e1d24 0.25vmin,#fff0 calc(0.25vmin + 1px)),radial-gradient(circle at 35% 25%,#0e1d24 0.25vmin,#fff0 calc(0.25vmin + 1px)),#ffffff10;width:3vmin;height:5vmin;border-radius:2vmin 2vmin 0 0;left:1vmin;top:1vmin;transform:skew(10deg,-10deg);clip-path:polygon(6% 90%,4% 66%,3% 56%,3% 48%,5% 35%,9% 22%,15% 13%,22% 8%,30% 4%,36% 3%,42% 3%,48% 4%,56% 6%,56% 8%,63% 9%,63% 9%,70% 13%,73% 17%,78% 24%,81% 28%,85% 36%,85% 38%,88% 44%,91% 51%,93% 62%,95% 74%,97% 88%,96% 89%,93% 88%,90% 87%,84% 88%,77% 90%,72% 91%,67% 93%,63% 92%,59% 92%,56% 91%,53% 90%,50% 91%,45% 94%,41% 96%,38% 96%,32% 96%,27% 94%,19% 96%,13% 97%,9% 98%,7% 99%,5% 98%,4% 96%,4% 96%,4% 93%);animation:nh-move-phantom 2s ease 0s infinite alternate; }
-        @keyframes nh-move-phantom { 0%{left:0.5vmin;transform:skew(10deg,-10deg)}20%,60%,80%{transform:rotate(8deg) skew(10deg,-10deg);}0%,40%,70%{transform:rotate(-7deg) skew(10deg,-10deg);}45%{left:3.5vmin;}50%{bottom:-5vmin;}100%{left:0.5vmin;transform:skew(10deg,-10deg)} }
-        .nh-phantom + .nh-phantom { transform:skew(-7deg,9deg) rotateY(180deg);animation-delay:-1s;animation-direction:reverse;animation-duration:2.1s;margin-top:-0.25vmin;width:3.5vmin;height:5.5vmin;animation:nh-move-phantom-2 2.03s ease -1s infinite alternate; }
-        @keyframes nh-move-phantom-2 { 0%{left:0.5vmin;transform:skew(10deg,-10deg) rotateY(180deg);}20%,60%,80%{transform:rotate(8deg) skew(10deg,-10deg) rotateY(180deg);}0%,40%,70%{transform:rotate(-7deg) skew(10deg,-10deg) rotateY(180deg);}45%{left:3.5vmin;}50%{bottom:-5vmin;}100%{left:0.5vmin;transform:skew(10deg,-10deg) rotateY(180deg);} }
-
-        .nh-witch { width:15vmin;height:18vmin;left:-9.5vmin;bottom:-0.15vmin;opacity:0.5;background:var(--nh-house);animation:nh-move-witch 4s ease 0s infinite alternate;box-sizing:border-box;clip-path:polygon(3% 55%,5% 55%,11% 55%,22% 56%,24% 57%,24% 55%,28% 56%,34% 53%,36% 51%,38% 48%,41% 42%,42% 41%,42% 38%,43% 36%,42% 36%,40% 38%,40% 38%,40% 36%,39% 33%,38% 33%,36% 33%,35% 34%,35% 33%,35% 32%,36% 30%,37% 29%,38% 27%,38% 26%,34% 23%,32% 21%,28% 17%,27% 14%,27% 12%,40% 20%,45% 17%,50% 14%,56% 10%,59% 8%,62% 8%,66% 8%,64% 9%,62% 10%,60% 13%,58% 15%,54% 18%,53% 18%,52% 24%,56% 25%,60% 27%,64% 27%,62% 28%,58% 29%,56% 30%,59% 32%,57% 31%,56% 33%,56% 32%,55% 33%,57% 33%,56% 33%,60% 36%,56% 36%,62% 37%,56% 38%,56% 40%,58% 42%,61% 45%,64% 48%,67% 52%,69% 54%,70% 56%,69% 58%,68% 59%,70% 60%,75% 60%,76% 57%,77% 56%,78% 55%,80% 56%,80% 56%,82% 57%,83% 56%,87% 56%,90% 56%,93% 56%,96% 55%,95% 56%,97% 57%,98% 60%,97% 64%,97% 67%,96% 70%,93% 69%,88% 68%,85% 67%,82% 66%,81% 66%,80% 67%,78% 66%,77% 66%,76% 66%,75% 65%,75% 63%,74% 62%,71% 61%,67% 60%,66% 61%,64% 61%,63% 62%,64% 65%,66% 67%,68% 70%,70% 72%,73% 73%,75% 75%,78% 77%,81% 78%,78% 79%,76% 80%,75% 82%,72% 81%,71% 82%,70% 82%,70% 82%,69% 81%,67% 81%,66% 79%,65% 79%,64% 78%,62% 78%,58% 78%,54% 78%,52% 77%,51% 77%,51% 77%,51% 78%,51% 79%,54% 82%,55% 84%,56% 86%,55% 86%,53% 87%,52% 89%,50% 90%,47% 92%,47% 92%,46% 91%,47% 91%,48% 90%,50% 89%,51% 87%,51% 84%,52% 84%,47% 78%,44% 75%,41% 73%,40% 79%,41% 83%,42% 85%,41% 85%,40% 84%,39% 85%,38% 86%,36% 88%,33% 89%,32% 89%,34% 87%,36% 86%,36% 84%,36% 83%,37% 82%,38% 80%,38% 74%,37% 70%,37% 68%,36% 67%,34% 66%,35% 64%,36% 62%,36% 59%,32% 59%,29% 58%,26% 59%,24% 58%,22% 57%,12% 56%,5% 56%,3% 55%); }
-        @keyframes nh-move-witch { 0%{left:1.5vmin;}25%{bottom:-4vmin}50%{left:-5vmin;}75%{bottom:2vmin;}100%{left:1.5vmin;} }
-
-        .nh-nosferatu { width:10vmin;height:12.5vmin;left:-4vmin;bottom:-0.15vmin;opacity:0.5;background:var(--nh-house);box-sizing:border-box;clip-path:polygon(75% 100%,69% 95%,66% 90%,62% 87%,60% 82%,58% 79%,57% 75%,57% 73%,58% 68%,59% 67%,59% 65%,59% 64%,59% 62%,60% 60%,60% 59%,61% 58%,61% 58%,61% 57%,62% 55.75%,67% 54.25%,70% 53.5%,73% 52%,75% 50.75%,77.5% 50%,78% 50%,79.5% 49%,79.5% 48.75%,82.5% 47.75%,83% 47.9%,84% 48%,86.25% 49%,88% 49.5%,90% 51%,89% 49%,88% 48%,86% 47%,84% 46%,83% 46%,83.5% 45.5%,85% 45.5%,88% 46%,89% 46.5%,90% 47%,91% 48%,91% 49%,91.5% 47%,91.5% 47%,91% 46%,89% 44.75%,86% 44%,83.5% 43.75%,83% 43.25%,84.15% 42.75%,86% 42.75%,89% 43.65%,90% 43.75%,91% 43.75%,92% 44.25%,92.5% 45%,92.5% 46.5%,93.5% 44%,92.75% 43%,90% 41.75%,88% 40.5%,85% 39.5%,84% 39.5%,82% 39.75%,81% 40%,80% 40%,79% 40.5%,78% 41%,77% 41.25%,76% 41.35%,74.5% 42.25%,72% 43%,69.5% 44%,70% 43%,70.5% 42%,71% 41%,71.75% 40%,72% 39%,71.75% 38%,71.5% 37%,72% 36%,72.2% 35%,72.5% 33%,73.25% 32%,74% 31%,74% 31%,75% 30%,76.5% 28.5%,78% 30%,78.5% 30.5%,79.2% 29%,79.5% 28%,79.6% 26%,79.25% 25%,79.1% 24%,80% 23%,80.2% 22%,80% 21%,81% 21%,81.35% 20.35%,80.95% 19.75%,80.5% 19.25%,80.4% 19%,80.5% 18.7%,80.65% 16%,80.5% 15%,79.75% 13%,78.75% 11%,78% 10%,76.75% 9%,74% 7%,73% 6.25%,71% 5.35%,69% 5%,68% 5%,67% 5.5%,66% 6%,65% 7%,64.75% 7.5%,64.5% 7.75%,64% 7.5%,63.25% 7.2%,62% 7%,61.25% 7.5%,60.5% 8%,59.5% 9%,58.5% 9.5%,57.5% 9.2%,56% 9.35%,55% 9.5%,52% 9%,50% 8.9%,47% 9%,44% 9.2%,42.5% 9.65%,41% 9.25%,40.5% 9.25%,39.5% 9.25%,38.5% 10%,36.5% 12%,35.25% 13%,34% 15%,33.75% 17%,33.25% 18%,32.5% 20%,30.5% 22%,29.5% 23%,27.25% 25%,27% 25.25%,25.75% 26%,24.7% 27%,23.8% 28%,23% 28.6%,22.25% 29.2%,20.7% 30.8%,20.1% 31.5%,20% 32%,19% 33%,18% 35%,17.25% 36%,17% 37%,17% 41%,18% 46%,18% 49%,18% 50%,18% 51%,19% 57%,19% 53%,19% 55%,18.7% 57%,18.6% 59%,19% 61%,19% 62%,19.5% 65%,19.7% 68%,19.6% 70%,19.5% 71%,18% 73%,17% 74%,15% 75%,14% 76%,12% 77%,11% 78%,10% 79%,9% 80%,8% 81%,7% 83%,7% 84.5%,8.3% 83%,9.3% 82%,10.75% 81%,12.2% 80%,14% 79%,15% 78%,17% 77.2%,18% 77.25%,17.5% 78%,16.5% 79%,15.25% 80%,14.5% 81%,13.5% 82%,13% 83%,12.25% 84%,11.7% 85%,11% 86%,11% 86%,9.27% 88%,9% 89%,9% 90%,10% 89%,11.55% 88%,12.5% 87%,13.5% 86%,15.3% 84%,16% 83%,18% 81%,20% 80%,19.75% 81%,19.5% 81.25%,19% 82%,18% 84%,16.7% 86%,15.7% 87%,15% 88%,15% 89%,16% 88%,18% 87%,19% 86%,20% 84%,21% 83.25%,22% 82%,22% 82%,23% 81%,26% 76%,29% 69%,30% 61%,29% 57%,29% 56%,29% 54%,28.75% 51%,29% 48%,28.8% 46%,29% 44%,29.6% 43.5%,30% 41.5%,29% 43%,31% 41%,32% 40%,32.8% 39.25%,34.5% 38.75%,33.25% 45%,33% 49%,32% 53%,31.8% 55%,30.2% 59%,29% 68%,27% 74%,25% 80%,22.65% 85%,19.85% 91%,19.5% 93%,18.25% 96%,16.75% 100%);animation:nh-move-nosferatu 10s linear(0 0%,0 1.8%,0.01 3.6%,0.03 6.35%,0.07 9.1%,0.13 11.4%,0.19 13.4%,0.27 15%,0.34 16.1%,0.54 18.35%,0.66 20.6%,0.72 22.4%,0.77 24.6%,0.81 27.3%,0.85 30.4%,0.88 35.1%,0.92 40.6%,0.94 47.2%,0.96 55%,0.98 64%,0.99 74.4%,1 86.4%,1 100%) 0s infinite; }
-        @keyframes nh-move-nosferatu { 0%{left:-4vmin;}45%{left:1.75vmin;}50%{bottom:0;}100%{left:-4vmin;} }
-
-        .nh-zombie-hand { width:5vmin;height:8vmin;left:12.75vmin;bottom:-2vmin;clip-path:polygon(24% 99%,30% 77%,32% 69%,33% 66%,34% 60%,32% 56%,27% 54%,25% 52%,22% 44%,22% 39%,21% 37%,16% 36%,15% 38%,11% 38%,6% 36%,5% 34%,7% 32%,10% 32%,12% 31%,14% 31%,16% 32%,20% 32%,25% 33%,28% 33%,29% 32%,30% 30%,28% 28%,25% 27%,23% 27%,20% 27%,17% 27%,16% 26%,17% 24%,18% 22%,19% 20%,24% 20%,28% 21%,33% 22%,35% 24%,36% 27%,38% 28%,42% 26%,42% 24%,41% 21%,38% 20%,33% 17%,31% 16%,28% 16%,26% 15%,27% 12%,29% 11%,33% 12%,36% 12%,37% 13%,39% 13%,42% 15%,45% 17%,48% 19%,49% 20%,50% 23%,53% 25%,53% 23%,53% 21%,52% 18%,52% 16%,52% 14%,48% 12%,46% 9%,44% 6%,45% 5%,48% 4%,49% 4%,52% 5%,54% 7%,58% 9%,59% 10%,60% 11%,61% 13%,63% 17%,64% 18%,66% 19%,67% 21%,67% 23%,67% 25%,66% 29%,66% 32%,68% 34%,68% 35%,70% 37%,72% 37%,74% 34%,76% 33%,77% 32%,76% 31%,76% 30%,77% 27%,81% 23%,85% 21%,88% 21%,92% 21%,93% 21%,94% 21%,94% 22%,92% 24%,92% 25%,91% 27%,90% 28%,92% 29%,92% 30%,93% 31%,94% 33%,94% 34%,91% 35%,89% 36%,88% 38%,85% 39%,84% 42%,84% 43%,83% 45%,80% 47%,75% 48%,72% 50%,68% 53%,66% 56%,64% 61%,64% 65%,63% 69%,64% 73%,64% 76%,66% 99%);background:var(--nh-house);transform-origin:75% 100%;transform:rotate(10deg);transition:bottom 1s ease 0s; }
-        .nh-tomb { width:7vmin;height:8vmin;left:6.5vmin;bottom:5.75vmin;background:var(--nh-house);clip-path:polygon(50% 0%,84% 15%,100% 100%,0% 100%,15% 15%);transform:rotateX(12deg) skew(-11deg,20deg);text-align:center;color:#3a1752;padding-top:2vmin;font-family:serif;font-weight:bold;font-size:1.75vmin;z-index:1; }
-
-        .nh-skeleton-floating { width:8vmin;height:20vmin;bottom:0vmin;left:5vmin;z-index:3; }
-        .nh-skeleton { --nh-bone:var(--nh-house);opacity:0.965;width:32vmin;height:60vmin;position:absolute;z-index:1;display:flex;justify-content:center;transform:scale(0.375);left:-7vmin;bottom:-19.5vmin;animation:nh-floating-down 2s cubic-bezier(0.46,0.03,0.52,0.96) 0s 1; }
-        @keyframes nh-move-frankenstein { 0%{left:-6.5vmin;}20%,60%,80%{transform:rotate(5deg)}0%,40%,70%{transform:rotate(-5deg)}45%{left:-5.5vmin;}50%{bottom:-5vmin;}100%{left:-6.5vmin;} }
-        .nh-skeleton * { animation-play-state:paused !important; }
-        @keyframes nh-floating-down { 0%{margin-bottom:0vmin;margin-left:0vmin}25%{margin-bottom:2vmin;}33%{margin-left:-3vmin;}66%{margin-left:1vmin;}75%{margin-bottom:1vmin;}100%{margin-bottom:0vmin;margin-left:0vmin;} }
-        .nh-skeleton div { position:absolute; }
-        .nh-sk-head { width:13vmin;height:17vmin;top:4.25vmin;animation:nh-swinging-right 0.55s ease-in-out 0s infinite alternate;transform-origin:50% 75%; }
-        @keyframes nh-swinging-left { 0%{transform:rotate(-5deg);}100%{transform:rotate(5deg);} }
-        @keyframes nh-swinging-right { 0%{transform:rotateY(180deg) rotate(5deg);}100%{transform:rotateY(180deg) rotate(-5deg);} }
-        .nh-cranium { width:12vmin;height:13vmin;left:0.5vmin;top:0.25vmin;border-radius:6vmin 6vmin 4.5vmin 4.5vmin;background:radial-gradient(circle at 50% 74%,#fff0 9vmin,#fff6 100%),conic-gradient(from -24deg at 100% 75%,var(--nh-bone) 0 45deg,#fff0 0 100%),conic-gradient(from -24deg at 0% 75%,var(--nh-bone) 0 45deg,#fff0 0 100%),conic-gradient(from -24deg at 50% 75%,var(--nh-bone) 0 45deg,#fff0 0 100%),linear-gradient(180deg,var(--nh-bone) 0 59%,#fff0 0 90%,var(--nh-bone) 0 100%),radial-gradient(circle at 75% 73%,#fff0 0 1.75vmin,var(--nh-bone) calc(1.75vmin + 1px) 3vmin,#fff0 0 100%),radial-gradient(circle at 25% 73%,#fff0 0 1.75vmin,var(--nh-bone) calc(1.75vmin + 1px) 3vmin,#fff0 0 100%); }
-        .nh-sk-neck { width:4vmin;height:3vmin;top:20vmin;margin-left:-0.25vmin; }
-        .nh-sk-torso { width:10vmin;height:16vmin;top:21.5vmin;margin-left:-0.25vmin;z-index:2; }
-        .nh-sk-arms { width:28vmin;height:18vmin;top:22.5vmin;z-index:2; }
-        .nh-sk-arm { width:3.4vmin;height:20vmin;transform:rotate(3deg);left:7.25vmin;top:-0.5vmin;transform-origin:50% 1vmin;animation:nh-swinging-left 0.55s ease-in-out 0s infinite alternate; }
-        .nh-sk-arm + .nh-sk-arm { transform:rotateY(180deg) rotate(3deg);left:17.25vmin;animation:nh-swinging-right 0.55s ease-in-out 0s infinite alternate;transform-origin:55% 1vmin; }
-        .nh-sk-legs { width:15vmin;height:21vmin;top:37.5vmin;z-index:-1;margin-left:-0.2vmin; }
-        .nh-sk-leg { width:4.25vmin;height:19vmin;transform:rotate(3deg);left:2.65vmin;top:-1vmin;border-radius:1px 1px 30% 40%;transform-origin:50% 1vmin;animation:nh-swinging-left 0.55s ease-in-out 0s infinite alternate; }
-        .nh-sk-leg + .nh-sk-leg { transform:rotateY(180deg) rotate(3deg);left:8vmin;animation:nh-swinging-right 0.55s ease-in-out 0s infinite alternate;transform-origin:55% 1vmin; }
-
-        .nh-electricity { width:50vmin;height:52vmin;bottom:0;left:-5vmin;z-index:-2; }
-        .nh-pole { background:var(--nh-house);width:1.75vmin;height:60vmin;left:1vmin;bottom:-2vmin;transform:skew(-2deg,25deg) rotate(3deg);border-radius:0.25vmin; }
-
-        /* ══════════════════════════════════════
-           DAY BACKGROUND
-        ══════════════════════════════════════ */
-        .day-bg {
-          position: absolute; inset: 0; width: 100%; height: 100%;
-          transition: opacity 5s ease-in-out;
+        .full-spooky-bg {
+          position: fixed;
+          inset: 0;
+          width: 100vw;
+          height: 100vh;
+          z-index: 0;
+          pointer-events: none;
+          transition: background-color 5s ease-in-out;
+          background-color: var(--sky-color);
           overflow: hidden;
-        }
-        /* Sky gradient — blue day sky */
-        .day-sky {
-          position: absolute; inset: 0;
-          background: linear-gradient(180deg, #1a6bb5 0%, #5ba4e5 40%, #87ceeb 70%, #b8e4f9 100%);
-        }
-        /* Day ground */
-        .day-ground {
-          position: absolute; bottom: 0; left: -5%; width: 110%; height: 22%;
-          background: linear-gradient(180deg, #2d5a1b 0%, #1a3a0a 100%);
-          border-radius: 50% 50% 0 0 / 20px 20px 0 0;
-          z-index: 5;
-        }
-        /* Sun arc pivot — same mechanic as original */
-        .day-sun-pivot {
-          position: absolute; bottom: 0; left: 50%; width: 0; height: 0; z-index: 3;
-          transition: transform 5s ease-in-out;
-          transform: rotate(calc(var(--day-sun-angle) * 1deg));
-        }
-        .day-sun-body {
-          position: absolute;
-          left: -40px; top: calc(-1 * var(--day-arc-radius));
-          width: 80px; height: 80px;
-          border-radius: 50%;
-          background: radial-gradient(circle, #fffde7 0%, #FFD700 40%, #FFA500 100%);
-          box-shadow: 0 0 40px 20px rgba(255,215,0,0.5), 0 0 80px 40px rgba(255,165,0,0.2);
-          transform: rotate(calc(var(--day-sun-angle) * -1deg));
-          transition: transform 5s ease-in-out;
+          --celestial-scale: 1;
+          --arc-radius: 85vh;
         }
         @media (max-width: 768px) {
-          :root { --day-arc-radius: 70vh; }
-          .day-sun-body { width: 55px; height: 55px; left: -27px; }
+          .full-spooky-bg { --celestial-scale: 0.6; --arc-radius: 75vh; }
         }
-        /* Sun rays */
-        .day-sun-rays {
-          position: absolute; left: -40px; top: calc(-1 * var(--day-arc-radius));
-          width: 80px; height: 80px;
-          transform: rotate(calc(var(--day-sun-angle) * -1deg));
-          transition: transform 5s ease-in-out;
-          animation: day-spin-rays 20s linear infinite;
-        }
-        @keyframes day-spin-rays { 100% { transform: rotate(calc(var(--day-sun-angle) * -1deg + 360deg)); } }
-        .day-sun-rays:before {
-          content: "";
-          position: absolute;
-          inset: -25px;
-          background: repeating-conic-gradient(rgba(255,215,0,0.3) 0deg 10deg, transparent 10deg 30deg);
-          border-radius: 50%;
-        }
-        /* Day clouds */
-        .day-cloud {
-          position: absolute;
-          background: rgba(255,255,255,0.9);
-          border-radius: 50%;
-          filter: blur(3px);
-        }
-        .day-cloud-1 { width: 120px; height: 45px; top: 12%; animation: day-cloud-drift 35s linear infinite; left: -150px; }
-        .day-cloud-2 { width: 90px; height: 35px; top: 20%; animation: day-cloud-drift 50s linear infinite; left: -120px; animation-delay: -18s; }
-        .day-cloud-3 { width: 150px; height: 50px; top: 8%; animation: day-cloud-drift 42s linear infinite; left: -180px; animation-delay: -30s; }
-        .day-cloud-4 { width: 80px; height: 30px; top: 25%; animation: day-cloud-drift 28s linear infinite; left: -100px; animation-delay: -10s; }
-        @keyframes day-cloud-drift { 0%{left:-200px;} 100%{left:calc(100vw + 200px);} }
-        /* cloud puffs */
-        .day-cloud:before,.day-cloud:after { content:"";position:absolute;background:rgba(255,255,255,0.95);border-radius:50%;filter:blur(2px); }
-        .day-cloud-1:before { width:70px;height:60px;top:-25px;left:20px; }
-        .day-cloud-1:after { width:55px;height:50px;top:-20px;left:55px; }
-        .day-cloud-2:before { width:55px;height:50px;top:-20px;left:15px; }
-        .day-cloud-2:after { width:40px;height:40px;top:-15px;left:45px; }
-        .day-cloud-3:before { width:90px;height:70px;top:-30px;left:25px; }
-        .day-cloud-3:after { width:70px;height:60px;top:-25px;left:65px; }
-        .day-cloud-4:before { width:50px;height:45px;top:-18px;left:12px; }
-        .day-cloud-4:after { width:40px;height:35px;top:-14px;left:40px; }
+        .full-spooky-bg.theme-night { --sky-color: #212f3c; --window-color: #ffd166; --rain-opacity: 1; }
+        .full-spooky-bg.theme-day { --sky-color: #5b92e5; --window-color: #111; --rain-opacity: 0; }
 
-        /* Day house — same spooky silhouette but slightly more visible */
-        .day-house-wrap {
-          position: absolute; bottom: 20%; left: 50%;
-          transform: translateX(-50%) scale(1.6);
-          z-index: 6;
-        }
-        @media (max-width: 768px) { .day-house-wrap { transform: translateX(-50%) scale(1.1); bottom: 21%; } }
-        .day-house { position: relative; width: 120px; height: 150px; background-color: #1a1a1a; transform: rotate(5deg); }
-        .day-house:before { content:"";position:absolute;width:0;height:0;border-bottom:30px solid #1a1a1a;border-right:50px solid transparent;left:115px;top:70px;transform:rotate(5deg); }
-        .day-house:after { content:"";position:absolute;width:5px;height:65px;background-color:#1a1a1a;left:145px;top:95px; }
-        .day-porch { position:absolute;width:30px;height:100px;background-color:#1a1a1a;left:-20px;top:55px;transform:rotate(-10deg); }
-        .day-porch:before { content:"";position:absolute;width:0;height:0;border-bottom:20px solid #1a1a1a;border-left:40px solid transparent;left:-35px;top:45px; }
-        .day-porch:after { content:"";position:absolute;width:0;height:0;border-left:20px solid transparent;border-right:20px solid transparent;border-bottom:30px solid #1a1a1a;left:-5px;top:-25px; }
-        .day-first-floor { position:absolute;transform:rotate(-10deg);background-color:#1a1a1a;width:5px;height:45px;left:-37px;top:125px; }
-        .day-first-floor:before { content:"";position:absolute;background-color:#1a1a1a;width:85px;height:90px;top:-150px;left:50px; }
-        .day-first-floor:after { content:"";position:absolute;border-left:52px solid transparent;border-right:52px solid transparent;border-bottom:50px solid #1a1a1a;top:-199px;left:40px; }
-        .day-second-floor { position:absolute;background-color:#1a1a1a;width:35px;height:100px;transform:rotate(3deg);top:-70px;left:70px; }
-        .day-second-floor:before { content:"";position:absolute;background-color:#1a1a1a;width:20px;height:100px;left:33px;top:40px;transform:rotate(-3deg); }
-        .day-second-floor:after { content:"";position:absolute;width:0;height:0;border-left:25px solid transparent;border-right:25px solid transparent;border-bottom:30px solid #1a1a1a;top:12px;left:15px; }
-        .day-roof { position:absolute;width:0;height:0;border-left:25px solid transparent;border-right:25px solid transparent;border-bottom:30px solid #1a1a1a;left:65px;top:-95px; }
-        .day-door { position:absolute;background-color:#111;width:30px;height:50px;transform:rotate(-5deg);border-radius:30px 30px 0 0;top:90px;left:40px; }
-        .day-big-window { position:absolute;background-color:#333;border-radius:30px 30px 0 0;transform:rotate(-7deg);width:30px;height:40px;top:-35px;left:10px; }
-        /* birds in the day sky */
-        .day-bird { position:absolute;z-index:4;animation:day-bird-fly linear infinite; }
-        .day-bird:before,.day-bird:after { content:"";position:absolute;width:12px;height:6px;border-top:2px solid rgba(30,30,30,0.7);border-radius:50% 50% 0 0;border-right:2px solid rgba(30,30,30,0.7); }
-        .day-bird:after { left:10px;transform:scaleX(-1); }
-        .day-bird-1 { top:15%;left:-50px;animation-duration:18s;animation-delay:-5s; }
-        .day-bird-2 { top:22%;left:-50px;animation-duration:24s;animation-delay:-12s;transform:scale(0.7); }
-        .day-bird-3 { top:10%;left:-50px;animation-duration:15s;animation-delay:-8s;transform:scale(0.85); }
-        @keyframes day-bird-fly { 0%{left:-60px;}100%{left:calc(100vw + 60px);} }
-        /* Day mood ambient glow at bottom */
-        .day-ambient { position:absolute;bottom:15%;left:0;right:0;height:30%;background:radial-gradient(ellipse at 50% 100%,rgba(255,200,50,0.15) 0%,transparent 70%);z-index:4;pointer-events:none; }
+        .celestial-pivot { position: absolute; top: 100vh; left: 50%; width: 0; height: 0; z-index: 1; }
+        .sun-pivot { transition: transform 5s ease-in-out; transform: rotate(calc(var(--sun-angle) * 1deg)); }
+        .moon-pivot { transition: transform 5s ease-in-out; transform: rotate(calc(var(--moon-angle) * 1deg)); }
+
+        .celestial-body { position: absolute; left: -100px; top: calc(-1 * var(--arc-radius)); width: 200px; height: 200px; border-radius: 50%; }
+        
+        .moon { background-color: #95a5a6; box-shadow: inset 7px -7px 0 rgba(0, 0, 0, 0.09); transition: transform 5s ease-in-out; transform: scale(var(--celestial-scale)) rotate(calc(var(--moon-angle) * -1deg)); }
+        .moon:before, .moon:after { content: ""; position: absolute; border-radius: 50%; background-color: rgba(0, 0, 0, 0.09); box-shadow: inset -5px 5px 0 rgba(0, 0, 0, 0.09); }
+        .moon:before { width: 30px; height: 30px; top: 50px; left: 45px; }
+        .moon:after { width: 40px; height: 40px; top: 100px; left: 30px; }
+
+        .sun { background-color: #FFD700; box-shadow: inset 7px -7px 0 rgba(200, 100, 0, 0.2), 0 0 50px rgba(255, 215, 0, 0.6); transition: transform 5s ease-in-out; transform: scale(var(--celestial-scale)) rotate(calc(var(--sun-angle) * -1deg)); }
+        .sun:before, .sun:after { content: ""; position: absolute; border-radius: 50%; background-color: rgba(255, 255, 255, 0.25); box-shadow: inset -5px 5px 0 rgba(255, 255, 255, 0.1); }
+        .sun:before { width: 30px; height: 30px; top: 50px; left: 45px; }
+        .sun:after { width: 40px; height: 40px; top: 100px; left: 30px; }
+
+        .ground { position: absolute; bottom: 0; left: -10vw; width: 120vw; height: 25vh; background-color: #000; z-index: 9; border-radius: 50% 50% 0 0 / 30px 30px 0 0; }
+        .house-wrapper { position: absolute; bottom: 22vh; left: 50%; transform: translateX(-50%) scale(1.6); z-index: 10; }
+        @media (max-width: 768px) { .house-wrapper { transform: translateX(-50%) scale(1.2); bottom: 23vh; } }
+
+        .house { position: relative; width: 120px; height: 150px; background-color: black; transform: rotate(5deg); }
+        .house:before { content: ""; position: absolute; width: 0; height: 0; border-bottom: 30px solid black; border-right: 50px solid transparent; left: 115px; top: 70px; transform: rotate(5deg); }
+        .house:after { content: ""; position: absolute; width: 5px; height: 65px; background-color: black; left: 145px; top: 95px; }
+        .porch { position: absolute; width: 30px; height: 100px; background-color: black; left: -20px; top: 55px; transform: rotate(-10deg); }
+        .porch:before { content: ""; position: absolute; width: 0; height: 0; border-bottom: 20px solid black; border-left: 40px solid transparent; left: -35px; top: 45px; }
+        .porch:after { content: ""; position: absolute; width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 30px solid black; left: -5px; top: -25px; }
+        .first-floor { position: absolute; transform: rotate(-10deg); background-color: black; width: 5px; height: 45px; left: -37px; top: 125px; }
+        .first-floor:before { content: ""; position: absolute; background-color: #000; width: 85px; height: 90px; top: -150px; left: 50px; }
+        .first-floor:after { content: ""; position: absolute; border-left: 52px solid transparent; border-right: 52px solid transparent; border-bottom: 50px solid black; top: -199px; left: 40px; }
+        .second-floor { position: absolute; background-color: black; width: 35px; height: 100px; transform: rotate(3deg); top: -70px; left: 70px; }
+        .second-floor:before { content: ""; position: absolute; background-color: black; width: 20px; height: 100px; left: 33px; top: 40px; transform: rotate(-3deg); }
+        .second-floor:after { content: ""; position: absolute; width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid black; top: 12px; left: 15px; }
+        .roof { position: absolute; width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 30px solid black; left: 65px; top: -95px; }
+        .roof:before { content: ""; position: absolute; width: 6px; height: 20px; background-color: black; top: 5px; left: 10px; box-shadow: 20px 35px black; }
+        .roof:after { content: ""; position: absolute; width: 6px; height: 20px; background-color: black; transform: rotate(-10deg); left: -110px; top: 35px; box-shadow: -27px 97px black; }
+        .door { position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out; width: 30px; height: 50px; transform: rotate(-5deg); border-radius: 30px 30px 0 0; box-shadow: inset -10px 5px rgba(0, 0, 0, 0.5); top: 90px; left: 40px; }
+        .door:before { content: ""; position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out; border-radius: 30px 30px 0 0; box-shadow: inset -5px 2px rgba(0, 0, 0, 0.5); width: 20px; height: 30px; left: -40px; transform: rotate(-3deg); }
+        .door:after { content: ""; position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out; box-shadow: inset -5px 2px rgba(0, 0, 0, 0.5); border-radius: 30px 30px 0 0; width: 20px; height: 30px; left: 45px; transform: rotate(3deg); }
+        .small-windows { position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out; border-radius: 30px 30px 0 0; width: 13px; height: 25px; left: 100px; top: -20px; box-shadow: -19px -40px var(--window-color), inset -4px 2px rgba(0, 0, 0, 0.5); }
+        .small-windows:before { content: ""; position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out, box-shadow 5s ease-in-out; border-radius: 30px 30px 0 0; width: 13px; height: 25px; transform: rotate(-7deg); left: -60px; top: 50px; box-shadow: -60px 20px var(--window-color); }
+        .big-window { position: absolute; background-color: var(--window-color); transition: background-color 5s ease-in-out; border-radius: 30px 30px 0 0; transform: rotate(-7deg); width: 30px; height: 40px; top: -35px; left: 10px; }
+        .big-window:before, .big-window:after { content: ""; position: absolute; background-color: black; }
+        .big-window:before { height: 40px; width: 2px; left: 15px; box-shadow: 13px 55px black, -47px 80px black, -32px 120px black; }
+        .big-window:after { height: 2px; width: 40px; top: 22px; box-shadow: 10px 58px black, -45px 78px black, -30px 120px black; }
+        .frames { position: absolute; width: 2px; height: 40px; background-color: black; top: -65px; left: 86.5px; box-shadow: 19px 40px black, 7px 150px black; }
+        .frames:before { content: ""; position: absolute; height: 2px; width: 30px; background-color: black; top: 17px; left: -10px; box-shadow: 10px 40px black, 5px 150px black; }
+        .rain-container { position: absolute; inset: 0; z-index: 5; opacity: var(--rain-opacity); transition: opacity 5s ease-in-out; overflow: hidden; }
+        .dropOne, .dropTwo, .dropThree, .dropFour, .dropFive, .dropSix, .dropSeven, .dropEight, .dropNine, .dropTen { position: absolute; background-color: rgba(211, 211, 211, 0.3); height: 10px; width: 1px; top: 0; box-shadow: 0 -270px rgba(211, 211, 211, 0.3), -50px -50px rgba(211, 211, 211, 0.3), -50px -150px rgba(211, 211, 211, 0.3), 50px -395px rgba(211, 211, 211, 0.3), 50px -200px rgba(211, 211, 211, 0.3), 50px -100px rgba(211, 211, 211, 0.3), 100px -400px rgba(211, 211, 211, 0.3), 100px -320px rgba(211, 211, 211, 0.3), 100px -150px rgba(211, 211, 211, 0.3), 150px -200px rgba(211, 211, 211, 0.3), 200px -100px rgba(211, 211, 211, 0.3), 200px -370px rgba(211, 211, 211, 0.3), 250px -330px rgba(211, 211, 211, 0.3), 250px -220px rgba(211, 211, 211, 0.3), 300px -70px rgba(211, 211, 211, 0.3), 300px -140px rgba(211, 211, 211, 0.3), 300px -300px rgba(211, 211, 211, 0.3); }
+        .dropOne { left: 10%; animation: rainAnim 1.5s linear infinite; } .dropTwo { left: 20%; animation: rainAnim 1.2s linear infinite; } .dropThree { left: 30%; animation: rainAnim 1.7s linear infinite; } .dropFour { left: 40%; animation: rainAnim 1.4s linear infinite; } .dropFive { left: 50%; animation: rainAnim 1.3s linear infinite; } .dropSix { left: 60%; animation: rainAnim 1.6s linear infinite; } .dropSeven { left: 70%; animation: rainAnim 1.1s linear infinite; } .dropEight { left: 80%; animation: rainAnim 1.8s linear infinite; } .dropNine { left: 90%; animation: rainAnim 1.4s linear infinite; } .dropTen { left: 95%; animation: rainAnim 1.5s linear infinite; }
+        @keyframes rainAnim { 0% { transform: translateY(-200px); } 100% { transform: translateY(120vh); } }
       `}</style>
-
-      {/* ── NIGHT LAYER ── */}
-      <div className="night-bg" style={{ opacity: isNight ? 1 : 0, transition: 'opacity 5s ease-in-out', pointerEvents: 'none' }}>
-        <div className="night-sky"></div>
-        <div className="nh-clouds">
-          <span></span><span></span><span></span><span></span>
-        </div>
-        <div className="nh-moon"></div>
-        <div className="nh-content">
-          <div className="nh-level-0">
-            <div className="nh-door"></div>
-            <div className="nh-nosferatu"></div>
-            <div className="nh-shining"></div>
-          </div>
-          <div className="nh-level-1">
-            <div className="nh-window">
-              <div className="nh-frankenstein" style={{width:'20vmin',height:'20vmin',left:'-6.5vmin',bottom:'-6.25vmin',opacity:0.5,background:'var(--nh-house)',boxSizing:'border-box',animation:'nh-move-frankenstein 8s ease 0s infinite alternate',transformOrigin:'50% 100%',clipPath:'polygon(29% 87%,31% 82%,32% 82%,38% 85%,39% 83%,41% 81%,42% 79%,46% 76%,49% 68%,49% 64%,50% 59%,51% 57%,52% 55%,52% 52%,50% 51%,49% 51%,51% 48%,52% 45%,53% 42%,54% 39%,54% 38%,53% 37%,52% 38%,51% 40%,50% 40%,48% 39%,46% 37%,45% 38%,44% 38%,43% 38%,41% 42%,40% 42%,40% 40%,41% 38%,40% 39%,38% 40%,37% 42%,36% 41%,36% 41%,35% 40%,34% 40%,35% 38%,38% 36%,40% 35%,43% 34%,43% 33%,45% 33%,47% 32%,47% 31%,46% 30%,43% 30%,39% 30%,37% 30%,37% 32%,36% 30%,36% 28%,34% 27%,31% 27%,30% 27%,28% 28%,25% 27%,24% 27%,24% 26%,23% 25%,22% 25%,22% 24%,23% 23%,22% 22%,24% 22%,26% 23%,28% 23%,30% 23%,33% 24%,35% 24%,36% 23%,37% 23%,40% 23%,45% 23%,50% 23%,53% 23%,54% 21%,55% 21%,56% 21%,58% 21%,60% 21%,60% 19%,62% 19%,62% 17%,60% 17%,59% 17%,58% 16%,58% 15%,59% 14%,58% 13%,59% 12%,59% 11%,58% 11%,57% 11%,57% 10%,58% 9%,59% 8%,59% 7%,58% 7%,58% 6%,59% 5%,59% 1%,60% 0%,61% 0%,63% 0%,64% 1%,65% 1%,66% 1%,67% 2%,68% 1%,69% 3%,70% 2%,71% 3%,72% 3%,73% 4%,72% 5%,72% 8%,72% 10%,70% 12%,71% 14%,69% 14%,69% 15%,70% 16%,69% 16%,68% 16%,69% 17%,69% 18%,70% 19%,72% 20%,73% 21%,74% 23%,74% 24%,74% 27%,74% 31%,74% 34%,73% 38%,73% 42%,73% 45%,73% 47%,73% 49%,73% 50%,73% 51%,73% 53%,73% 54%,74% 56%,72% 57%,71% 57%,71% 58%,70% 61%,70% 63%,70% 64%,71% 66%,71% 68%,71% 70%,70% 71%,71% 74%,72% 77%,73% 81%,75% 86%,76% 88%,76% 89%,77% 90%,77% 91%,77% 93%,76% 93%,76% 97%,72% 98%,66% 99%,60% 100%,59% 98%,59% 95%,60% 94%,62% 93%,64% 93%,65% 92%,64% 90%,64% 87%,64% 84%,63% 82%,62% 80%,61% 76%,60% 73%,58% 73%,55% 78%,52% 84%,52% 86%,51% 88%,49% 89%,48% 90%,46% 94%,44% 96%,43% 96%,42% 96%,37% 93%,31% 90%,29% 88%)'}}></div>
-            </div>
-            <div className="nh-shining"></div>
-          </div>
-          <div className="nh-level-2">
-            <div className="nh-window">
-              <div className="nh-witch"></div>
-            </div>
-            <div className="nh-shining"></div>
-          </div>
-          <div className="nh-balcony"></div>
-          <div className="nh-bat-cat">
-            <div className="nh-bc-body"></div>
-            <div className="nh-bc-leg"></div>
-            <div className="nh-bc-leg"></div>
-            <div className="nh-bc-head"></div>
-            <div className="nh-bc-ears"></div>
-            <div className="nh-bat-cat nh-bc-tail" style={{position:'absolute'}}></div>
-            <div className="nh-bc-wings">
-              <div className="nh-bc-wing"></div>
-              <div className="nh-bc-wing"></div>
-            </div>
-          </div>
-          <div className="nh-roof-0">
-            <div className="nh-roof-0-win" style={{position:'absolute',borderRadius:'100%',height:'7vmin',width:'7vmin',background:'linear-gradient(183deg,#fff0 0 3.25vmin,#000000 calc(3.25vmin + 1px) 3.65vmin,#fff0 calc(3.65vmin + 1px)),linear-gradient(91deg,#fff0 0 3.25vmin,#000000 calc(3.25vmin + 1px) 3.65vmin,#fff0 calc(3.65vmin + 1px)),linear-gradient(180deg,#111,#084461e0)',left:'-3vmin'}}>
-              <div className="nh-phantom"></div>
-              <div className="nh-phantom"></div>
-            </div>
-            <div className="nh-shining"></div>
-          </div>
-          <div className="nh-roof-1"></div>
-          <div className="nh-roof-2">
-            <div className="nh-chimney">
-              <div className="nh-smoke">
-                <span></span><span></span><span></span><span></span><span></span><span></span>
-              </div>
-            </div>
-          </div>
-          <div className="nh-flying-bat"></div>
-          <div className="nh-fence">
-            <span></span><span></span>
-            <div className="nh-bat-fence" style={{position:'absolute',width:'15vmin',height:'12vmin',bottom:'30vmin',left:'13.25vmin'}}></div>
-            <div className="nh-chimney-fence" style={{position:'absolute',left:'24.5vmin',top:'-19.65vmin',width:'6vmin',height:'12vmin',zIndex:-1}}></div>
-          </div>
-          <div className="nh-fence">
-            <span></span><span></span>
-            <div className="nh-tomb">RIP</div>
-            <div className="nh-zombie-hand"></div>
-          </div>
-          <div className="nh-skeleton-floating"></div>
-          <div className="nh-skeleton">
-            <div className="nh-sk-head">
-              <div className="nh-cranium"></div>
-            </div>
-            <div className="nh-sk-neck" style={{background:'var(--nh-house)',width:'4vmin',height:'3vmin'}}></div>
-            <div className="nh-sk-torso" style={{background:'var(--nh-house)'}}></div>
-            <div className="nh-sk-arms">
-              <div className="nh-sk-arm" style={{background:'var(--nh-house)'}}></div>
-              <div className="nh-sk-arm" style={{background:'var(--nh-house)'}}></div>
-            </div>
-            <div className="nh-sk-legs">
-              <div className="nh-sk-leg" style={{background:'var(--nh-house)'}}></div>
-              <div className="nh-sk-leg" style={{background:'var(--nh-house)'}}></div>
-            </div>
-          </div>
-          <div className="nh-electricity">
-            <div className="nh-pole"></div>
-          </div>
-          <div className="nh-pumpkin">
-            <span></span><span></span><span></span><span></span><span></span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── DAY LAYER ── */}
-      <div
-        className="day-bg"
-        style={{
-          opacity: isNight ? 0 : 1,
-          transition: 'opacity 5s ease-in-out',
-          pointerEvents: 'none',
-          '--day-sun-angle': angles.sun,
-          '--day-arc-radius': '80vh',
-        }}
-      >
-        <div className="day-sky"></div>
-        {/* Sun arc — same pivot mechanic as original */}
-        <div className="day-sun-pivot">
-          <div className="day-sun-rays"></div>
-          <div className="day-sun-body"></div>
-        </div>
-        {/* Clouds */}
-        <div className="day-cloud day-cloud-1"></div>
-        <div className="day-cloud day-cloud-2"></div>
-        <div className="day-cloud day-cloud-3"></div>
-        <div className="day-cloud day-cloud-4"></div>
-        {/* Birds */}
-        <div className="day-bird day-bird-1"></div>
-        <div className="day-bird day-bird-2"></div>
-        <div className="day-bird day-bird-3"></div>
-        {/* Ambient glow */}
-        <div className="day-ambient"></div>
-        {/* Same spooky house silhouette */}
-        <div className="day-house-wrap">
-          <div className="day-house">
-            <div className="day-porch"></div>
-            <div className="day-first-floor"></div>
-            <div className="day-second-floor"></div>
-            <div className="day-roof"></div>
-            <div className="day-door"></div>
-            <div className="day-big-window"></div>
-          </div>
-        </div>
-        <div className="day-ground"></div>
-      </div>
+      <div className="celestial-pivot sun-pivot"><div className="celestial-body sun"></div></div>
+      <div className="celestial-pivot moon-pivot"><div className="celestial-body moon"></div></div>
+      <div className="house-wrapper"><div className="house"><div className="porch"></div><div className="first-floor"></div><div className="second-floor"></div><div className="roof"></div><div className="door"></div><div className="small-windows"></div><div className="big-window"></div><div className="frames"></div></div></div>
+      <div className="ground"></div>
+      <div className="rain-container"><div className="dropOne"></div><div className="dropTwo"></div><div className="dropThree"></div><div className="dropFour"></div><div className="dropFive"></div><div className="dropSix"></div><div className="dropSeven"></div><div className="dropEight"></div><div className="dropNine"></div><div className="dropTen"></div></div>
     </div>
   );
 };
