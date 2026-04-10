@@ -5,7 +5,6 @@ import './spooky.css';
 
 // ─── CONSTANTS ───────────────────────────────────────
 const TRANSITION_MS = 5000;
-const TAU = Math.PI * 2;
 
 // Anti-Glitch Helper for Mobile Taps
 const tapSafeStyle = { 
@@ -42,11 +41,13 @@ const MemoizedGalaxy = React.memo(() => (
 const FullScreenSpooky = ({ phase }) => {
   const isNight = phase.startsWith('night') || phase === 'night_transition';
   
-  // ARCHITECT FIX: Day/Night Dynamic Angles
+  // Controls Day/Night Rotation - directly applied to inline style so mobile never ignores it
   const [angles, setAngles] = useState({ sun: isNight ? 180 : 0, moon: isNight ? 0 : -180 });
   const prevIsNight = useRef(isNight);
+  
   const [activeZone, setActiveZone] = useState(null);
 
+  // Trigger Sun/Moon rotation when phase changes
   useEffect(() => {
     if (isNight !== prevIsNight.current) {
       setAngles(prev => ({ sun: prev.sun + 180, moon: prev.moon + 180 }));
@@ -54,6 +55,7 @@ const FullScreenSpooky = ({ phase }) => {
     }
   }, [isNight]);
 
+  // Single active zone controller
   const handleTrigger = (zone, e) => {
     if (e) e.stopPropagation();
     setActiveZone(prev => prev === zone ? null : zone);
@@ -62,11 +64,10 @@ const FullScreenSpooky = ({ phase }) => {
   const themeClass = isNight ? 'theme-night' : 'theme-day';
 
   return (
-    <div className={`spooky-container ${themeClass}`} onClick={() => setActiveZone(null)} style={{ '--sun-angle': angles.sun, '--moon-angle': angles.moon }}>
+    <div className={`spooky-container ${themeClass}`} onClick={() => setActiveZone(null)}>
       <div className="sky">
-        {/* Restored Pivots for Rotation */}
-        <div className="celestial-pivot moon-pivot"><div className="moon"></div></div>
-        <div className="celestial-pivot sun-pivot"><div className="sun"></div></div>
+        <div className="celestial-pivot moon-pivot" style={{ transform: `rotate(${angles.moon}deg)` }}><div className="moon"></div></div>
+        <div className="celestial-pivot sun-pivot" style={{ transform: `rotate(${angles.sun}deg)` }}><div className="sun"></div></div>
         <div className="clouds">
           <span></span><span></span><span></span><span></span>
         </div>
