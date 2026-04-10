@@ -42,13 +42,11 @@ const MemoizedGalaxy = React.memo(() => (
 const FullScreenSpooky = ({ phase }) => {
   const isNight = phase.startsWith('night') || phase === 'night_transition';
   
-  // Controls Day/Night Rotation
+  // ARCHITECT FIX: Day/Night Dynamic Angles
   const [angles, setAngles] = useState({ sun: isNight ? 180 : 0, moon: isNight ? 0 : -180 });
   const prevIsNight = useRef(isNight);
-  
   const [activeZone, setActiveZone] = useState(null);
 
-  // Trigger Sun/Moon rotation when phase changes
   useEffect(() => {
     if (isNight !== prevIsNight.current) {
       setAngles(prev => ({ sun: prev.sun + 180, moon: prev.moon + 180 }));
@@ -56,15 +54,17 @@ const FullScreenSpooky = ({ phase }) => {
     }
   }, [isNight]);
 
-  // Single active zone controller
   const handleTrigger = (zone, e) => {
     if (e) e.stopPropagation();
     setActiveZone(prev => prev === zone ? null : zone);
   };
 
+  const themeClass = isNight ? 'theme-night' : 'theme-day';
+
   return (
-    <div className="spooky-container" onClick={() => setActiveZone(null)} style={{ '--sun-angle': angles.sun, '--moon-angle': angles.moon }}>
+    <div className={`spooky-container ${themeClass}`} onClick={() => setActiveZone(null)} style={{ '--sun-angle': angles.sun, '--moon-angle': angles.moon }}>
       <div className="sky">
+        {/* Restored Pivots for Rotation */}
         <div className="celestial-pivot moon-pivot"><div className="moon"></div></div>
         <div className="celestial-pivot sun-pivot"><div className="sun"></div></div>
         <div className="clouds">
@@ -72,7 +72,7 @@ const FullScreenSpooky = ({ phase }) => {
         </div>
       </div>
       <div className="content">
-        <div className="ground-fill"></div> {/* FILLS THE GAP */}
+        <div className="ground-fill"></div>
         <div className="level-0">
           <div className={`door ${activeZone === 'door' ? 'active' : ''}`} onClick={(e) => handleTrigger('door', e)}>
             <div className="nosferatu"></div>
@@ -337,7 +337,6 @@ export default function GameBoard() {
         <MemoizedGalaxy />
       </div>
       
-      {/* ARCHITECT FIX: Spooky Phase sits completely underneath UI and acts like a fixed background screen */}
       <div className="fixed inset-0 w-full h-full transition-opacity duration-700 ease-in-out" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
         <FullScreenSpooky phase={state.phase} />
       </div>
