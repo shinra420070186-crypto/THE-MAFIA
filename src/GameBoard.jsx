@@ -3,29 +3,17 @@ import { useGameStore } from './store';
 import Galaxy from './Galaxy';
 import './spooky.css';
 
-// ─── CONSTANTS ───────────────────────────────────────
 const TRANSITION_MS = 5000;
-const TAU = Math.PI * 2;
+const tapSafeStyle = { WebkitTapHighlightColor: 'rgba(0,0,0,0)', WebkitTouchCallout: 'none', userSelect: 'none', outline: 'none' };
 
-// Anti-Glitch Helper for Mobile Taps
-const tapSafeStyle = { 
-  WebkitTapHighlightColor: 'rgba(0,0,0,0)', 
-  WebkitTouchCallout: 'none', 
-  userSelect: 'none', 
-  outline: 'none' 
-};
-
-// ─── NATIVE ANIMATED SCROLL ITEM (ZERO DEPENDENCIES) ─
 const AnimatedItem = ({ children, delay = 0, index }) => {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
-
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => { setInView(entry.isIntersecting); }, { threshold: 0.2 });
     if (ref.current) observer.observe(ref.current);
     return () => { if (ref.current) observer.unobserve(ref.current); };
   }, []);
-
   return (
     <div ref={ref} data-index={index} style={{ width: '100%', transition: `transform 0.25s ease-out ${delay}s, opacity 0.25s ease-out ${delay}s`, transform: inView ? 'scale(1)' : 'scale(0.8)', opacity: inView ? 1 : 0 }}>
       {children}
@@ -33,7 +21,6 @@ const AnimatedItem = ({ children, delay = 0, index }) => {
   );
 };
 
-// ─── PURE ISOLATED BACKGROUND LAYER (ZERO FLICKER) ───
 const MemoizedGalaxy = React.memo(() => (
   <Galaxy mouseRepulsion={true} mouseInteraction={true} density={1} glowIntensity={0.3} saturation={0} hueShift={140} twinkleIntensity={0.3} rotationSpeed={0.1} repulsionStrength={2} autoCenterRepulsion={0} starSpeed={0.5} speed={1} />
 ));
@@ -41,8 +28,6 @@ const MemoizedGalaxy = React.memo(() => (
 // ─── FULL SCREEN SPOOKY HOUSE BACKGROUND ─────────────
 const FullScreenSpooky = ({ phase }) => {
   const isNight = phase.startsWith('night') || phase === 'night_transition';
-  
-  // ARCHITECT FIX: Day/Night Dynamic Angles
   const [angles, setAngles] = useState({ sun: isNight ? 180 : 0, moon: isNight ? 0 : -180 });
   const prevIsNight = useRef(isNight);
   const [activeZone, setActiveZone] = useState(null);
@@ -62,11 +47,10 @@ const FullScreenSpooky = ({ phase }) => {
   const themeClass = isNight ? 'theme-night' : 'theme-day';
 
   return (
-    <div className={`spooky-container ${themeClass}`} onClick={() => setActiveZone(null)} style={{ '--sun-angle': angles.sun, '--moon-angle': angles.moon }}>
+    <div className={`spooky-container ${themeClass}`} onClick={() => setActiveZone(null)}>
       <div className="sky">
-        {/* Restored Pivots for Rotation */}
-        <div className="celestial-pivot moon-pivot"><div className="moon"></div></div>
-        <div className="celestial-pivot sun-pivot"><div className="sun"></div></div>
+        <div className="celestial-pivot moon-pivot" style={{ transform: `rotate(${angles.moon}deg)` }}><div className="moon"></div></div>
+        <div className="celestial-pivot sun-pivot" style={{ transform: `rotate(${angles.sun}deg)` }}><div className="sun"></div></div>
         <div className="clouds">
           <span></span><span></span><span></span><span></span>
         </div>
@@ -76,9 +60,7 @@ const FullScreenSpooky = ({ phase }) => {
         <div className="level-0">
           <div className={`door ${activeZone === 'door' ? 'active' : ''}`} onClick={(e) => handleTrigger('door', e)}>
             <div className="nosferatu"></div>
-            <div className="logs">
-              <span></span><span></span><span></span>
-            </div>
+            <div className="logs"><span></span><span></span><span></span></div>
           </div>
           <div className="shining"></div>
         </div>
@@ -96,124 +78,56 @@ const FullScreenSpooky = ({ phase }) => {
         </div>	
         <div className={`balcony ${activeZone === 'balcony' ? 'active' : ''}`} onClick={(e) => handleTrigger('balcony', e)}></div>
         <div className="bat-cat">
-          <div className="body"></div>
-          <div className="leg"></div>
-          <div className="leg"></div>
-          <div className="head"></div>
-          <div className="ears"></div>
-          <div className="tail"></div>
+          <div className="body"></div><div className="leg"></div><div className="leg"></div><div className="head"></div><div className="ears"></div><div className="tail"></div>
           <div className="wings">
-            <div className="wing">
-              <div className="finger"></div><div className="finger"></div><div className="finger"></div><div className="finger"></div>
-              <div className="membrane"></div><div className="membrane"></div><div className="membrane"></div>
-            </div>
-            <div className="wing">
-              <div className="finger"></div><div className="finger"></div><div className="finger"></div><div className="finger"></div>
-              <div className="membrane"></div><div className="membrane"></div><div className="membrane"></div>
-            </div>
+            <div className="wing"><div className="finger"></div><div className="finger"></div><div className="finger"></div><div className="finger"></div><div className="membrane"></div><div className="membrane"></div><div className="membrane"></div></div>
+            <div className="wing"><div className="finger"></div><div className="finger"></div><div className="finger"></div><div className="finger"></div><div className="membrane"></div><div className="membrane"></div><div className="membrane"></div></div>
           </div>
         </div>
         <div className="roof-0">
           <div className={`window ${activeZone === 'roof0' ? 'active' : ''}`} onClick={(e) => handleTrigger('roof0', e)}>
-            <div className="phantom"></div>
-            <div className="phantom"></div>
+            <div className="phantom"></div><div className="phantom"></div>
           </div>
           <div className="shining"></div>
         </div>
         <div className="roof-1"></div>
         <div className="roof-2">
           <div className={`chimney ${activeZone === 'chimney2' ? 'active' : ''}`} onClick={(e) => handleTrigger('chimney2', e)}></div>
-          <div className="smoke">
-            <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-          </div>
+          <div className="smoke"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
         </div>
         <div className={`flying-bat ${activeZone === 'bat' ? 'active' : ''}`} onClick={(e) => handleTrigger('bat', e)}></div>
         <div className="fence">
           <span></span><span></span>
-          <div className="bat">
-            <div className="head">
-              <div className="eyes"></div>
-              <div className="mouth"></div>
-            </div>
-            <div className="wings"></div>
-            <div className="legs">
-              <div className="leg"></div>
-              <div className="leg"></div>
-            </div>
-          </div>
+          <div className="bat"><div className="head"><div className="eyes"></div><div className="mouth"></div></div><div className="wings"></div><div className="legs"><div className="leg"></div><div className="leg"></div></div></div>
           <div className="chimney"></div>
         </div>
         <div className="fence">
           <span></span><span></span>
           <div className={`tomb ${activeZone === 'tomb' ? 'active' : ''}`} onClick={(e) => handleTrigger('tomb', e)}>RIP</div>
-          <div className="zombie-hand"></div>
-          <div className="stones"></div>
+          <div className="zombie-hand"></div><div className="stones"></div>
         </div>
         <div className={`skeleton-floating ${activeZone === 'skeleton' ? 'active' : ''}`} onClick={(e) => handleTrigger('skeleton', e)}></div>
         <div className="skeleton">
-          <div className="head">
-            <div className="cranium"></div>
-            <div className="nose"></div>
-            <div className="mouth"></div>
-          </div>
-          <div className="neck"></div>
-          <div className="torso">
-            <div className="pelvis"></div>
-            <div className="column"></div>
-            <div className="rib"></div>
-            <div className="rib"></div>
-            <div className="clavicle"></div>
-          </div>
+          <div className="head"><div className="cranium"></div><div className="nose"></div><div className="mouth"></div></div><div className="neck"></div>
+          <div className="torso"><div className="pelvis"></div><div className="column"></div><div className="rib"></div><div className="rib"></div><div className="clavicle"></div></div>
           <div className="arms">
-            <div className="arm">
-              <div className="bone"></div><div className="bone"></div>
-              <div className="hand">
-                <div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div>
-              </div>
-            </div>
-            <div className="arm">
-              <div className="bone"></div><div className="bone"></div>
-              <div className="hand">
-                <div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div>
-              </div>
-            </div>
+            <div className="arm"><div className="bone"></div><div className="bone"></div><div className="hand"><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div></div></div>
+            <div className="arm"><div className="bone"></div><div className="bone"></div><div className="hand"><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div><div className="bone"></div></div></div>
           </div>
           <div className="legs">
-            <div className="leg">
-              <div className="bone"></div><div className="bone"></div><div className="bone ball"></div>
-              <div className="foot">
-                <div className="bone"></div><div className="bone"></div><div className="bone"></div>
-              </div>
-            </div>
-            <div className="leg">
-              <div className="bone"></div><div className="bone"></div><div className="bone ball"></div>
-              <div className="foot">
-                <div className="bone"></div><div className="bone"></div><div className="bone"></div>
-              </div>
-            </div>
+            <div className="leg"><div className="bone"></div><div className="bone"></div><div className="bone ball"></div><div className="foot"><div className="bone"></div><div className="bone"></div><div className="bone"></div></div></div>
+            <div className="leg"><div className="bone"></div><div className="bone"></div><div className="bone ball"></div><div className="foot"><div className="bone"></div><div className="bone"></div><div className="bone"></div></div></div>
           </div>
         </div>
         <div className="electricity">
-          <div className="pole"></div>
-          <div className="bar"><span></span></div>
-          <div className="bar"><span></span></div>
-          <div className={`cable ${activeZone === 'cable1' ? 'active' : ''}`} onClick={(e) => handleTrigger('cable1', e)}>
-            <span></span><span></span><span></span>
-          </div>
+          <div className="pole"></div><div className="bar"><span></span></div><div className="bar"><span></span></div>
+          <div className={`cable ${activeZone === 'cable1' ? 'active' : ''}`} onClick={(e) => handleTrigger('cable1', e)}><span></span><span></span><span></span></div>
           <div className={`cable ${activeZone === 'cable2' ? 'active' : ''}`} onClick={(e) => handleTrigger('cable2', e)}></div>
-          <div className="box">
-            <div className="sparks">
-              <span></span><span></span><span></span><span></span><span></span>
-            </div>
-          </div>
+          <div className="box"><div className="sparks"><span></span><span></span><span></span><span></span><span></span></div></div>
         </div>
         <div className={`pumpkin ${activeZone === 'pumpkin' ? 'active' : ''}`} onClick={(e) => handleTrigger('pumpkin', e)}>
           <span></span><span></span><span></span><span></span><span></span>
-          <div className="eyes"></div>
-          <div className="nose"></div>
-          <div className="mouth">
-            <div className="teeth"></div>
-          </div>
+          <div className="eyes"></div><div className="nose"></div><div className="mouth"><div className="teeth"></div></div>
         </div>
       </div>
     </div>
@@ -288,31 +202,17 @@ export default function GameBoard() {
 
   const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
-    
     return (
       <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={tapSafeStyle}>
-        <div 
-          className="w-full space-y-3 max-h-[280px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
-          style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}
-        >
+        <div className="w-full space-y-3 max-h-[280px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}>
           {visiblePlayers.map((p, index) => (
             <AnimatedItem key={p.id} index={index} delay={0.05}>
-              <button 
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => onSelect(p.id)}
-                className="w-full p-4 bg-[#111] text-white active:scale-95 border border-slate-700 rounded-xl font-bold uppercase transition-all hover:border-slate-500"
-                style={tapSafeStyle}
-              >{p.name}</button>
+              <button onPointerDown={(e) => e.stopPropagation()} onClick={() => onSelect(p.id)} className="w-full p-4 bg-[#111] text-white active:scale-95 border border-slate-700 rounded-xl font-bold uppercase transition-all hover:border-slate-500" style={tapSafeStyle}>{p.name}</button>
             </AnimatedItem>
           ))}
           {includeSkip && (
             <AnimatedItem index={visiblePlayers.length} delay={0.05}>
-              <button 
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => onSelect(null)}
-                className="w-full p-4 bg-transparent border border-slate-700/80 text-slate-400 rounded-xl font-bold uppercase mt-2 active:scale-95 transition-all hover:border-slate-500 hover:text-slate-300"
-                style={tapSafeStyle}
-              >Skip / Nobody</button>
+              <button onPointerDown={(e) => e.stopPropagation()} onClick={() => onSelect(null)} className="w-full p-4 bg-transparent border border-slate-700/80 text-slate-400 rounded-xl font-bold uppercase mt-2 active:scale-95 transition-all hover:border-slate-500 hover:text-slate-300" style={tapSafeStyle}>Skip / Nobody</button>
             </AnimatedItem>
           )}
         </div>
@@ -323,7 +223,6 @@ export default function GameBoard() {
   return (
     <>
       <style>{`
-        /* PERMANENT FIX: Root level reset to kill tap highlights and stop whole-page scrolling */
         html, body, #root { width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; position: fixed; overscroll-behavior: none; background-color: #050505 !important; user-select: none; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent !important; -webkit-touch-callout: none !important; }
         * { -webkit-tap-highlight-color: transparent !important; outline: none !important; }
         input { user-select: auto; }
@@ -331,7 +230,6 @@ export default function GameBoard() {
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
       
-      {/* ─── PERMANENT BACKGROUND MOUNTS (ZERO FLICKER) ─── */}
       <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out" style={{ backgroundColor: '#e5e5e5', opacity: state.phase === 'splash' ? 1 : 0, zIndex: state.phase === 'splash' ? 0 : -100, visibility: state.phase === 'splash' ? 'visible' : 'hidden' }} />
       <div className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out" style={{ opacity: isGalaxyPhase ? 1 : 0, zIndex: isGalaxyPhase ? 0 : -50, visibility: isGalaxyPhase ? 'visible' : 'hidden' }}>
         <MemoizedGalaxy />
@@ -341,17 +239,13 @@ export default function GameBoard() {
         <FullScreenSpooky phase={state.phase} />
       </div>
 
-      {/* ─── SPLASH PHASE ─── */}
       {state.phase === 'splash' && (
         <div className="relative h-[100dvh] w-full flex flex-col items-center justify-center p-6 overflow-hidden z-10 transition-opacity duration-1000 pointer-events-none" style={tapSafeStyle}>
           <ImagePreloader />
-          <button onPointerDown={(e) => e.stopPropagation()} onClick={() => { setTimeout(() => { state.enterLobby(); }, 800); }} className="splash-batman-btn pointer-events-auto" style={tapSafeStyle}>
-            <span>PLAY GAME</span>
-          </button>
+          <button onPointerDown={(e) => e.stopPropagation()} onClick={() => { setTimeout(() => { state.enterLobby(); }, 800); }} className="splash-batman-btn pointer-events-auto" style={tapSafeStyle}><span>PLAY GAME</span></button>
         </div>
       )}
 
-      {/* ─── LOBBY PHASE ─── */}
       {state.phase === 'lobby' && (
         <div className="relative h-[100dvh] w-full text-white flex flex-col items-center p-6 overflow-hidden pointer-events-none z-10" style={tapSafeStyle}>
           <button onPointerDown={(e) => e.stopPropagation()} onClick={() => setShowSettings((prev) => !prev)} className="absolute top-4 left-4 z-50 w-12 h-12 rounded-xl border border-cyan-300/40 bg-[#02060a]/80 backdrop-blur-md flex items-center justify-center active:scale-95 transition-all hover:border-cyan-200/70 hover:bg-[#07111a]/85 pointer-events-auto" style={tapSafeStyle}>
@@ -412,19 +306,14 @@ export default function GameBoard() {
               <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-3 pl-2 text-center drop-shadow-md">Recent Players</p>
               <div className="flex flex-wrap justify-center gap-2">
                 {availableRecentNames.slice(0, 6).map(name => (
-                  <button key={name} onPointerDown={(e) => e.stopPropagation()} onClick={() => state.addPlayer(name)} className="px-4 py-2 bg-[#222] text-[#e81cff] border border-[#e81cff]/30 rounded-full text-xs font-bold tracking-wider active:scale-95 transition-all shadow-md" style={tapSafeStyle}>
-                    + {name}
-                  </button>
+                  <button key={name} onPointerDown={(e) => e.stopPropagation()} onClick={() => state.addPlayer(name)} className="px-4 py-2 bg-[#222] text-[#e81cff] border border-[#e81cff]/30 rounded-full text-xs font-bold tracking-wider active:scale-95 transition-all shadow-md" style={tapSafeStyle}>+ {name}</button>
                 ))}
               </div>
             </div>
           )}
 
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mb-10" style={tapSafeStyle}>
-            <div 
-              className="w-full space-y-2 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
-              style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)' }}
-            >
+            <div className="w-full space-y-2 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)' }}>
               {state.players.map((p, index) => (
                 <AnimatedItem key={p.id} index={index} delay={0.05}>
                   <div className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all">
@@ -446,44 +335,25 @@ export default function GameBoard() {
         </div>
       )}
 
-      {/* ─── ROLE REVEAL ─── */}
       {state.phase === 'role_reveal' && (
         <div className="relative h-[100dvh] w-full text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
           <p className="text-slate-300 font-bold uppercase tracking-widest text-[10px] mb-2 relative z-10 pointer-events-none">Pass phone to</p>
           <h2 className="text-4xl font-black text-white uppercase mb-8 drop-shadow-md relative z-10 pointer-events-none">{state.players[state.revealIndex]?.name}</h2>
           
-          <div 
-            onPointerDown={(e) => e.stopPropagation()}
-            onMouseDown={() => setIsFlipped(true)}
-            onMouseUp={() => { setIsFlipped(false); setCardViewed(true); }}
-            onMouseLeave={() => setIsFlipped(false)}
-            onTouchStart={() => setIsFlipped(true)}
-            onTouchEnd={() => { setIsFlipped(false); setCardViewed(true); }}
-            className="cursor-pointer relative z-10 pointer-events-auto"
-            style={tapSafeStyle}
-          >
+          <div onPointerDown={(e) => e.stopPropagation()} onMouseDown={() => setIsFlipped(true)} onMouseUp={() => { setIsFlipped(false); setCardViewed(true); }} onMouseLeave={() => setIsFlipped(false)} onTouchStart={() => setIsFlipped(true)} onTouchEnd={() => { setIsFlipped(false); setCardViewed(true); }} className="cursor-pointer relative z-10 pointer-events-auto" style={tapSafeStyle}>
             <RoleCard isFlipped={isFlipped} role={state.players[state.revealIndex]?.role} />
           </div>
 
           <div className="relative w-full max-w-sm flex justify-center mt-12 z-10 pointer-events-none h-[80px]">
-            <p className={`absolute top-0 text-slate-400 font-bold text-sm transition-opacity duration-500 pointer-events-none ${cardViewed ? 'opacity-0' : 'opacity-100 animate-pulse'}`}>
-              👆 Tap the card to view your role
-            </p>
-            <button 
-              onPointerDown={(e) => e.stopPropagation()} 
-              onClick={() => { setIsFlipped(false); setCardViewed(false); state.nextRoleReveal(); }} 
-              disabled={!cardViewed} 
-              className={`absolute top-0 p-5 w-full rounded-xl font-black uppercase tracking-widest transition-all duration-500 pointer-events-auto ${!cardViewed ? 'opacity-0 translate-y-4 scale-95 pointer-events-none' : 'opacity-100 translate-y-0 scale-100 bg-[#0a0a0a]/90 backdrop-blur-md text-white border border-slate-800 hover:border-slate-500 active:scale-95'}`} 
-              style={tapSafeStyle}
-            >
+            <p className={`absolute top-0 text-slate-400 font-bold text-sm transition-opacity duration-500 pointer-events-none ${cardViewed ? 'opacity-0' : 'opacity-100 animate-pulse'}`}>👆 Tap the card to view your role</p>
+            <button onPointerDown={(e) => e.stopPropagation()} onClick={() => { setIsFlipped(false); setCardViewed(false); state.nextRoleReveal(); }} disabled={!cardViewed} className={`absolute top-0 p-5 w-full rounded-xl font-black uppercase tracking-widest transition-all duration-500 pointer-events-auto ${!cardViewed ? 'opacity-0 translate-y-4 scale-95 pointer-events-none' : 'opacity-100 translate-y-0 scale-100 bg-[#0a0a0a]/90 backdrop-blur-md text-white border border-slate-800 hover:border-slate-500 active:scale-95'}`} style={tapSafeStyle}>
               {state.revealIndex === state.players.length - 1 ? 'Give to Moderator' : 'Next Player'}
             </button>
           </div>
         </div>
       )}
 
-      {/* ─── NIGHT PHASES ─── */}
       {state.phase === 'night_transition' && (
         <div className="relative h-[100dvh] w-full text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
@@ -501,7 +371,7 @@ export default function GameBoard() {
           {renderBackButton()}
           <h2 className="text-3xl md:text-4xl font-black text-red-500 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
           <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🌙 Moderator: Ask the Mafia to wake up and point.</p>
-          <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(220,38,38,0.4)] tracking-[0.1em] pointer-events-none">Who does the Mafia kill?</h3>
+          <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(220,38,38,0.4)] tracking-[0.1em] pointer-events-none">Who does the Mafia act upon?</h3>
           {renderPlayerList((id) => state.submitNightAction('Mafia', id), true, (p) => p.role === 'Mafia')}
         </div>
       )}
@@ -546,7 +416,7 @@ export default function GameBoard() {
           {renderBackButton()}
           <h2 className="text-3xl md:text-4xl font-black text-purple-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(168,85,247,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
           <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">⚔️ Moderator: Ask the Sheriff to wake up and point.</p>
-          <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(168,85,247,0.4)] tracking-[0.1em] pointer-events-none">Who does the Sheriff execute?</h3>
+          <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(168,85,247,0.4)] tracking-[0.1em] pointer-events-none">Who does the Sheriff act upon?</h3>
           {renderPlayerList((id) => state.submitNightAction('Sheriff', id), true, (p) => p.role === 'Sheriff')}
         </div>
       )}
@@ -585,10 +455,7 @@ export default function GameBoard() {
           <p className="text-lg font-bold text-red-400 tracking-widest uppercase relative z-10 drop-shadow-md pointer-events-none">Who do you exile?</p>
           
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-6 mb-6" style={tapSafeStyle}>
-            <div 
-              className="w-full space-y-3 max-h-[280px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar"
-              style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}
-            >
+            <div className="w-full space-y-3 max-h-[280px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}>
               {alivePlayers.filter(p => p.id !== alivePlayers[state.votingState.currentVoterIndex]?.id).map((p, index) => (
                 <AnimatedItem key={p.id} index={index} delay={0.05}>
                   <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.submitVote(p.id)} className="w-full p-4 bg-slate-900/70 backdrop-blur-md text-white border-2 border-slate-700/70 rounded-lg font-bold uppercase active:scale-95 transition-all hover:border-slate-500 hover:bg-slate-900" style={tapSafeStyle}>→ Vote {p.name}</button>
