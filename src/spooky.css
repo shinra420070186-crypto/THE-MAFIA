@@ -28,19 +28,15 @@
 	align-items: flex-end;
 	justify-content: center;
 	align-content: flex-end;
-	background: var(--sky-bg);
-	transition: background 5s ease-in-out;
-    pointer-events: auto;
+	pointer-events: auto;
 }
 
-/* Theme Dynamic Colors */
+/* Theme Variables (Removed Sky Gradients from here) */
 .theme-night { 
-    --sky-bg: linear-gradient(238deg, #000, #fff0, #fff0), linear-gradient(180deg, #000, #fff0, #fff0), radial-gradient(circle at 50% 100%, #005eff, #6d006d, #38005e );
     --window: #ff8d00cf;
     --stars-opacity: 0.5;
 }
 .theme-day { 
-    --sky-bg: linear-gradient(238deg, #fff0, #fff0, #fff0), linear-gradient(180deg, #87ceeb, #5b92e5, #87ceeb), radial-gradient(circle at 50% 100%, #5b92e5, #5b92e5, #5b92e5 );
     --window: #111;
     --stars-opacity: 0;
 }
@@ -144,6 +140,7 @@
 	width: 4.5vmin; height: 4.5vmin; position: absolute; top: 20%; left: 20%; border-radius: 100%; filter: blur(2px);
 }
 
+/* Day Sky is permanently the background */
 .sky {
 	height: 100%;
     width: 100%;
@@ -152,6 +149,23 @@
 	left: 0;
 	top: 0;
     overflow: hidden;
+	background: linear-gradient(238deg, #fff0, #fff0, #fff0), linear-gradient(180deg, #87ceeb, #5b92e5, #87ceeb), radial-gradient(circle at 50% 100%, #5b92e5, #5b92e5, #5b92e5 );
+}
+
+/* Night Sky overlays the Day Sky, transitions opacity smoothly */
+.sky:before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(238deg, #000, #fff0, #fff0), linear-gradient(180deg, #000, #fff0, #fff0), radial-gradient(circle at 50% 100%, #005eff, #6d006d, #38005e );
+	opacity: 0;
+	transition: opacity 5s ease-in-out;
+	z-index: -1;
+}
+
+/* Fade in the night sky when theme is active */
+.theme-night .sky:before {
+	opacity: 1;
 }
 
 .sky:after {
