@@ -25,7 +25,7 @@ const MemoizedGalaxy = React.memo(() => (
   <Galaxy mouseRepulsion={true} mouseInteraction={true} density={1} glowIntensity={0.3} saturation={0} hueShift={140} twinkleIntensity={0.3} rotationSpeed={0.1} repulsionStrength={2} autoCenterRepulsion={0} starSpeed={0.5} speed={1} />
 ));
 
-// ─── FULL SCREEN SPOOKY HOUSE BACKGROUND (NOW MEMOIZED TO FIX LAG) ───
+// ─── FULL SCREEN SPOOKY HOUSE BACKGROUND (MEMOIZED FOR ZERO LAG) ───
 const FullScreenSpooky = React.memo(({ phase }) => {
   const isNight = phase.startsWith('night') || phase === 'night_transition';
   const [angles, setAngles] = useState({ sun: isNight ? 180 : 0, moon: isNight ? 0 : -180 });
@@ -164,7 +164,6 @@ export default function GameBoard() {
   const [cardViewed, setCardViewed] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   
-  // State to hold the currently selected player before confirming
   const [pendingSelection, setPendingSelection] = useState(null);
 
   const alivePlayers = state.players.filter(p => p.isAlive);
@@ -186,7 +185,6 @@ export default function GameBoard() {
     return () => clearTimeout(timer);
   }, [state.phase]);
 
-  // Clear selections when phases or voters change
   useEffect(() => { 
     setCardViewed(false); 
     setPendingSelection(null);
@@ -207,7 +205,7 @@ export default function GameBoard() {
     );
   };
 
-  // UPDATED renderPlayerList WITH NEW GLASS CSS CLASSES
+  // ─── OPTIMIZED GLASSMORPHISM PLAYER LIST ───
   const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
 
@@ -228,7 +226,8 @@ export default function GameBoard() {
                 <button 
                   onPointerDown={(e) => e.stopPropagation()} 
                   onClick={() => setPendingSelection(p.id)} 
-                  className={`w-full p-4 font-bold uppercase transition-all duration-150 ease-out transform will-change-transform active:scale-95 text-slate-200 uiverse-glass-card ${isSelected ? 'selected text-white' : ''}`} 
+                  // Removed ALL Tailwind transitions to let custom optimized CSS handle it
+                  className={`w-full p-4 font-bold uppercase text-slate-200 uiverse-glass-card ${isSelected ? 'selected text-white' : ''}`} 
                   style={tapSafeStyle}
                 >
                   {p.name}
@@ -241,7 +240,8 @@ export default function GameBoard() {
               <button 
                 onPointerDown={(e) => e.stopPropagation()} 
                 onClick={() => setPendingSelection('skip')} 
-                className={`w-full p-4 mt-2 font-bold uppercase transition-all duration-150 ease-out transform will-change-transform active:scale-95 text-slate-300 uiverse-glass-card ${pendingSelection === 'skip' ? 'selected text-white' : ''}`} 
+                // Removed ALL Tailwind transitions to let custom optimized CSS handle it
+                className={`w-full p-4 mt-2 font-bold uppercase text-slate-300 uiverse-glass-card ${pendingSelection === 'skip' ? 'selected text-white' : ''}`} 
                 style={tapSafeStyle}
               >
                 Skip / Nobody
@@ -267,7 +267,7 @@ export default function GameBoard() {
 
   return (
     <>
-      {/* INJECTED CSS FOR TRUE GLASSMORPHISM & LAG FIXES */}
+      {/* INJECTED CSS FOR TRUE GLASSMORPHISM & ANDROID 120FPS LAG FIX */}
       <style>{`
         html, body, #root { width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; position: fixed; overscroll-behavior: none; background-color: #050505 !important; user-select: none; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent !important; -webkit-touch-callout: none !important; }
         * { -webkit-tap-highlight-color: transparent !important; outline: none !important; }
@@ -275,44 +275,37 @@ export default function GameBoard() {
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* --- TRUE GLASSMORPHISM CLASSES EXPORTED FROM UIVERSE --- */
+        /* --- TRUE GLASSMORPHISM (120FPS ANDROID FIX) --- */
         .uiverse-glass-card {
-          border: 1px solid rgba(255, 255, 255, 0.33);
-          border-radius: 10px;
-          backdrop-filter: blur(10.5px);
-          -webkit-backdrop-filter: blur(10.5px);
           position: relative;
-          box-shadow: inset 2px 1px 6px rgba(255, 255, 255, 0.27), 0 4px 10px rgba(0,0,0,0.5);
-          overflow: hidden;
-          z-index: 0;
-          background: rgba(255, 255, 255, 0.05);
-        }
-        
-        .uiverse-glass-card::after {
-          z-index: -1;
-          content: " ";
-          position: absolute;
-          width: 150%;
-          top: 0;
-          left: 0;
-          height: 10px;
-          background: #ffffff;
-          transform: rotateZ(50deg);
-          filter: blur(30px);
-          animation: card-shine 10s ease infinite;
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.08); /* Thick enough to show blur */
+          backdrop-filter: blur(12px); /* True frosted glass */
+          -webkit-backdrop-filter: blur(12px); /* Safari/iOS/Android support */
+          box-shadow: inset 0 1px 3px rgba(255,255,255,0.2), 0 4px 10px rgba(0,0,0,0.3);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          
+          /* PERFORMANCE HACKS: Hardware acceleration & specific transitions */
+          transform: translateZ(0); /* Forces element onto its own GPU layer */
+          will-change: transform;
+          transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), 
+                      background-color 0.15s ease, 
+                      border-color 0.15s ease, 
+                      box-shadow 0.15s ease;
         }
 
-        @keyframes card-shine {
-          0% { top: 100%; left: -100%; }
-          50%, 100% { top: 0%; left: 70%; }
+        /* Instant press down effect */
+        .uiverse-glass-card:active {
+          transform: scale(0.96) translateZ(0) !important;
+          background: rgba(255, 255, 255, 0.12);
         }
 
-        /* Pop-up effect when tile is selected */
+        /* Selected Pop-up effect */
         .uiverse-glass-card.selected {
-          transform: scale(1.05) translateY(-4px) !important;
+          transform: scale(1.05) translateY(-2px) translateZ(0) !important;
           background: rgba(255, 255, 255, 0.2);
-          border-color: #ffffff;
-          box-shadow: inset 2px 1px 6px rgba(255, 255, 255, 0.5), 0 10px 20px rgba(0,0,0,0.8);
+          border-color: rgba(255, 255, 255, 0.6);
+          box-shadow: inset 0 2px 6px rgba(255,255,255,0.4), 0 12px 24px rgba(0,0,0,0.6);
         }
       `}</style>
       
@@ -322,7 +315,6 @@ export default function GameBoard() {
       </div>
       
       <div className="fixed inset-0 w-full h-full transition-opacity duration-700 ease-in-out" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
-        {/* USING THE MEMOIZED COMPONENT HERE */}
         <FullScreenSpooky phase={state.phase} />
       </div>
 
@@ -550,7 +542,7 @@ export default function GameBoard() {
                     <button 
                       onPointerDown={(e) => e.stopPropagation()} 
                       onClick={() => setPendingSelection(p.id)} 
-                      className={`w-full p-4 font-bold uppercase transition-all duration-150 ease-out transform will-change-transform active:scale-95 text-slate-200 uiverse-glass-card ${isSelected ? 'selected text-white' : ''}`} 
+                      className={`w-full p-4 font-bold uppercase text-slate-200 uiverse-glass-card ${isSelected ? 'selected text-white' : ''}`} 
                       style={tapSafeStyle}
                     >
                       → Vote {p.name}
@@ -562,7 +554,7 @@ export default function GameBoard() {
                 <button 
                   onPointerDown={(e) => e.stopPropagation()} 
                   onClick={() => setPendingSelection('skip')} 
-                  className={`w-full p-4 mt-2 font-bold uppercase transition-all duration-150 ease-out transform will-change-transform active:scale-95 text-slate-300 uiverse-glass-card ${pendingSelection === 'skip' ? 'selected text-white' : ''}`} 
+                  className={`w-full p-4 mt-2 font-bold uppercase text-slate-300 uiverse-glass-card ${pendingSelection === 'skip' ? 'selected text-white' : ''}`} 
                   style={tapSafeStyle}
                 >
                   ⊘ Pass / No Vote
