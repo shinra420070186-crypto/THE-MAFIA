@@ -205,9 +205,23 @@ export default function GameBoard() {
     );
   };
 
-  // ─── OPTIMIZED GLASSMORPHISM PLAYER LIST ───
+  // ─── NEW GLIDER UI COMPONENT (ZERO LAG) ───
   const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
+    
+    // Combine visible players and skip option into one array to calculate indexes easily
+    const options = [...visiblePlayers];
+    if (includeSkip) options.push({ id: 'skip', name: 'Skip / Nobody' });
+
+    // Find the current selected index for the glider math
+    const selectedIndex = pendingSelection ? options.findIndex(o => o.id === pendingSelection) : -1;
+
+    // DYNAMIC GLIDER COLORS BASED ON PHASE
+    let mainColor = '#f59e0b'; // Default Amber for Day Voting
+    if (state.phase === 'night_mafia') mainColor = '#ef4444'; // Red
+    if (state.phase === 'night_doctor') mainColor = '#22c55e'; // Green
+    if (state.phase === 'night_detective') mainColor = '#3b82f6'; // Blue
+    if (state.phase === 'night_sheriff') mainColor = '#a855f7'; // Purple
 
     const handleConfirm = () => {
       if (pendingSelection !== null) {
@@ -217,95 +231,68 @@ export default function GameBoard() {
     };
 
     return (
-      <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={tapSafeStyle}>
-        {/* CRITICAL FIX: Removed the CSS maskImage so Android Chrome doesn't break the backdrop-filter! */}
-        <div className="w-full space-y-4 max-h-[320px] overflow-y-auto px-4 pb-4 pt-4 hide-scrollbar">
-          {visiblePlayers.map((p, index) => {
-            const isSelected = pendingSelection === p.id;
-            return (
-              <AnimatedItem key={p.id} index={index} delay={0.05}>
-                <button 
-                  onPointerDown={(e) => e.stopPropagation()} 
-                  onClick={() => setPendingSelection(p.id)} 
-                  className={`w-full p-4 font-bold uppercase text-slate-200 uiverse-glass-card ${isSelected ? 'selected text-white' : ''}`} 
-                  style={tapSafeStyle}
-                >
-                  {p.name}
-                </button>
-              </AnimatedItem>
-            );
-          })}
-          {includeSkip && (
-            <AnimatedItem index={visiblePlayers.length} delay={0.05}>
+      <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={{...tapSafeStyle, '--main-color': mainColor, '--main-color-opacity': mainColor + '40'}}>
+        
+        {/* The List Container */}
+        <div className="relative w-full max-h-[320px] overflow-y-auto pl-4 hide-scrollbar">
+          
+          {/* Static Background Track (The thin vertical line) */}
+          <div className="absolute left-0 top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-slate-700 to-transparent" />
+          
+          {/* THE GLOWING GLIDER - Moves instantly using translateY */}
+          <div 
+            className="absolute left-0 w-full pointer-events-none transition-all duration-[400ms] ease-[cubic-bezier(0.37,1.95,0.66,0.56)] z-0"
+            style={{
+              height: '64px', // Fixed 4rem height for math
+              transform: `translateY(${Math.max(0, selectedIndex) * 64}px)`,
+              opacity: selectedIndex >= 0 ? 1 : 0
+            }}
+          >
+            <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[var(--main-color)]" />
+            <div className="absolute left-[-4px] top-1/4 bottom-1/4 w-[10px] bg-[var(--main-color)] blur-[8px]" />
+            <div className="absolute left-0 top-0 bottom-0 w-[200px] bg-gradient-to-r from-[var(--main-color-opacity)] to-transparent" />
+          </div>
+
+          {/* The Actual Buttons */}
+          <div className="relative z-10 w-full flex flex-col">
+            {options.map((opt) => (
               <button 
+                key={opt.id}
                 onPointerDown={(e) => e.stopPropagation()} 
-                onClick={() => setPendingSelection('skip')} 
-                className={`w-full p-4 mt-2 font-bold uppercase text-slate-300 uiverse-glass-card ${pendingSelection === 'skip' ? 'selected text-white' : ''}`} 
+                onClick={() => setPendingSelection(opt.id)} 
+                className={`w-full h-[64px] flex items-center px-6 font-black uppercase tracking-widest transition-colors duration-200 ${pendingSelection === opt.id ? 'text-[var(--main-color)]' : 'text-slate-500 hover:text-slate-300'}`}
                 style={tapSafeStyle}
               >
-                Skip / Nobody
+                {opt.id === 'skip' ? '⊘ ' : '→ '}{opt.name}
               </button>
-            </AnimatedItem>
-          )}
+            ))}
+          </div>
         </div>
 
-        {/* CLEAN CONFIRM BUTTON FIX: No black border, soft glowing glass container instead */}
+        {/* RAW, CLEAN CONFIRM BUTTON - Zero borders, zero blurs. */}
         {pendingSelection && (
-          <div className="mt-4 flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4 bg-white/10 backdrop-blur-xl p-3 rounded-2xl border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.8)] mx-4 will-change-transform">
+          <div className="mt-6 flex flex-col mx-4 animate-in fade-in slide-in-from-bottom-4 will-change-transform">
             <button 
               onClick={handleConfirm} 
-              className="w-full p-4 bg-white text-black rounded-xl font-black uppercase tracking-widest shadow-[0_0_15px_rgba(255,255,255,0.4)] active:scale-95 transition-transform duration-100 will-change-transform"
+              className="w-full p-4 bg-white text-black rounded-xl font-black uppercase tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.4)] active:scale-95 transition-transform duration-100 will-change-transform"
             >
-              CONFIRM & NEXT →
+              CONFIRM & NEXT
             </button>
           </div>
         )}
+
       </div>
     );
   };
 
   return (
     <>
-      {/* INJECTED CSS FOR TRUE GLASSMORPHISM & ANDROID 120FPS LAG FIX */}
       <style>{`
         html, body, #root { width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; position: fixed; overscroll-behavior: none; background-color: #050505 !important; user-select: none; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent !important; -webkit-touch-callout: none !important; }
         * { -webkit-tap-highlight-color: transparent !important; outline: none !important; }
         input { user-select: auto; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* --- TRUE GLASSMORPHISM (100MS + ANDROID FIX) --- */
-        .uiverse-glass-card {
-          position: relative;
-          border-radius: 12px;
-          background: rgba(255, 255, 255, 0.08); /* Thick enough to show blur */
-          backdrop-filter: blur(12px); /* True frosted glass */
-          -webkit-backdrop-filter: blur(12px); /* Safari/iOS/Android support */
-          box-shadow: inset 0 1px 3px rgba(255,255,255,0.2), 0 4px 10px rgba(0,0,0,0.3);
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          
-          /* PERFORMANCE HACKS: Hardware acceleration & 100ms transitions */
-          transform: translateZ(0); /* Forces element onto its own GPU layer */
-          will-change: transform;
-          transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), 
-                      background-color 0.1s ease, 
-                      border-color 0.1s ease, 
-                      box-shadow 0.1s ease;
-        }
-
-        /* Instant press down effect */
-        .uiverse-glass-card:active {
-          transform: scale(0.96) translateZ(0) !important;
-          background: rgba(255, 255, 255, 0.12);
-        }
-
-        /* Selected Pop-up effect */
-        .uiverse-glass-card.selected {
-          transform: scale(1.05) translateY(-2px) translateZ(0) !important;
-          background: rgba(255, 255, 255, 0.2);
-          border-color: rgba(255, 255, 255, 0.6);
-          box-shadow: inset 0 2px 6px rgba(255,255,255,0.4), 0 12px 24px rgba(0,0,0,0.6);
-        }
       `}</style>
       
       <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out will-change-opacity" style={{ backgroundColor: '#e5e5e5', opacity: state.phase === 'splash' ? 1 : 0, zIndex: state.phase === 'splash' ? 0 : -100, visibility: state.phase === 'splash' ? 'visible' : 'hidden' }} />
@@ -533,50 +520,7 @@ export default function GameBoard() {
           <p className="text-lg font-bold text-red-400 tracking-widest uppercase relative z-10 drop-shadow-md pointer-events-none">Who do you exile?</p>
           
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-6 mb-6" style={tapSafeStyle}>
-            {/* ANDROID FIX: Removed the CSS maskImage so Android Chrome doesn't break the backdrop-filter! */}
-            <div className="w-full space-y-4 max-h-[320px] overflow-y-auto px-4 pb-4 pt-4 hide-scrollbar">
-              {alivePlayers.filter(p => p.id !== alivePlayers[state.votingState.currentVoterIndex]?.id).map((p, index) => {
-                const isSelected = pendingSelection === p.id;
-                return (
-                  <AnimatedItem key={p.id} index={index} delay={0.05}>
-                    <button 
-                      onPointerDown={(e) => e.stopPropagation()} 
-                      onClick={() => setPendingSelection(p.id)} 
-                      className={`w-full p-4 font-bold uppercase text-slate-200 uiverse-glass-card ${isSelected ? 'selected text-white' : ''}`} 
-                      style={tapSafeStyle}
-                    >
-                      → Vote {p.name}
-                    </button>
-                  </AnimatedItem>
-                );
-              })}
-              <AnimatedItem index={999} delay={0.05}>
-                <button 
-                  onPointerDown={(e) => e.stopPropagation()} 
-                  onClick={() => setPendingSelection('skip')} 
-                  className={`w-full p-4 mt-2 font-bold uppercase text-slate-300 uiverse-glass-card ${pendingSelection === 'skip' ? 'selected text-white' : ''}`} 
-                  style={tapSafeStyle}
-                >
-                  ⊘ Pass / No Vote
-                </button>
-              </AnimatedItem>
-            </div>
-
-            {/* CLEAN CONFIRM BUTTON FIX: No black border, soft glowing glass container instead */}
-            {pendingSelection && (
-              <div className="mt-4 flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4 bg-white/10 backdrop-blur-xl p-3 rounded-2xl border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.8)] mx-4 will-change-transform">
-                <button 
-                  onClick={() => {
-                    state.submitVote(pendingSelection === 'skip' ? null : pendingSelection);
-                    setPendingSelection(null);
-                  }} 
-                  className="w-full p-4 bg-amber-400 text-black rounded-xl font-black uppercase tracking-widest shadow-[0_0_15px_rgba(255,193,7,0.4)] active:scale-95 transition-transform duration-100 will-change-transform hover:bg-amber-300"
-                >
-                  CONFIRM VOTE →
-                </button>
-              </div>
-            )}
-
+            {renderPlayerList((id) => state.submitVote(id), true, (p) => p.id === alivePlayers[state.votingState.currentVoterIndex]?.id)}
           </div>
           <p className="mt-10 text-slate-400 font-bold text-[11px] uppercase tracking-wider relative z-10 bg-slate-900/40 px-4 py-2 rounded-full backdrop-blur-md border border-slate-700/50 pointer-events-none">Vote {state.votingState.currentVoterIndex + 1} of {alivePlayers.length}</p>
         </div>
