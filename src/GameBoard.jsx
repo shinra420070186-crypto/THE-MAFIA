@@ -25,6 +25,26 @@ const MemoizedGalaxy = React.memo(() => (
   <Galaxy mouseRepulsion={true} mouseInteraction={true} density={1} glowIntensity={0.3} saturation={0} hueShift={140} twinkleIntensity={0.3} rotationSpeed={0.1} repulsionStrength={2} autoCenterRepulsion={0} starSpeed={0.5} speed={1} />
 ));
 
+// ─── NEW ALERT COMPONENT BASED ON YOUR DESIGN ─────────
+const SelectionAlert = ({ type, message }) => {
+  const themes = {
+    success: { bg: 'bg-green-100 dark:bg-green-900 border-green-500 text-green-900 dark:text-green-100', icon: 'text-green-600' },
+    info: { bg: 'bg-blue-100 dark:bg-blue-900 border-blue-500 text-blue-900 dark:text-blue-100', icon: 'text-blue-600' },
+    warning: { bg: 'bg-yellow-100 dark:bg-yellow-900 border-yellow-500 text-yellow-900 dark:text-yellow-100', icon: 'text-yellow-600' },
+    error: { bg: 'bg-red-100 dark:bg-red-900 border-red-500 text-red-900 dark:text-red-100', icon: 'text-red-600' }
+  };
+  const t = themes[type] || themes.info;
+
+  return (
+    <div role="alert" className={`${t.bg} border-l-4 p-3 rounded-lg flex items-center transition duration-300 ease-in-out transform hover:scale-105 shadow-md w-full`}>
+      <svg stroke="currentColor" viewBox="0 0 24 24" fill="none" className={`h-6 w-6 flex-shrink-0 mr-3 ${t.icon}`} xmlns="http://www.w3.org/2000/svg">
+        <path d="M13 16h-1v-4h1m0-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"></path>
+      </svg>
+      <p className="text-sm font-bold tracking-wide uppercase">{message}</p>
+    </div>
+  );
+};
+
 // ─── FULL SCREEN SPOOKY HOUSE BACKGROUND ─────────────
 const FullScreenSpooky = ({ phase }) => {
   const isNight = phase.startsWith('night') || phase === 'night_transition';
@@ -163,6 +183,9 @@ export default function GameBoard() {
   const [isFlipped, setIsFlipped] = useState(false);
   const [cardViewed, setCardViewed] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  
+  // NEW: State to hold the currently selected player before confirming
+  const [pendingSelection, setPendingSelection] = useState(null);
 
   const alivePlayers = state.players.filter(p => p.isAlive);
   const availableRecentNames = state.recentNames.filter(n => !state.players.some(p => p.name === n));
@@ -183,7 +206,11 @@ export default function GameBoard() {
     return () => clearTimeout(timer);
   }, [state.phase]);
 
-  useEffect(() => { setCardViewed(false); }, [state.phase]);
+  // Clear selections when phases or voters change
+  useEffect(() => { 
+    setCardViewed(false); 
+    setPendingSelection(null);
+  }, [state.phase, state.votingState?.currentVoterIndex]);
 
   const isGalaxyPhase = state.phase === 'lobby' || state.phase === 'role_reveal';
   const isSpookyPhase = state.phase !== 'splash' && state.phase !== 'lobby' && state.phase !== 'role_reveal';
@@ -200,22 +227,61 @@ export default function GameBoard() {
     );
   };
 
-  const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
+  // UPDATED renderPlayerList WITH CONFIRMATION LOGIC & ALERT UI
+  const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false, theme = 'info', actionVerb = 'Selected') => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
+
+    const handleConfirm = () => {
+      if (pendingSelection !== null) {
+        onSelect(pendingSelection === 'skip' ? null : pendingSelection);
+        setPendingSelection(null);
+      }
+    };
+
     return (
       <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={tapSafeStyle}>
-        <div className="w-full space-y-3 max-h-[280px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}>
+        <div className="w-full space-y-3 max-h-[200px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}>
           {visiblePlayers.map((p, index) => (
             <AnimatedItem key={p.id} index={index} delay={0.05}>
-              <button onPointerDown={(e) => e.stopPropagation()} onClick={() => onSelect(p.id)} className="w-full p-4 bg-[#111] text-white active:scale-95 border border-slate-700 rounded-xl font-bold uppercase transition-all hover:border-slate-500" style={tapSafeStyle}>{p.name}</button>
+              <button 
+                onPointerDown={(e) => e.stopPropagation()} 
+                onClick={() => setPendingSelection(p.id)} 
+                className={`w-full p-4 text-white active:scale-95 border rounded-xl font-bold uppercase transition-all ${pendingSelection === p.id ? 'bg-[#222] border-white ring-2 ring-white/50 scale-[1.02]' : 'bg-[#111] border-slate-700 hover:border-slate-500'}`} 
+                style={tapSafeStyle}
+              >
+                {p.name}
+              </button>
             </AnimatedItem>
           ))}
           {includeSkip && (
             <AnimatedItem index={visiblePlayers.length} delay={0.05}>
-              <button onPointerDown={(e) => e.stopPropagation()} onClick={() => onSelect(null)} className="w-full p-4 bg-transparent border border-slate-700/80 text-slate-400 rounded-xl font-bold uppercase mt-2 active:scale-95 transition-all hover:border-slate-500 hover:text-slate-300" style={tapSafeStyle}>Skip / Nobody</button>
+              <button 
+                onPointerDown={(e) => e.stopPropagation()} 
+                onClick={() => setPendingSelection('skip')} 
+                className={`w-full p-4 rounded-xl font-bold uppercase mt-2 active:scale-95 transition-all ${pendingSelection === 'skip' ? 'bg-[#222] border-white text-white ring-2 ring-white/50 scale-[1.02]' : 'bg-transparent border border-slate-700/80 text-slate-400 hover:border-slate-500 hover:text-slate-300'}`} 
+                style={tapSafeStyle}
+              >
+                Skip / Nobody
+              </button>
             </AnimatedItem>
           )}
         </div>
+
+        {/* POPUP ALERT AND NEXT BUTTON */}
+        {pendingSelection && (
+          <div className="mt-4 flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4 bg-[#0a0a0a]/90 backdrop-blur-md p-3 rounded-2xl border border-slate-700 shadow-[0_0_30px_rgba(0,0,0,0.8)]">
+            <SelectionAlert 
+              type={theme} 
+              message={`${actionVerb}: ${pendingSelection === 'skip' ? 'Nobody (Skipped)' : alivePlayers.find(x => x.id === pendingSelection)?.name}`} 
+            />
+            <button 
+              onClick={handleConfirm} 
+              className="w-full p-4 bg-white text-black rounded-xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform"
+            >
+              CONFIRM & NEXT →
+            </button>
+          </div>
+        )}
       </div>
     );
   };
@@ -372,7 +438,8 @@ export default function GameBoard() {
           <h2 className="text-3xl md:text-4xl font-black text-red-500 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
           <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🌙 Moderator: Ask the Mafia to wake up and point.</p>
           <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(220,38,38,0.4)] tracking-[0.1em] pointer-events-none">Who does the Mafia kill?</h3>
-          {renderPlayerList((id) => state.submitNightAction('Mafia', id), true, (p) => p.role === 'Mafia')}
+          {/* USES ERROR THEME (RED) */}
+          {renderPlayerList((id) => state.submitNightAction('Mafia', id), true, (p) => p.role === 'Mafia', 'error', 'Target Locked')}
         </div>
       )}
 
@@ -382,7 +449,8 @@ export default function GameBoard() {
           <h2 className="text-3xl md:text-4xl font-black text-green-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(34,197,94,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
           <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🌙 Moderator: Ask the Doctor to wake up and point.</p>
           <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(34,197,94,0.4)] tracking-[0.1em] pointer-events-none">Who does the Doctor save?</h3>
-          {renderPlayerList((id) => state.submitNightAction('Doctor', id), true, (p) => p.id === state.doctorLastSaved || (p.role === 'Doctor' && state.doctorHasSelfSaved))}
+          {/* USES SUCCESS THEME (GREEN) */}
+          {renderPlayerList((id) => state.submitNightAction('Doctor', id), true, (p) => p.id === state.doctorLastSaved || (p.role === 'Doctor' && state.doctorHasSelfSaved), 'success', 'Saving')}
         </div>
       )}
 
@@ -405,7 +473,8 @@ export default function GameBoard() {
               <h2 className="text-3xl md:text-4xl font-black text-blue-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(96,165,250,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
               <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">🔍 Moderator: Ask the Detective to wake up and point.</p>
               <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(96,165,250,0.4)] tracking-[0.1em] pointer-events-none">Who is investigated?</h3>
-              {renderPlayerList((id) => state.submitNightAction('Detective', id), false, (p) => p.role === 'Detective')}
+              {/* USES INFO THEME (BLUE) */}
+              {renderPlayerList((id) => state.submitNightAction('Detective', id), false, (p) => p.role === 'Detective', 'info', 'Investigating')}
             </>
           )}
         </div>
@@ -417,7 +486,8 @@ export default function GameBoard() {
           <h2 className="text-3xl md:text-4xl font-black text-purple-400 uppercase mt-14 relative z-10 drop-shadow-[0_0_20px_rgba(168,85,247,0.6)] tracking-[0.15em] pointer-events-none">Night Phase</h2>
           <p className="text-slate-300 mt-3 text-sm relative z-10 font-semibold pointer-events-none">⚔️ Moderator: Ask the Sheriff to wake up and point.</p>
           <h3 className="text-4xl font-black mt-12 relative z-10 drop-shadow-[0_0_15px_rgba(168,85,247,0.4)] tracking-[0.1em] pointer-events-none">Who does the Sheriff execute?</h3>
-          {renderPlayerList((id) => state.submitNightAction('Sheriff', id), true, (p) => p.role === 'Sheriff')}
+          {/* USES WARNING THEME (YELLOW) */}
+          {renderPlayerList((id) => state.submitNightAction('Sheriff', id), true, (p) => p.role === 'Sheriff', 'warning', 'Executing')}
         </div>
       )}
 
@@ -455,16 +525,50 @@ export default function GameBoard() {
           <p className="text-lg font-bold text-red-400 tracking-widest uppercase relative z-10 drop-shadow-md pointer-events-none">Who do you exile?</p>
           
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-6 mb-6" style={tapSafeStyle}>
-            <div className="w-full space-y-3 max-h-[280px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}>
+            <div className="w-full space-y-3 max-h-[220px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}>
               {alivePlayers.filter(p => p.id !== alivePlayers[state.votingState.currentVoterIndex]?.id).map((p, index) => (
                 <AnimatedItem key={p.id} index={index} delay={0.05}>
-                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.submitVote(p.id)} className="w-full p-4 bg-slate-900/70 backdrop-blur-md text-white border-2 border-slate-700/70 rounded-lg font-bold uppercase active:scale-95 transition-all hover:border-slate-500 hover:bg-slate-900" style={tapSafeStyle}>→ Vote {p.name}</button>
+                  <button 
+                    onPointerDown={(e) => e.stopPropagation()} 
+                    onClick={() => setPendingSelection(p.id)} 
+                    className={`w-full p-4 text-white border-2 rounded-lg font-bold uppercase active:scale-95 transition-all ${pendingSelection === p.id ? 'bg-slate-800 border-white ring-2 ring-white/50 scale-[1.02]' : 'bg-slate-900/70 backdrop-blur-md border-slate-700/70 hover:border-slate-500 hover:bg-slate-900'}`} 
+                    style={tapSafeStyle}
+                  >
+                    → Vote {p.name}
+                  </button>
                 </AnimatedItem>
               ))}
               <AnimatedItem index={999} delay={0.05}>
-                <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.submitVote(null)} className="w-full p-4 border-2 rounded-lg font-bold uppercase mt-2 active:scale-95 transition-all bg-transparent border-slate-600/50 backdrop-blur-sm text-slate-300 hover:border-slate-400 hover:text-slate-200" style={tapSafeStyle}>⊘ Pass / No Vote</button>
+                <button 
+                  onPointerDown={(e) => e.stopPropagation()} 
+                  onClick={() => setPendingSelection('skip')} 
+                  className={`w-full p-4 border-2 rounded-lg font-bold uppercase mt-2 active:scale-95 transition-all ${pendingSelection === 'skip' ? 'bg-slate-800 border-white text-white ring-2 ring-white/50 scale-[1.02]' : 'bg-transparent border-slate-600/50 backdrop-blur-sm text-slate-300 hover:border-slate-400 hover:text-slate-200'}`} 
+                  style={tapSafeStyle}
+                >
+                  ⊘ Pass / No Vote
+                </button>
               </AnimatedItem>
             </div>
+
+            {/* POPUP ALERT AND NEXT BUTTON FOR VOTING */}
+            {pendingSelection && (
+              <div className="mt-4 flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4 bg-[#0a0a0a]/90 backdrop-blur-md p-3 rounded-2xl border border-slate-700 shadow-[0_0_30px_rgba(0,0,0,0.8)]">
+                <SelectionAlert 
+                  type="warning" 
+                  message={`Voted for: ${pendingSelection === 'skip' ? 'Nobody (Passed)' : alivePlayers.find(x => x.id === pendingSelection)?.name}`} 
+                />
+                <button 
+                  onClick={() => {
+                    state.submitVote(pendingSelection === 'skip' ? null : pendingSelection);
+                    setPendingSelection(null);
+                  }} 
+                  className="w-full p-4 bg-amber-400 text-black rounded-xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform hover:bg-amber-300"
+                >
+                  CONFIRM VOTE →
+                </button>
+              </div>
+            )}
+
           </div>
           <p className="mt-10 text-slate-400 font-bold text-[11px] uppercase tracking-wider relative z-10 bg-slate-900/40 px-4 py-2 rounded-full backdrop-blur-md border border-slate-700/50 pointer-events-none">Vote {state.votingState.currentVoterIndex + 1} of {alivePlayers.length}</p>
         </div>
