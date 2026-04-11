@@ -218,7 +218,7 @@ export default function GameBoard() {
 
     return (
       <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={tapSafeStyle}>
-        {/* ANDROID FIX: Completely removed the CSS maskImage that was breaking the backdrop-filter blur! */}
+        {/* CRITICAL FIX: Removed the CSS maskImage so Android Chrome doesn't break the backdrop-filter! */}
         <div className="w-full space-y-4 max-h-[320px] overflow-y-auto px-4 pb-4 pt-4 hide-scrollbar">
           {visiblePlayers.map((p, index) => {
             const isSelected = pendingSelection === p.id;
@@ -249,12 +249,12 @@ export default function GameBoard() {
           )}
         </div>
 
-        {/* CONFIRM BUTTON */}
+        {/* CLEAN CONFIRM BUTTON FIX: No black border, soft glowing glass container instead */}
         {pendingSelection && (
-          <div className="mt-4 flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4 bg-[#0a0a0a]/90 backdrop-blur-md p-3 rounded-2xl border border-slate-700 shadow-[0_0_30px_rgba(0,0,0,0.8)] mx-4">
+          <div className="mt-4 flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4 bg-white/10 backdrop-blur-xl p-3 rounded-2xl border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.8)] mx-4 will-change-transform">
             <button 
               onClick={handleConfirm} 
-              className="w-full p-4 bg-white text-black rounded-xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform duration-100 will-change-transform"
+              className="w-full p-4 bg-white text-black rounded-xl font-black uppercase tracking-widest shadow-[0_0_15px_rgba(255,255,255,0.4)] active:scale-95 transition-transform duration-100 will-change-transform"
             >
               CONFIRM & NEXT →
             </button>
@@ -274,7 +274,7 @@ export default function GameBoard() {
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* --- TRUE GLASSMORPHISM (120FPS ANDROID FIX) --- */
+        /* --- TRUE GLASSMORPHISM (100MS + ANDROID FIX) --- */
         .uiverse-glass-card {
           position: relative;
           border-radius: 12px;
@@ -308,12 +308,12 @@ export default function GameBoard() {
         }
       `}</style>
       
-      <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out" style={{ backgroundColor: '#e5e5e5', opacity: state.phase === 'splash' ? 1 : 0, zIndex: state.phase === 'splash' ? 0 : -100, visibility: state.phase === 'splash' ? 'visible' : 'hidden' }} />
-      <div className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out" style={{ opacity: isGalaxyPhase ? 1 : 0, zIndex: isGalaxyPhase ? 0 : -50, visibility: isGalaxyPhase ? 'visible' : 'hidden' }}>
+      <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out will-change-opacity" style={{ backgroundColor: '#e5e5e5', opacity: state.phase === 'splash' ? 1 : 0, zIndex: state.phase === 'splash' ? 0 : -100, visibility: state.phase === 'splash' ? 'visible' : 'hidden' }} />
+      <div className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out will-change-opacity" style={{ opacity: isGalaxyPhase ? 1 : 0, zIndex: isGalaxyPhase ? 0 : -50, visibility: isGalaxyPhase ? 'visible' : 'hidden' }}>
         <MemoizedGalaxy />
       </div>
       
-      <div className="fixed inset-0 w-full h-full transition-opacity duration-700 ease-in-out" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
+      <div className="fixed inset-0 w-full h-full transition-opacity duration-700 ease-in-out will-change-opacity" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
         <FullScreenSpooky phase={state.phase} />
       </div>
 
@@ -533,7 +533,7 @@ export default function GameBoard() {
           <p className="text-lg font-bold text-red-400 tracking-widest uppercase relative z-10 drop-shadow-md pointer-events-none">Who do you exile?</p>
           
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-6 mb-6" style={tapSafeStyle}>
-            {/* ANDROID FIX: Removed the CSS maskImage that was breaking the backdrop-filter blur! */}
+            {/* ANDROID FIX: Removed the CSS maskImage so Android Chrome doesn't break the backdrop-filter! */}
             <div className="w-full space-y-4 max-h-[320px] overflow-y-auto px-4 pb-4 pt-4 hide-scrollbar">
               {alivePlayers.filter(p => p.id !== alivePlayers[state.votingState.currentVoterIndex]?.id).map((p, index) => {
                 const isSelected = pendingSelection === p.id;
@@ -562,15 +562,15 @@ export default function GameBoard() {
               </AnimatedItem>
             </div>
 
-            {/* CONFIRM BUTTON */}
+            {/* CLEAN CONFIRM BUTTON FIX: No black border, soft glowing glass container instead */}
             {pendingSelection && (
-              <div className="mt-4 flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4 bg-[#0a0a0a]/90 backdrop-blur-md p-3 rounded-2xl border border-slate-700 shadow-[0_0_30px_rgba(0,0,0,0.8)] mx-4">
+              <div className="mt-4 flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4 bg-white/10 backdrop-blur-xl p-3 rounded-2xl border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.8)] mx-4 will-change-transform">
                 <button 
                   onClick={() => {
                     state.submitVote(pendingSelection === 'skip' ? null : pendingSelection);
                     setPendingSelection(null);
                   }} 
-                  className="w-full p-4 bg-amber-400 text-black rounded-xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform duration-100 will-change-transform hover:bg-amber-300"
+                  className="w-full p-4 bg-amber-400 text-black rounded-xl font-black uppercase tracking-widest shadow-[0_0_15px_rgba(255,193,7,0.4)] active:scale-95 transition-transform duration-100 will-change-transform hover:bg-amber-300"
                 >
                   CONFIRM VOTE →
                 </button>
