@@ -207,7 +207,7 @@ export default function GameBoard() {
     );
   };
 
-  // UPDATED renderPlayerList WITH 3D POPUP TILE ANIMATION
+  // UPDATED renderPlayerList WITH HARDWARE ACCELERATED PERFORMANCE FIX
   const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
 
@@ -228,7 +228,8 @@ export default function GameBoard() {
                 <button 
                   onPointerDown={(e) => e.stopPropagation()} 
                   onClick={() => setPendingSelection(p.id)} 
-                  className={`w-full p-4 rounded-xl font-bold uppercase transition-all duration-300 ease-in-out transform relative
+                  // PERFORMANCE FIX: changed to duration-150, ease-out, will-change-transform, active:scale-95
+                  className={`w-full p-4 rounded-xl font-bold uppercase transition-all duration-150 ease-out transform will-change-transform active:scale-95 relative
                     ${isSelected 
                       ? 'bg-[#222] text-white scale-105 -translate-y-1 shadow-[0_10px_20px_rgba(0,0,0,0.5)] border border-white ring-2 ring-white/30 z-20' 
                       : 'bg-[#111] text-slate-300 border border-slate-700 hover:border-slate-500 hover:text-white hover:scale-[1.02] z-10'}`} 
@@ -244,7 +245,8 @@ export default function GameBoard() {
               <button 
                 onPointerDown={(e) => e.stopPropagation()} 
                 onClick={() => setPendingSelection('skip')} 
-                className={`w-full p-4 rounded-xl font-bold uppercase mt-2 transition-all duration-300 ease-in-out transform relative
+                // PERFORMANCE FIX: changed to duration-150, ease-out, will-change-transform, active:scale-95
+                className={`w-full p-4 rounded-xl font-bold uppercase mt-2 transition-all duration-150 ease-out transform will-change-transform active:scale-95 relative
                   ${pendingSelection === 'skip' 
                     ? 'bg-[#222] text-white scale-105 -translate-y-1 shadow-[0_10px_20px_rgba(0,0,0,0.5)] border border-white ring-2 ring-white/30 z-20' 
                     : 'bg-transparent text-slate-400 border border-slate-700/80 hover:border-slate-500 hover:text-slate-300 hover:scale-[1.02] z-10'}`} 
@@ -256,12 +258,12 @@ export default function GameBoard() {
           )}
         </div>
 
-        {/* ONLY THE CONFIRM BUTTON APPEARS BELOW NOW */}
+        {/* CONFIRM BUTTON */}
         {pendingSelection && (
           <div className="mt-4 flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4 bg-[#0a0a0a]/90 backdrop-blur-md p-3 rounded-2xl border border-slate-700 shadow-[0_0_30px_rgba(0,0,0,0.8)] mx-4">
             <button 
               onClick={handleConfirm} 
-              className="w-full p-4 bg-white text-black rounded-xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform"
+              className="w-full p-4 bg-white text-black rounded-xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform duration-150 will-change-transform"
             >
               CONFIRM & NEXT →
             </button>
@@ -514,7 +516,8 @@ export default function GameBoard() {
                     <button 
                       onPointerDown={(e) => e.stopPropagation()} 
                       onClick={() => setPendingSelection(p.id)} 
-                      className={`w-full p-4 rounded-xl font-bold uppercase transition-all duration-300 ease-in-out transform relative
+                      // PERFORMANCE FIX: changed to duration-150, ease-out, will-change-transform, active:scale-95
+                      className={`w-full p-4 rounded-xl font-bold uppercase transition-all duration-150 ease-out transform will-change-transform active:scale-95 relative
                         ${isSelected 
                           ? 'bg-[#222] text-white scale-105 -translate-y-1 shadow-[0_10px_20px_rgba(0,0,0,0.5)] border border-white ring-2 ring-white/30 z-20' 
                           : 'bg-[#111] text-slate-300 border border-slate-700 hover:border-slate-500 hover:text-white hover:scale-[1.02] z-10'}`} 
@@ -529,7 +532,8 @@ export default function GameBoard() {
                 <button 
                   onPointerDown={(e) => e.stopPropagation()} 
                   onClick={() => setPendingSelection('skip')} 
-                  className={`w-full p-4 rounded-xl font-bold uppercase mt-2 transition-all duration-300 ease-in-out transform relative
+                  // PERFORMANCE FIX: changed to duration-150, ease-out, will-change-transform, active:scale-95
+                  className={`w-full p-4 rounded-xl font-bold uppercase mt-2 transition-all duration-150 ease-out transform will-change-transform active:scale-95 relative
                     ${pendingSelection === 'skip' 
                       ? 'bg-[#222] text-white scale-105 -translate-y-1 shadow-[0_10px_20px_rgba(0,0,0,0.5)] border border-white ring-2 ring-white/30 z-20' 
                       : 'bg-transparent text-slate-400 border border-slate-700/80 hover:border-slate-500 hover:text-slate-300 hover:scale-[1.02] z-10'}`} 
@@ -540,7 +544,7 @@ export default function GameBoard() {
               </AnimatedItem>
             </div>
 
-            {/* ONLY THE CONFIRM BUTTON APPEARS BELOW NOW */}
+            {/* CONFIRM BUTTON */}
             {pendingSelection && (
               <div className="mt-4 flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4 bg-[#0a0a0a]/90 backdrop-blur-md p-3 rounded-2xl border border-slate-700 shadow-[0_0_30px_rgba(0,0,0,0.8)] mx-4">
                 <button 
@@ -548,7 +552,7 @@ export default function GameBoard() {
                     state.submitVote(pendingSelection === 'skip' ? null : pendingSelection);
                     setPendingSelection(null);
                   }} 
-                  className="w-full p-4 bg-amber-400 text-black rounded-xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform hover:bg-amber-300"
+                  className="w-full p-4 bg-amber-400 text-black rounded-xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform duration-150 will-change-transform hover:bg-amber-300"
                 >
                   CONFIRM VOTE →
                 </button>
