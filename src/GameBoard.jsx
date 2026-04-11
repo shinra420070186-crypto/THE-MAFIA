@@ -205,23 +205,9 @@ export default function GameBoard() {
     );
   };
 
-  // ─── NEW LAG-FREE GLIDER UI ───
+  // ─── RETURN TO GLASSMORPHISM TILES (LAG FIX VERSION) ───
   const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
-    
-    // Combine arrays for unified glider indexing
-    const options = [...visiblePlayers];
-    if (includeSkip) options.push({ id: 'skip', name: 'Skip / Nobody' });
-
-    // Dynamic coloring based on role/phase
-    let mainColor = '#fbbf24'; // default amber
-    if (state.phase === 'night_mafia') mainColor = '#ef4444'; // red
-    if (state.phase === 'night_doctor') mainColor = '#22c55e'; // green
-    if (state.phase === 'night_detective') mainColor = '#3b82f6'; // blue
-    if (state.phase === 'night_sheriff') mainColor = '#a855f7'; // purple
-
-    const selectedIndex = pendingSelection ? options.findIndex(o => o.id === pendingSelection) : -1;
-    const itemHeight = 64; // height of each row in pixels
 
     const handleConfirm = () => {
       if (pendingSelection !== null) {
@@ -231,46 +217,38 @@ export default function GameBoard() {
     };
 
     return (
-      <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={{ ...tapSafeStyle, '--main-color': mainColor, '--main-color-opacity': mainColor + '30' }}>
-        
-        {/* GLIDER LIST CONTAINER */}
-        <div className="relative w-full max-h-[320px] overflow-y-auto pl-4 hide-scrollbar">
-          
-          {/* Static Track Line */}
-          <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-transparent via-slate-800 to-transparent" />
-          
-          {/* Moving Glider Highlighter (Native 120fps Transform) */}
-          <div 
-            className="absolute left-0 w-full z-0 pointer-events-none transition-transform duration-300 ease-[cubic-bezier(0.37,1.95,0.66,0.56)]"
-            style={{
-              height: `${itemHeight}px`,
-              transform: `translateY(${Math.max(0, selectedIndex) * itemHeight}px)`,
-              opacity: selectedIndex >= 0 ? 1 : 0
-            }}
-          >
-            {/* The bright vertical line */}
-            <div className="absolute left-[-1px] top-0 bottom-0 w-[4px] bg-[var(--main-color)] rounded-full shadow-[0_0_10px_var(--main-color)]" />
-            {/* The soft gradient sweeping right */}
-            <div className="absolute left-0 top-0 bottom-0 w-[200px] bg-gradient-to-r from-[var(--main-color-opacity)] to-transparent" />
-          </div>
-
-          {/* Player Options */}
-          <div className="relative z-10 w-full flex flex-col">
-            {options.map((opt) => (
+      <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={tapSafeStyle}>
+        <div className="w-full space-y-4 max-h-[320px] overflow-y-auto px-4 pb-4 pt-4 hide-scrollbar">
+          {visiblePlayers.map((p, index) => {
+            const isSelected = pendingSelection === p.id;
+            return (
+              <AnimatedItem key={p.id} index={index} delay={0.05}>
+                <button 
+                  onPointerDown={(e) => e.stopPropagation()} 
+                  onClick={() => setPendingSelection(p.id)} 
+                  className={`glass-tile-android ${isSelected ? 'selected' : ''}`}
+                  style={tapSafeStyle}
+                >
+                  {p.name}
+                </button>
+              </AnimatedItem>
+            );
+          })}
+          {includeSkip && (
+            <AnimatedItem index={visiblePlayers.length} delay={0.05}>
               <button 
-                key={opt.id}
                 onPointerDown={(e) => e.stopPropagation()} 
-                onClick={() => setPendingSelection(opt.id)} 
-                className={`w-full flex items-center px-6 font-black uppercase tracking-widest transition-colors duration-200 ${pendingSelection === opt.id ? 'text-[var(--main-color)] drop-shadow-md scale-105 origin-left' : 'text-slate-500 hover:text-slate-300'}`}
-                style={{ height: `${itemHeight}px`, ...tapSafeStyle }}
+                onClick={() => setPendingSelection('skip')} 
+                className={`glass-tile-android ${pendingSelection === 'skip' ? 'selected' : ''} !mt-2`}
+                style={tapSafeStyle}
               >
-                {opt.name}
+                Skip / Nobody
               </button>
-            ))}
-          </div>
+            </AnimatedItem>
+          )}
         </div>
 
-        {/* PURE, CLEAN CONFIRM BUTTON (No blurry border container) */}
+        {/* PURE CONFIRM BUTTON: Removed blurry extra border */}
         {pendingSelection && (
           <div className="mt-8 flex flex-col mx-4 animate-in fade-in slide-in-from-bottom-4 will-change-transform">
             <button 
@@ -293,15 +271,52 @@ export default function GameBoard() {
         input { user-select: auto; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .will-change-opacity { will-change: opacity; }
+
+        /* ULTIMATE GLASS LAG FIX FOR ANDROID */
+        .glass-tile-android {
+          width: 100%;
+          padding: 1rem;
+          border-radius: 12px;
+          text-transform: uppercase;
+          font-weight: 900;
+          color: #e2e8f0;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 0.06);
+          
+          /* The Blur Hack: Pre-calculate on GPU */
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          transform: translateZ(0); 
+          backface-visibility: hidden;
+          
+          /* Smooth performance */
+          will-change: transform, box-shadow;
+          transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), 
+                      background-color 0.1s ease,
+                      border-color 0.1s ease;
+          
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-tile-android.selected {
+          transform: scale(1.05) translateY(-2px) translateZ(0) !important;
+          background: rgba(255, 255, 255, 0.18);
+          border-color: rgba(255, 255, 255, 0.6);
+          color: white;
+          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5), inset 0 0 8px rgba(255, 255, 255, 0.2);
+        }
+
+        .glass-tile-android:active {
+          transform: scale(0.97) translateZ(0);
+        }
       `}</style>
       
-      <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out will-change-opacity" style={{ backgroundColor: '#e5e5e5', opacity: state.phase === 'splash' ? 1 : 0, zIndex: state.phase === 'splash' ? 0 : -100, visibility: state.phase === 'splash' ? 'visible' : 'hidden' }} />
-      <div className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out will-change-opacity" style={{ opacity: isGalaxyPhase ? 1 : 0, zIndex: isGalaxyPhase ? 0 : -50, visibility: isGalaxyPhase ? 'visible' : 'hidden' }}>
+      <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out" style={{ backgroundColor: '#e5e5e5', opacity: state.phase === 'splash' ? 1 : 0, zIndex: state.phase === 'splash' ? 0 : -100, visibility: state.phase === 'splash' ? 'visible' : 'hidden' }} />
+      <div className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out" style={{ opacity: isGalaxyPhase ? 1 : 0, zIndex: isGalaxyPhase ? 0 : -50, visibility: isGalaxyPhase ? 'visible' : 'hidden' }}>
         <MemoizedGalaxy />
       </div>
       
-      <div className="fixed inset-0 w-full h-full transition-opacity duration-700 ease-in-out will-change-opacity" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
+      <div className="fixed inset-0 w-full h-full transition-opacity duration-700 ease-in-out" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
         <FullScreenSpooky phase={state.phase} />
       </div>
 
