@@ -207,7 +207,7 @@ export default function GameBoard() {
     );
   };
 
-  // UPDATED renderPlayerList WITH HARDWARE ACCELERATED PERFORMANCE FIX
+  // UPDATED renderPlayerList WITH GLASSMORPHISM STYLES
   const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
 
@@ -228,11 +228,10 @@ export default function GameBoard() {
                 <button 
                   onPointerDown={(e) => e.stopPropagation()} 
                   onClick={() => setPendingSelection(p.id)} 
-                  // PERFORMANCE FIX: changed to duration-150, ease-out, will-change-transform, active:scale-95
-                  className={`w-full p-4 rounded-xl font-bold uppercase transition-all duration-150 ease-out transform will-change-transform active:scale-95 relative
+                  className={`w-full p-4 rounded-xl font-bold uppercase transition-all duration-150 ease-out transform will-change-transform active:scale-95 relative overflow-hidden
                     ${isSelected 
-                      ? 'bg-[#222] text-white scale-105 -translate-y-1 shadow-[0_10px_20px_rgba(0,0,0,0.5)] border border-white ring-2 ring-white/30 z-20' 
-                      : 'bg-[#111] text-slate-300 border border-slate-700 hover:border-slate-500 hover:text-white hover:scale-[1.02] z-10'}`} 
+                      ? 'bg-white/20 backdrop-blur-[10px] text-white scale-105 -translate-y-1 shadow-[0_10px_20px_rgba(0,0,0,0.5)] border border-white ring-2 ring-white/30 z-20' 
+                      : 'bg-white/5 backdrop-blur-[10px] shadow-[0_0_10px_rgba(0,0,0,0.25)] text-slate-200 border border-white/10 hover:border-white/30 hover:bg-white/10 hover:text-white hover:scale-[1.02] z-10'}`} 
                   style={tapSafeStyle}
                 >
                   {p.name}
@@ -245,11 +244,10 @@ export default function GameBoard() {
               <button 
                 onPointerDown={(e) => e.stopPropagation()} 
                 onClick={() => setPendingSelection('skip')} 
-                // PERFORMANCE FIX: changed to duration-150, ease-out, will-change-transform, active:scale-95
-                className={`w-full p-4 rounded-xl font-bold uppercase mt-2 transition-all duration-150 ease-out transform will-change-transform active:scale-95 relative
+                className={`w-full p-4 rounded-xl font-bold uppercase mt-2 transition-all duration-150 ease-out transform will-change-transform active:scale-95 relative overflow-hidden
                   ${pendingSelection === 'skip' 
-                    ? 'bg-[#222] text-white scale-105 -translate-y-1 shadow-[0_10px_20px_rgba(0,0,0,0.5)] border border-white ring-2 ring-white/30 z-20' 
-                    : 'bg-transparent text-slate-400 border border-slate-700/80 hover:border-slate-500 hover:text-slate-300 hover:scale-[1.02] z-10'}`} 
+                    ? 'bg-white/20 backdrop-blur-[10px] text-white scale-105 -translate-y-1 shadow-[0_10px_20px_rgba(0,0,0,0.5)] border border-white ring-2 ring-white/30 z-20' 
+                    : 'bg-white/5 backdrop-blur-[10px] shadow-[0_0_10px_rgba(0,0,0,0.25)] text-slate-300 border border-white/10 hover:border-white/30 hover:bg-white/10 hover:text-white hover:scale-[1.02] z-10'}`} 
                 style={tapSafeStyle}
               >
                 Skip / Nobody
@@ -302,7 +300,7 @@ export default function GameBoard() {
       {state.phase === 'lobby' && (
         <div className="relative h-[100dvh] w-full text-white flex flex-col items-center p-6 overflow-hidden pointer-events-none z-10" style={tapSafeStyle}>
           <button onPointerDown={(e) => e.stopPropagation()} onClick={() => setShowSettings((prev) => !prev)} className="absolute top-4 left-4 z-50 w-12 h-12 rounded-xl border border-cyan-300/40 bg-[#02060a]/80 backdrop-blur-md flex items-center justify-center active:scale-95 transition-all hover:border-cyan-200/70 hover:bg-[#07111a]/85 pointer-events-auto" style={tapSafeStyle}>
-            <svg className={`w-6 h-6 text-cyan-100 ${showSettings ? 'animate-spin' : ''}`} style={{ animationDuration: '0.8s' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3.2" /><path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.9 1.9 0 0 1-2.7 2.7l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 0 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.9 1.9 0 0 1-2.7-2.7l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 0 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0 1.1.2h0a1 1 0 0 0 .6-.9V4a2 2 0 0 1 4 0v.2a1 1 0 0 0 .6.9h0a1 1 0 0 0 1.1-.2l.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0-.2 1.1v0a1 1 0 0 0 .9.6h.2a2 2 0 0 1 0 4h-.2a1 1 0 0 0-.9.6Z" /></svg>
+            <svg className={`w-6 h-6 text-cyan-100 ${showSettings ? 'animate-spin' : ''}`} style={{ animationDuration: '0.8s' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3.2" /><path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.9 1.9 0 0 1-2.7 2.7l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 0 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.9 1.9 0 0 1-2.7-2.7l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 0 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0-.2 1.1v0a1 1 0 0 0 .9.6h.2a2 2 0 0 1 0 4h-.2a1 1 0 0 0-.9.6Z" /></svg>
           </button>
           
           <h1 className="text-5xl md:text-6xl font-black uppercase mb-10 tracking-[0.2em] mt-14 relative z-10 shine-text text-center pointer-events-none">THE MAFIA</h1>
@@ -516,11 +514,10 @@ export default function GameBoard() {
                     <button 
                       onPointerDown={(e) => e.stopPropagation()} 
                       onClick={() => setPendingSelection(p.id)} 
-                      // PERFORMANCE FIX: changed to duration-150, ease-out, will-change-transform, active:scale-95
-                      className={`w-full p-4 rounded-xl font-bold uppercase transition-all duration-150 ease-out transform will-change-transform active:scale-95 relative
+                      className={`w-full p-4 rounded-xl font-bold uppercase transition-all duration-150 ease-out transform will-change-transform active:scale-95 relative overflow-hidden
                         ${isSelected 
-                          ? 'bg-[#222] text-white scale-105 -translate-y-1 shadow-[0_10px_20px_rgba(0,0,0,0.5)] border border-white ring-2 ring-white/30 z-20' 
-                          : 'bg-[#111] text-slate-300 border border-slate-700 hover:border-slate-500 hover:text-white hover:scale-[1.02] z-10'}`} 
+                          ? 'bg-white/20 backdrop-blur-[10px] text-white scale-105 -translate-y-1 shadow-[0_10px_20px_rgba(0,0,0,0.5)] border border-white ring-2 ring-white/30 z-20' 
+                          : 'bg-white/5 backdrop-blur-[10px] shadow-[0_0_10px_rgba(0,0,0,0.25)] text-slate-200 border border-white/10 hover:border-white/30 hover:bg-white/10 hover:text-white hover:scale-[1.02] z-10'}`} 
                       style={tapSafeStyle}
                     >
                       → Vote {p.name}
@@ -532,11 +529,10 @@ export default function GameBoard() {
                 <button 
                   onPointerDown={(e) => e.stopPropagation()} 
                   onClick={() => setPendingSelection('skip')} 
-                  // PERFORMANCE FIX: changed to duration-150, ease-out, will-change-transform, active:scale-95
-                  className={`w-full p-4 rounded-xl font-bold uppercase mt-2 transition-all duration-150 ease-out transform will-change-transform active:scale-95 relative
+                  className={`w-full p-4 rounded-xl font-bold uppercase mt-2 transition-all duration-150 ease-out transform will-change-transform active:scale-95 relative overflow-hidden
                     ${pendingSelection === 'skip' 
-                      ? 'bg-[#222] text-white scale-105 -translate-y-1 shadow-[0_10px_20px_rgba(0,0,0,0.5)] border border-white ring-2 ring-white/30 z-20' 
-                      : 'bg-transparent text-slate-400 border border-slate-700/80 hover:border-slate-500 hover:text-slate-300 hover:scale-[1.02] z-10'}`} 
+                      ? 'bg-white/20 backdrop-blur-[10px] text-white scale-105 -translate-y-1 shadow-[0_10px_20px_rgba(0,0,0,0.5)] border border-white ring-2 ring-white/30 z-20' 
+                      : 'bg-white/5 backdrop-blur-[10px] shadow-[0_0_10px_rgba(0,0,0,0.25)] text-slate-300 border border-white/10 hover:border-white/30 hover:bg-white/10 hover:text-white hover:scale-[1.02] z-10'}`} 
                   style={tapSafeStyle}
                 >
                   ⊘ Pass / No Vote
