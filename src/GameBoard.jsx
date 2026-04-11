@@ -218,7 +218,8 @@ export default function GameBoard() {
 
     return (
       <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={tapSafeStyle}>
-        <div className="w-full space-y-4 max-h-[320px] overflow-y-auto px-4 pb-4 pt-4 hide-scrollbar" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}>
+        {/* ANDROID FIX: Completely removed the CSS maskImage that was breaking the backdrop-filter blur! */}
+        <div className="w-full space-y-4 max-h-[320px] overflow-y-auto px-4 pb-4 pt-4 hide-scrollbar">
           {visiblePlayers.map((p, index) => {
             const isSelected = pendingSelection === p.id;
             return (
@@ -226,7 +227,6 @@ export default function GameBoard() {
                 <button 
                   onPointerDown={(e) => e.stopPropagation()} 
                   onClick={() => setPendingSelection(p.id)} 
-                  // Removed ALL Tailwind transitions to let custom optimized CSS handle it
                   className={`w-full p-4 font-bold uppercase text-slate-200 uiverse-glass-card ${isSelected ? 'selected text-white' : ''}`} 
                   style={tapSafeStyle}
                 >
@@ -240,7 +240,6 @@ export default function GameBoard() {
               <button 
                 onPointerDown={(e) => e.stopPropagation()} 
                 onClick={() => setPendingSelection('skip')} 
-                // Removed ALL Tailwind transitions to let custom optimized CSS handle it
                 className={`w-full p-4 mt-2 font-bold uppercase text-slate-300 uiverse-glass-card ${pendingSelection === 'skip' ? 'selected text-white' : ''}`} 
                 style={tapSafeStyle}
               >
@@ -255,7 +254,7 @@ export default function GameBoard() {
           <div className="mt-4 flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4 bg-[#0a0a0a]/90 backdrop-blur-md p-3 rounded-2xl border border-slate-700 shadow-[0_0_30px_rgba(0,0,0,0.8)] mx-4">
             <button 
               onClick={handleConfirm} 
-              className="w-full p-4 bg-white text-black rounded-xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform duration-150 will-change-transform"
+              className="w-full p-4 bg-white text-black rounded-xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform duration-100 will-change-transform"
             >
               CONFIRM & NEXT →
             </button>
@@ -285,13 +284,13 @@ export default function GameBoard() {
           box-shadow: inset 0 1px 3px rgba(255,255,255,0.2), 0 4px 10px rgba(0,0,0,0.3);
           border: 1px solid rgba(255, 255, 255, 0.15);
           
-          /* PERFORMANCE HACKS: Hardware acceleration & specific transitions */
+          /* PERFORMANCE HACKS: Hardware acceleration & 100ms transitions */
           transform: translateZ(0); /* Forces element onto its own GPU layer */
           will-change: transform;
-          transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), 
-                      background-color 0.15s ease, 
-                      border-color 0.15s ease, 
-                      box-shadow 0.15s ease;
+          transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), 
+                      background-color 0.1s ease, 
+                      border-color 0.1s ease, 
+                      box-shadow 0.1s ease;
         }
 
         /* Instant press down effect */
@@ -534,7 +533,8 @@ export default function GameBoard() {
           <p className="text-lg font-bold text-red-400 tracking-widest uppercase relative z-10 drop-shadow-md pointer-events-none">Who do you exile?</p>
           
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-6 mb-6" style={tapSafeStyle}>
-            <div className="w-full space-y-4 max-h-[320px] overflow-y-auto px-4 pb-4 pt-4 hide-scrollbar" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' }}>
+            {/* ANDROID FIX: Removed the CSS maskImage that was breaking the backdrop-filter blur! */}
+            <div className="w-full space-y-4 max-h-[320px] overflow-y-auto px-4 pb-4 pt-4 hide-scrollbar">
               {alivePlayers.filter(p => p.id !== alivePlayers[state.votingState.currentVoterIndex]?.id).map((p, index) => {
                 const isSelected = pendingSelection === p.id;
                 return (
@@ -570,7 +570,7 @@ export default function GameBoard() {
                     state.submitVote(pendingSelection === 'skip' ? null : pendingSelection);
                     setPendingSelection(null);
                   }} 
-                  className="w-full p-4 bg-amber-400 text-black rounded-xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform duration-150 will-change-transform hover:bg-amber-300"
+                  className="w-full p-4 bg-amber-400 text-black rounded-xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform duration-100 will-change-transform hover:bg-amber-300"
                 >
                   CONFIRM VOTE →
                 </button>
