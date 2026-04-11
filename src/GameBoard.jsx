@@ -205,23 +205,23 @@ export default function GameBoard() {
     );
   };
 
-  // ─── NEW GLIDER UI COMPONENT (ZERO LAG) ───
+  // ─── NEW LAG-FREE GLIDER UI ───
   const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
     
-    // Combine visible players and skip option into one array to calculate indexes easily
+    // Combine arrays for unified glider indexing
     const options = [...visiblePlayers];
     if (includeSkip) options.push({ id: 'skip', name: 'Skip / Nobody' });
 
-    // Find the current selected index for the glider math
-    const selectedIndex = pendingSelection ? options.findIndex(o => o.id === pendingSelection) : -1;
+    // Dynamic coloring based on role/phase
+    let mainColor = '#fbbf24'; // default amber
+    if (state.phase === 'night_mafia') mainColor = '#ef4444'; // red
+    if (state.phase === 'night_doctor') mainColor = '#22c55e'; // green
+    if (state.phase === 'night_detective') mainColor = '#3b82f6'; // blue
+    if (state.phase === 'night_sheriff') mainColor = '#a855f7'; // purple
 
-    // DYNAMIC GLIDER COLORS BASED ON PHASE
-    let mainColor = '#f59e0b'; // Default Amber for Day Voting
-    if (state.phase === 'night_mafia') mainColor = '#ef4444'; // Red
-    if (state.phase === 'night_doctor') mainColor = '#22c55e'; // Green
-    if (state.phase === 'night_detective') mainColor = '#3b82f6'; // Blue
-    if (state.phase === 'night_sheriff') mainColor = '#a855f7'; // Purple
+    const selectedIndex = pendingSelection ? options.findIndex(o => o.id === pendingSelection) : -1;
+    const itemHeight = 64; // height of each row in pixels
 
     const handleConfirm = () => {
       if (pendingSelection !== null) {
@@ -231,56 +231,56 @@ export default function GameBoard() {
     };
 
     return (
-      <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={{...tapSafeStyle, '--main-color': mainColor, '--main-color-opacity': mainColor + '40'}}>
+      <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={{ ...tapSafeStyle, '--main-color': mainColor, '--main-color-opacity': mainColor + '30' }}>
         
-        {/* The List Container */}
+        {/* GLIDER LIST CONTAINER */}
         <div className="relative w-full max-h-[320px] overflow-y-auto pl-4 hide-scrollbar">
           
-          {/* Static Background Track (The thin vertical line) */}
-          <div className="absolute left-0 top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-slate-700 to-transparent" />
+          {/* Static Track Line */}
+          <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-transparent via-slate-800 to-transparent" />
           
-          {/* THE GLOWING GLIDER - Moves instantly using translateY */}
+          {/* Moving Glider Highlighter (Native 120fps Transform) */}
           <div 
-            className="absolute left-0 w-full pointer-events-none transition-all duration-[400ms] ease-[cubic-bezier(0.37,1.95,0.66,0.56)] z-0"
+            className="absolute left-0 w-full z-0 pointer-events-none transition-transform duration-300 ease-[cubic-bezier(0.37,1.95,0.66,0.56)]"
             style={{
-              height: '64px', // Fixed 4rem height for math
-              transform: `translateY(${Math.max(0, selectedIndex) * 64}px)`,
+              height: `${itemHeight}px`,
+              transform: `translateY(${Math.max(0, selectedIndex) * itemHeight}px)`,
               opacity: selectedIndex >= 0 ? 1 : 0
             }}
           >
-            <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[var(--main-color)]" />
-            <div className="absolute left-[-4px] top-1/4 bottom-1/4 w-[10px] bg-[var(--main-color)] blur-[8px]" />
+            {/* The bright vertical line */}
+            <div className="absolute left-[-1px] top-0 bottom-0 w-[4px] bg-[var(--main-color)] rounded-full shadow-[0_0_10px_var(--main-color)]" />
+            {/* The soft gradient sweeping right */}
             <div className="absolute left-0 top-0 bottom-0 w-[200px] bg-gradient-to-r from-[var(--main-color-opacity)] to-transparent" />
           </div>
 
-          {/* The Actual Buttons */}
+          {/* Player Options */}
           <div className="relative z-10 w-full flex flex-col">
             {options.map((opt) => (
               <button 
                 key={opt.id}
                 onPointerDown={(e) => e.stopPropagation()} 
                 onClick={() => setPendingSelection(opt.id)} 
-                className={`w-full h-[64px] flex items-center px-6 font-black uppercase tracking-widest transition-colors duration-200 ${pendingSelection === opt.id ? 'text-[var(--main-color)]' : 'text-slate-500 hover:text-slate-300'}`}
-                style={tapSafeStyle}
+                className={`w-full flex items-center px-6 font-black uppercase tracking-widest transition-colors duration-200 ${pendingSelection === opt.id ? 'text-[var(--main-color)] drop-shadow-md scale-105 origin-left' : 'text-slate-500 hover:text-slate-300'}`}
+                style={{ height: `${itemHeight}px`, ...tapSafeStyle }}
               >
-                {opt.id === 'skip' ? '⊘ ' : '→ '}{opt.name}
+                {opt.name}
               </button>
             ))}
           </div>
         </div>
 
-        {/* RAW, CLEAN CONFIRM BUTTON - Zero borders, zero blurs. */}
+        {/* PURE, CLEAN CONFIRM BUTTON (No blurry border container) */}
         {pendingSelection && (
-          <div className="mt-6 flex flex-col mx-4 animate-in fade-in slide-in-from-bottom-4 will-change-transform">
+          <div className="mt-8 flex flex-col mx-4 animate-in fade-in slide-in-from-bottom-4 will-change-transform">
             <button 
               onClick={handleConfirm} 
-              className="w-full p-4 bg-white text-black rounded-xl font-black uppercase tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.4)] active:scale-95 transition-transform duration-100 will-change-transform"
+              className="w-full p-4 bg-white text-black rounded-xl font-black uppercase tracking-widest shadow-[0_4px_20px_rgba(255,255,255,0.3)] active:scale-95 transition-transform duration-100 will-change-transform"
             >
               CONFIRM & NEXT
             </button>
           </div>
         )}
-
       </div>
     );
   };
@@ -293,6 +293,7 @@ export default function GameBoard() {
         input { user-select: auto; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .will-change-opacity { will-change: opacity; }
       `}</style>
       
       <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out will-change-opacity" style={{ backgroundColor: '#e5e5e5', opacity: state.phase === 'splash' ? 1 : 0, zIndex: state.phase === 'splash' ? 0 : -100, visibility: state.phase === 'splash' ? 'visible' : 'hidden' }} />
