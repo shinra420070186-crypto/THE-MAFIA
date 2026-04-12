@@ -291,7 +291,7 @@ export default function GameBoard() {
           
           /* Authentic Apple Blur + Color Saturation Pop */
           -webkit-backdrop-filter: saturate(180%) blur(20px);
-          backdrop-filter: saturate(180%) blur(20px);
+          backdrop-filter: saturate(180%) blur(10px);
           
           box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
           
