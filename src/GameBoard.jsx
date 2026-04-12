@@ -6,6 +6,37 @@ import './spooky.css';
 const TRANSITION_MS = 5000;
 const tapSafeStyle = { WebkitTapHighlightColor: 'rgba(0,0,0,0)', WebkitTouchCallout: 'none', userSelect: 'none', outline: 'none' };
 
+// ─── RESTORED SCROLL ANIMATION (WITH PERFORMANCE FIX) ───
+const AnimatedItem = ({ children, delay = 0, index }) => {
+  const ref = useRef(null);
+  const [hasAppeared, setHasAppeared] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      // The Fix: Only animate ONCE. When it appears, lock it in so the blur doesn't lag when scrolling!
+      if (entry.isIntersecting && !hasAppeared) {
+        setHasAppeared(true);
+        if (ref.current) observer.unobserve(ref.current);
+      }
+    }, { threshold: 0.1 });
+
+    if (ref.current) observer.observe(ref.current);
+    return () => { if (ref.current) observer.unobserve(ref.current); };
+  }, [hasAppeared]);
+
+  return (
+    <div ref={ref} data-index={index} style={{ 
+      width: '100%', 
+      transition: `transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) ${delay}s, opacity 0.3s ease-out ${delay}s`, 
+      transform: hasAppeared ? 'translate3d(0, 0, 0) scale(1)' : 'translate3d(0, 20px, 0) scale(0.9)', 
+      opacity: hasAppeared ? 1 : 0,
+      willChange: hasAppeared ? 'auto' : 'transform, opacity' // Frees up GPU memory after animating
+    }}>
+      {children}
+    </div>
+  );
+};
+
 const MemoizedGalaxy = React.memo(() => (
   <Galaxy mouseRepulsion={true} mouseInteraction={true} density={1} glowIntensity={0.3} saturation={0} hueShift={140} twinkleIntensity={0.3} rotationSpeed={0.1} repulsionStrength={2} autoCenterRepulsion={0} starSpeed={0.5} speed={1} />
 ));
@@ -177,6 +208,7 @@ export default function GameBoard() {
   const isGalaxyPhase = state.phase === 'lobby' || state.phase === 'role_reveal';
   const isSpookyPhase = state.phase !== 'splash' && state.phase !== 'lobby' && state.phase !== 'role_reveal';
   
+  // Calculate isNight once to pass to the background so it doesn't glitch on every click
   const isNightPhase = state.phase.startsWith('night') || state.phase === 'night_transition';
 
   const renderBackButton = () => {
@@ -191,7 +223,7 @@ export default function GameBoard() {
     );
   };
 
-  // ─── PLAYER LIST: NATIVE CSS STAGGER FIX (ZERO LAG) ───
+  // ─── PLAYER LIST: SCROLL ANIMATION IS BACK! ───
   const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
 
@@ -209,34 +241,37 @@ export default function GameBoard() {
           {visiblePlayers.map((p, index) => {
             const isSelected = pendingSelection === p.id;
             return (
-              /* Notice: No wrapper div! The button itself animates natively. */
-              <button 
-                key={p.id}
-                onPointerDown={(e) => e.stopPropagation()} 
-                onClick={() => setPendingSelection(p.id)} 
-                className={`apple-glass-tile stagger-animate ${isSelected ? 'selected' : ''}`}
-                style={{ ...tapSafeStyle, animationDelay: `${index * 0.05}s` }}
-              >
-                {p.name}
-              </button>
+              /* SCROLL ANIMATION WRAPPER RESTORED */
+              <AnimatedItem key={p.id} index={index} delay={0.05}>
+                <button 
+                  onPointerDown={(e) => e.stopPropagation()} 
+                  onClick={() => setPendingSelection(p.id)} 
+                  className={`apple-glass-tile ${isSelected ? 'selected' : ''}`}
+                  style={tapSafeStyle}
+                >
+                  {p.name}
+                </button>
+              </AnimatedItem>
             );
           })}
           
           {includeSkip && (
-            <button 
-              onPointerDown={(e) => e.stopPropagation()} 
-              onClick={() => setPendingSelection('skip')} 
-              className={`apple-glass-tile stagger-animate ${pendingSelection === 'skip' ? 'selected' : ''} !mt-2`}
-              style={{ ...tapSafeStyle, animationDelay: `${visiblePlayers.length * 0.05}s` }}
-            >
-              Skip / Nobody
-            </button>
+            <AnimatedItem index={visiblePlayers.length} delay={0.05}>
+              <button 
+                onPointerDown={(e) => e.stopPropagation()} 
+                onClick={() => setPendingSelection('skip')} 
+                className={`apple-glass-tile ${pendingSelection === 'skip' ? 'selected' : ''} !mt-2`}
+                style={tapSafeStyle}
+              >
+                Skip / Nobody
+              </button>
+            </AnimatedItem>
           )}
         </div>
 
         {/* APPLE STYLE CONFIRM BUTTON */}
         {pendingSelection && (
-          <div className="mt-8 flex flex-col mx-4" style={{ animation: 'popIn 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) both' }}>
+          <div className="mt-8 flex flex-col mx-4 animate-in fade-in slide-in-from-bottom-4 will-change-transform">
             <button 
               onClick={handleConfirm} 
               className="apple-confirm-btn"
@@ -258,16 +293,6 @@ export default function GameBoard() {
         input { user-select: auto; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* --- THE ANIMATION FIX: CSS Keyframes completely replace the IntersectionObserver lag --- */
-        @keyframes popIn {
-          0% { opacity: 0; transform: scale(0.95) translateY(10px) translateZ(0); }
-          100% { opacity: 1; transform: scale(1) translateY(0px) translateZ(0); }
-        }
-
-        .stagger-animate {
-          animation: popIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-        }
 
         /* --- TRUE APPLE UI GLASSMORPHISM --- */
         .apple-glass-tile {
@@ -291,15 +316,15 @@ export default function GameBoard() {
           background-clip: padding-box;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
           
-          /* THE APPLE BLUR IS BACK! (You can lower 12px to 8px if you want it less blurry) */
+          /* APPLE BLUR */
           -webkit-backdrop-filter: saturate(180%) blur(12px);
           backdrop-filter: saturate(180%) blur(12px);
           
           transform: translateZ(0);
           -webkit-transform: translateZ(0);
           backface-visibility: hidden;
+          will-change: transform;
           
-          /* Only transition transform and background. Never transition blur! */
           transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.15s ease;
         }
 
@@ -336,6 +361,7 @@ export default function GameBoard() {
           box-shadow: 0 8px 20px rgba(255, 255, 255, 0.15);
           
           transform: translateZ(0);
+          will-change: transform;
           transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
@@ -351,6 +377,7 @@ export default function GameBoard() {
         <MemoizedGalaxy />
       </div>
       
+      {/* GLITCH FIX: Passed isNightPhase instead of the exact phase so it only redraws when absolutely necessary */}
       <div className="fixed inset-0 w-full h-full transition-opacity duration-700 ease-in-out will-change-opacity" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
         <FullScreenSpooky isNight={isNightPhase} />
       </div>
@@ -428,14 +455,15 @@ export default function GameBoard() {
             </div>
           )}
 
-          {/* Player list for lobby - native CSS animation */}
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mb-10" style={tapSafeStyle}>
             <div className="w-full space-y-2 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)' }}>
               {state.players.map((p, index) => (
-                <div key={p.id} className="stagger-animate flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all" style={{ animationDelay: `${index * 0.05}s` }}>
-                  <span className="font-bold tracking-widest text-white">{p.name}</span>
-                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6" style={tapSafeStyle}>✕</button>
-                </div>
+                <AnimatedItem key={p.id} index={index} delay={0.05}>
+                  <div className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all">
+                    <span className="font-bold tracking-widest text-white">{p.name}</span>
+                    <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6" style={tapSafeStyle}>✕</button>
+                  </div>
+                </AnimatedItem>
               ))}
             </div>
           </div>
