@@ -6,6 +6,38 @@ import './spooky.css';
 const TRANSITION_MS = 5000;
 const tapSafeStyle = { WebkitTapHighlightColor: 'rgba(0,0,0,0)', WebkitTouchCallout: 'none', userSelect: 'none', outline: 'none' };
 
+// ─── THE CRASH FIX: A proper, top-level React Component for the animated glass buttons ───
+// This fuses the animation, blur, and button into ONE element with zero lag.
+const AnimatedGlassButton = ({ children, onClick, isSelected, isSkip }) => {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    // Direct DOM manipulation bypasses React render lag, keeping blur perfectly synced
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+      } else {
+        entry.target.classList.remove('is-visible'); // Animates AGAIN when you scroll back!
+      }
+    }, { threshold: 0.1 });
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <button
+      ref={ref}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={onClick}
+      className={`apple-glass-tile ${isSelected ? 'selected' : ''} ${isSkip ? '!mt-2' : ''}`}
+      style={tapSafeStyle}
+    >
+      {children}
+    </button>
+  );
+};
+
 const MemoizedGalaxy = React.memo(() => (
   <Galaxy mouseRepulsion={true} mouseInteraction={true} density={1} glowIntensity={0.3} saturation={0} hueShift={140} twinkleIntensity={0.3} rotationSpeed={0.1} repulsionStrength={2} autoCenterRepulsion={0} starSpeed={0.5} speed={1} />
 ));
@@ -176,6 +208,7 @@ export default function GameBoard() {
 
   const isGalaxyPhase = state.phase === 'lobby' || state.phase === 'role_reveal';
   const isSpookyPhase = state.phase !== 'splash' && state.phase !== 'lobby' && state.phase !== 'role_reveal';
+  
   const isNightPhase = state.phase.startsWith('night') || state.phase === 'night_transition';
 
   const renderBackButton = () => {
@@ -190,32 +223,9 @@ export default function GameBoard() {
     );
   };
 
-  // ─── PLAYER LIST: DIRECT DOM MANIPULATION (ZERO LAG) ───
+  // ─── PLAYER LIST: NOW USES THE SAFE, CRASH-FREE COMPONENT ───
   const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
-    
-    // We use a React ref to track all buttons, so we can native-observe them!
-    const tileRefs = useRef(new Map());
-
-    useEffect(() => {
-      // Native IntersectionObserver bypassing React state for 120fps scrolling
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible');
-          } else {
-            // Removes the class instantly so it animates AGAIN when scrolled back up
-            entry.target.classList.remove('is-visible');
-          }
-        });
-      }, { threshold: 0.1 });
-
-      tileRefs.current.forEach((node) => {
-        if (node) observer.observe(node);
-      });
-
-      return () => observer.disconnect();
-    }, [visiblePlayers, state.phase]); // Only reconstruct observer if players change
 
     const handleConfirm = () => {
       if (pendingSelection !== null) {
@@ -231,36 +241,25 @@ export default function GameBoard() {
           {visiblePlayers.map((p) => {
             const isSelected = pendingSelection === p.id;
             return (
-              /* ONE ELEMENT: The animation, shadow, and blur are fully connected to the button node natively */
-              <button 
+              <AnimatedGlassButton 
                 key={p.id}
-                ref={(el) => {
-                  if (el) tileRefs.current.set(p.id, el);
-                  else tileRefs.current.delete(p.id);
-                }}
-                onPointerDown={(e) => e.stopPropagation()} 
-                onClick={() => setPendingSelection(p.id)} 
-                className={`apple-glass-tile ${isSelected ? 'selected' : ''}`}
-                style={tapSafeStyle}
+                onClick={() => setPendingSelection(p.id)}
+                isSelected={isSelected}
               >
                 {p.name}
-              </button>
+              </AnimatedGlassButton>
             );
           })}
           
           {includeSkip && (
-            <button 
-              ref={(el) => {
-                if (el) tileRefs.current.set('skip', el);
-                else tileRefs.current.delete('skip');
-              }}
-              onPointerDown={(e) => e.stopPropagation()} 
-              onClick={() => setPendingSelection('skip')} 
-              className={`apple-glass-tile ${pendingSelection === 'skip' ? 'selected' : ''} !mt-2`}
-              style={tapSafeStyle}
+            <AnimatedGlassButton 
+              key="skip"
+              onClick={() => setPendingSelection('skip')}
+              isSelected={pendingSelection === 'skip'}
+              isSkip={true}
             >
               Skip / Nobody
-            </button>
+            </AnimatedGlassButton>
           )}
         </div>
 
@@ -462,11 +461,11 @@ export default function GameBoard() {
             </div>
           )}
 
-          {/* NO WRAPPERS: The player list tiles use their own simple CSS animation loop */}
+          {/* PLAYER LIST LOBBY */}
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mb-10" style={tapSafeStyle}>
             <div className="w-full space-y-2 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)' }}>
               {state.players.map((p) => (
-                <div key={p.id} className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm">
+                <div key={p.id} className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all">
                   <span className="font-bold tracking-widest text-white">{p.name}</span>
                   <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6" style={tapSafeStyle}>✕</button>
                 </div>
