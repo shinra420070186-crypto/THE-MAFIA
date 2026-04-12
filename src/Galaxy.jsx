@@ -33,7 +33,9 @@ uniform float uMouseActiveFactor;
 uniform float uAutoCenterRepulsion;
 uniform bool uTransparent;
 varying vec2 vUv;
-#define NUM_LAYER 4.0
+
+/* PERFORMANCE FIX: Reduced from 4.0 to 3.0. Keeps parallax depth but saves 25% GPU */
+#define NUM_LAYER 3.0 
 #define STAR_COLOR_CUTOFF 0.2
 #define MAT45 mat2(0.7071, -0.7071, 0.7071, 0.7071)
 #define PERIOD 3.0
@@ -171,7 +173,14 @@ export default function Galaxy({
   useEffect(() => {
     if (!ctnDom.current) return;
     const ctn = ctnDom.current;
-    const renderer = new Renderer({ alpha: transparent, premultipliedAlpha: false });
+    
+    // PERFORMANCE FIX: Force High-Performance GPU mode and restrict device pixel ratio
+    const renderer = new Renderer({ 
+      alpha: transparent, 
+      premultipliedAlpha: false,
+      powerPreference: "high-performance",
+      dpr: Math.min(window.devicePixelRatio, 1.5) // Stops newer phones from choking on super-high DPIs
+    });
     const gl = renderer.gl;
 
     if (transparent) {
@@ -185,7 +194,10 @@ export default function Galaxy({
     let program;
 
     function resize() {
-      const scale = 1;
+      // PERFORMANCE FIX: Downscale resolution on mobile phones. Cuts GPU load in half instantly.
+      const isMobile = window.innerWidth <= 768;
+      const scale = isMobile ? 0.7 : 1; 
+      
       renderer.setSize(ctn.offsetWidth * scale, ctn.offsetHeight * scale);
       if (program) {
         program.uniforms.uResolution.value = new Color(
@@ -243,9 +255,12 @@ export default function Galaxy({
       renderer.render({ scene: mesh });
     }
     animateId = requestAnimationFrame(update);
+    
+    // Scale canvas back up to fit container visually
+    gl.canvas.style.width = '100%';
+    gl.canvas.style.height = '100%';
     ctn.appendChild(gl.canvas);
 
-    // CRITICAL FIX: Handles taps, drags, and mouse clicks identically
     function handlePointer(e) {
       const rect = ctn.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width;
