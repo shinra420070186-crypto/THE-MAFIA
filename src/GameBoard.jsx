@@ -15,7 +15,7 @@ const AnimatedItem = ({ children, delay = 0, index }) => {
     return () => { if (ref.current) observer.unobserve(ref.current); };
   }, []);
   return (
-    <div ref={ref} data-index={index} style={{ width: '100%', transition: `transform 0.1s ease-out ${delay}s, opacity 0.1s ease-out ${delay}s`, transform: inView ? 'scale(1)' : 'scale(0.8)', opacity: inView ? 1 : 0 }}>
+    <div ref={ref} data-index={index} style={{ width: '100%', transition: `transform 0.15s ease-out ${delay}s, opacity 0.15s ease-out ${delay}s`, transform: inView ? 'scale(1)' : 'scale(0.8)', opacity: inView ? 1 : 0 }}>
       {children}
     </div>
   );
@@ -205,7 +205,7 @@ export default function GameBoard() {
     );
   };
 
-  // ─── PLAYER LIST: ACRYLIC (NO-BLUR) 120FPS VERSION ───
+  // ─── PLAYER LIST WITH PREMIUM CUSTOM GLASSMORPHISM ───
   const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
 
@@ -218,7 +218,7 @@ export default function GameBoard() {
 
     return (
       <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={tapSafeStyle}>
-        {/* Scroll list with NO MASK to prevent GPU crashes */}
+        {/* Scrollable area without any mask filters to protect GPU memory */}
         <div className="w-full space-y-4 max-h-[320px] overflow-y-auto px-4 pb-4 pt-4 hide-scrollbar">
           {visiblePlayers.map((p, index) => {
             const isSelected = pendingSelection === p.id;
@@ -227,7 +227,7 @@ export default function GameBoard() {
                 <button 
                   onPointerDown={(e) => e.stopPropagation()} 
                   onClick={() => setPendingSelection(p.id)} 
-                  className={`acrylic-tile ${isSelected ? 'selected' : ''}`}
+                  className={`premium-glass ${isSelected ? 'selected' : ''}`}
                   style={tapSafeStyle}
                 >
                   {p.name}
@@ -240,7 +240,7 @@ export default function GameBoard() {
               <button 
                 onPointerDown={(e) => e.stopPropagation()} 
                 onClick={() => setPendingSelection('skip')} 
-                className={`acrylic-tile ${pendingSelection === 'skip' ? 'selected' : ''} !mt-2`}
+                className={`premium-glass ${pendingSelection === 'skip' ? 'selected' : ''} !mt-2`}
                 style={tapSafeStyle}
               >
                 Skip / Nobody
@@ -249,12 +249,12 @@ export default function GameBoard() {
           )}
         </div>
 
-        {/* PURE CONFIRM BUTTON: Absolutely NO extra styling or borders around it */}
+        {/* PURE CONFIRM BUTTON: Clean white, nice shadow, no blurry boxes */}
         {pendingSelection && (
           <div className="mt-8 flex flex-col mx-4 animate-in fade-in slide-in-from-bottom-4 will-change-transform">
             <button 
               onClick={handleConfirm} 
-              className="w-full p-4 bg-white text-black rounded-xl font-black uppercase tracking-widest shadow-[0_8px_30px_rgba(255,255,255,0.3)] active:scale-95 transition-transform duration-100 will-change-transform"
+              className="w-full p-4 bg-slate-100 text-slate-900 rounded-xl font-black uppercase tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.25)] active:scale-95 transition-transform duration-100 will-change-transform"
             >
               CONFIRM & NEXT
             </button>
@@ -272,50 +272,48 @@ export default function GameBoard() {
         input { user-select: auto; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .will-change-opacity { will-change: opacity; }
 
-        /* THE ACRYLIC HACK: Looks exactly like glass, but uses ZERO blur math */
-        .acrylic-tile {
+        /* --- THE ULTIMATE PREMIUM GLASS (ANDROID OPTIMIZED) --- */
+        .premium-glass {
           width: 100%;
           padding: 1rem;
           border-radius: 12px;
-          text-transform: uppercase;
+          text-align: center;
           font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
           color: #e2e8f0;
           
-          /* Fake Glass Texture */
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 100%);
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          border-top-color: rgba(255, 255, 255, 0.3);
-          border-left-color: rgba(255, 255, 255, 0.2);
+          /* The Glass Look */
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-top-color: rgba(255, 255, 255, 0.2);  /* Top highlight edge */
+          border-left-color: rgba(255, 255, 255, 0.15); /* Left highlight edge */
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
           
-          /* Static Shadows - no misalignments */
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.15);
+          /* The Blur - Hardware Accelerated */
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          transform: translate3d(0, 0, 0); /* Forces GPU layer immediately, fixing delay */
+          backface-visibility: hidden;
           
-          /* Hardware Acceleration & 100ms Speed */
-          transform: translateZ(0);
+          /* CRITICAL: Do NOT transition box-shadow or filter */
           will-change: transform;
-          transition: transform 0.1s ease-out, background 0.1s ease-out, border-color 0.1s ease-out, box-shadow 0.1s ease-out;
+          transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.1s ease;
         }
 
-        .acrylic-tile.selected {
-          transform: scale(1.05) translateY(-2px) translateZ(0) !important;
-          
-          /* Brighter, thicker fake glass when selected */
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.08) 100%);
-          border-color: rgba(255, 255, 255, 0.4);
-          border-top-color: rgba(255, 255, 255, 0.6);
-          border-left-color: rgba(255, 255, 255, 0.5);
-          
-          color: #ffffff;
-          box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.4);
+        .premium-glass:active {
+          transform: scale(0.95) translate3d(0,0,0) !important;
+          background: rgba(255, 255, 255, 0.08);
         }
 
-        .acrylic-tile:active {
-          transform: scale(0.96) translateZ(0) !important;
+        .premium-glass.selected {
+          transform: scale(1.03) translateY(-2px) translate3d(0,0,0) !important;
           background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.4);
+          color: #ffffff;
         }
-        
-        .will-change-opacity { will-change: opacity; }
       `}</style>
       
       <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out will-change-opacity" style={{ backgroundColor: '#e5e5e5', opacity: state.phase === 'splash' ? 1 : 0, zIndex: state.phase === 'splash' ? 0 : -100, visibility: state.phase === 'splash' ? 'visible' : 'hidden' }} />
