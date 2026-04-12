@@ -6,42 +6,11 @@ import './spooky.css';
 const TRANSITION_MS = 5000;
 const tapSafeStyle = { WebkitTapHighlightColor: 'rgba(0,0,0,0)', WebkitTouchCallout: 'none', userSelect: 'none', outline: 'none' };
 
-// ─── RESTORED SCROLL ANIMATION (WITH PERFORMANCE FIX) ───
-const AnimatedItem = ({ children, delay = 0, index }) => {
-  const ref = useRef(null);
-  const [hasAppeared, setHasAppeared] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      // The Fix: Only animate ONCE. When it appears, lock it in so the blur doesn't lag when scrolling!
-      if (entry.isIntersecting && !hasAppeared) {
-        setHasAppeared(true);
-        if (ref.current) observer.unobserve(ref.current);
-      }
-    }, { threshold: 0.1 });
-
-    if (ref.current) observer.observe(ref.current);
-    return () => { if (ref.current) observer.unobserve(ref.current); };
-  }, [hasAppeared]);
-
-  return (
-    <div ref={ref} data-index={index} style={{ 
-      width: '100%', 
-      transition: `transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) ${delay}s, opacity 0.3s ease-out ${delay}s`, 
-      transform: hasAppeared ? 'translate3d(0, 0, 0) scale(1)' : 'translate3d(0, 20px, 0) scale(0.9)', 
-      opacity: hasAppeared ? 1 : 0,
-      willChange: hasAppeared ? 'auto' : 'transform, opacity' // Frees up GPU memory after animating
-    }}>
-      {children}
-    </div>
-  );
-};
-
 const MemoizedGalaxy = React.memo(() => (
   <Galaxy mouseRepulsion={true} mouseInteraction={true} density={1} glowIntensity={0.3} saturation={0} hueShift={140} twinkleIntensity={0.3} rotationSpeed={0.1} repulsionStrength={2} autoCenterRepulsion={0} starSpeed={0.5} speed={1} />
 ));
 
-// ─── SCREEN GLITCH FIX: Now only re-renders when Day/Night actually swaps ───
+// ─── SCREEN GLITCH FIX: Only re-renders when Day/Night actually swaps ───
 const FullScreenSpooky = React.memo(({ isNight }) => {
   const [angles, setAngles] = useState({ sun: isNight ? 180 : 0, moon: isNight ? 0 : -180 });
   const prevIsNight = useRef(isNight);
@@ -207,8 +176,6 @@ export default function GameBoard() {
 
   const isGalaxyPhase = state.phase === 'lobby' || state.phase === 'role_reveal';
   const isSpookyPhase = state.phase !== 'splash' && state.phase !== 'lobby' && state.phase !== 'role_reveal';
-  
-  // Calculate isNight once to pass to the background so it doesn't glitch on every click
   const isNightPhase = state.phase.startsWith('night') || state.phase === 'night_transition';
 
   const renderBackButton = () => {
@@ -223,9 +190,32 @@ export default function GameBoard() {
     );
   };
 
-  // ─── PLAYER LIST: SCROLL ANIMATION IS BACK! ───
+  // ─── PLAYER LIST: DIRECT DOM MANIPULATION (ZERO LAG) ───
   const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
+    
+    // We use a React ref to track all buttons, so we can native-observe them!
+    const tileRefs = useRef(new Map());
+
+    useEffect(() => {
+      // Native IntersectionObserver bypassing React state for 120fps scrolling
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+          } else {
+            // Removes the class instantly so it animates AGAIN when scrolled back up
+            entry.target.classList.remove('is-visible');
+          }
+        });
+      }, { threshold: 0.1 });
+
+      tileRefs.current.forEach((node) => {
+        if (node) observer.observe(node);
+      });
+
+      return () => observer.disconnect();
+    }, [visiblePlayers, state.phase]); // Only reconstruct observer if players change
 
     const handleConfirm = () => {
       if (pendingSelection !== null) {
@@ -238,49 +228,56 @@ export default function GameBoard() {
       <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={tapSafeStyle}>
         
         <div className="w-full space-y-3 max-h-[320px] overflow-y-auto px-4 pb-4 pt-4 hide-scrollbar">
-          {visiblePlayers.map((p, index) => {
+          {visiblePlayers.map((p) => {
             const isSelected = pendingSelection === p.id;
             return (
-              /* SCROLL ANIMATION WRAPPER RESTORED */
-              <AnimatedItem key={p.id} index={index} delay={0.05}>
-                <button 
-                  onPointerDown={(e) => e.stopPropagation()} 
-                  onClick={() => setPendingSelection(p.id)} 
-                  className={`apple-glass-tile ${isSelected ? 'selected' : ''}`}
-                  style={tapSafeStyle}
-                >
-                  {p.name}
-                </button>
-              </AnimatedItem>
+              /* ONE ELEMENT: The animation, shadow, and blur are fully connected to the button node natively */
+              <button 
+                key={p.id}
+                ref={(el) => {
+                  if (el) tileRefs.current.set(p.id, el);
+                  else tileRefs.current.delete(p.id);
+                }}
+                onPointerDown={(e) => e.stopPropagation()} 
+                onClick={() => setPendingSelection(p.id)} 
+                className={`apple-glass-tile ${isSelected ? 'selected' : ''}`}
+                style={tapSafeStyle}
+              >
+                {p.name}
+              </button>
             );
           })}
           
           {includeSkip && (
-            <AnimatedItem index={visiblePlayers.length} delay={0.05}>
-              <button 
-                onPointerDown={(e) => e.stopPropagation()} 
-                onClick={() => setPendingSelection('skip')} 
-                className={`apple-glass-tile ${pendingSelection === 'skip' ? 'selected' : ''} !mt-2`}
-                style={tapSafeStyle}
-              >
-                Skip / Nobody
-              </button>
-            </AnimatedItem>
+            <button 
+              ref={(el) => {
+                if (el) tileRefs.current.set('skip', el);
+                else tileRefs.current.delete('skip');
+              }}
+              onPointerDown={(e) => e.stopPropagation()} 
+              onClick={() => setPendingSelection('skip')} 
+              className={`apple-glass-tile ${pendingSelection === 'skip' ? 'selected' : ''} !mt-2`}
+              style={tapSafeStyle}
+            >
+              Skip / Nobody
+            </button>
           )}
         </div>
 
-        {/* APPLE STYLE CONFIRM BUTTON */}
-        {pendingSelection && (
-          <div className="mt-8 flex flex-col mx-4 animate-in fade-in slide-in-from-bottom-4 will-change-transform">
-            <button 
-              onClick={handleConfirm} 
-              className="apple-confirm-btn"
-              style={tapSafeStyle}
-            >
-              CONFIRM & NEXT
-            </button>
-          </div>
-        )}
+        {/* LAYOUT SHIFT FIX: Fixed 80px container so the Confirm button doesn't stretch the DOM and glitch the screen */}
+        <div className="h-[80px] mt-4 flex items-center justify-center mx-4">
+          {pendingSelection && (
+            <div className="w-full flex flex-col animate-in fade-in slide-in-from-bottom-4 will-change-transform">
+              <button 
+                onClick={handleConfirm} 
+                className="apple-confirm-btn"
+                style={tapSafeStyle}
+              >
+                CONFIRM & NEXT
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -294,7 +291,7 @@ export default function GameBoard() {
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* --- TRUE APPLE UI GLASSMORPHISM --- */
+        /* --- THE ULTIMATE "ONE-PART" APPLE GLASS TILE --- */
         .apple-glass-tile {
           -webkit-appearance: none;
           appearance: none;
@@ -306,35 +303,47 @@ export default function GameBoard() {
           letter-spacing: 0.1em;
           color: rgba(255, 255, 255, 0.9);
           
+          /* The Glass Look */
           background: rgba(255, 255, 255, 0.08);
           border: 1px solid rgba(255, 255, 255, 0.15);
           border-top: 1px solid rgba(255, 255, 255, 0.25);
           border-left: 1px solid rgba(255, 255, 255, 0.2);
           
-          /* SHADOW SQUARE BUG FIX */
+          /* SQUARE SHADOW BUG FIX: Hugs the rounded border perfectly */
           -webkit-background-clip: padding-box;
           background-clip: padding-box;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
           
-          /* APPLE BLUR */
+          /* The BLUR */
           -webkit-backdrop-filter: saturate(180%) blur(12px);
           backdrop-filter: saturate(180%) blur(12px);
           
-          transform: translateZ(0);
-          -webkit-transform: translateZ(0);
-          backface-visibility: hidden;
-          will-change: transform;
+          /* SCROLL ANIMATION: Base "Hidden" State */
+          opacity: 0;
+          transform: translate3d(0, 20px, 0) scale(0.95);
           
-          transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.15s ease;
+          /* Single unified transition for GPU acceleration */
+          will-change: transform, opacity;
+          transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), 
+                      opacity 0.25s ease-out, 
+                      background-color 0.15s ease;
         }
 
-        .apple-glass-tile:active {
-          transform: scale(0.96) translateZ(0);
+        /* NATIVE SCROLL ANIMATION TRIGGER: Happens instantly via direct DOM observer */
+        .apple-glass-tile.is-visible {
+          opacity: 1;
+          transform: translate3d(0, 0, 0) scale(1);
+        }
+
+        /* Tap Interaction */
+        .apple-glass-tile.is-visible:active {
+          transform: translate3d(0, 0, 0) scale(0.96) !important;
           background: rgba(255, 255, 255, 0.05);
         }
 
-        .apple-glass-tile.selected {
-          transform: scale(1.02) translateY(-2px) translateZ(0);
+        /* Selection */
+        .apple-glass-tile.is-visible.selected {
+          transform: translate3d(0, -2px, 0) scale(1.02) !important;
           background: rgba(255, 255, 255, 0.25);
           border-color: rgba(255, 255, 255, 0.4);
           color: #ffffff;
@@ -361,7 +370,6 @@ export default function GameBoard() {
           box-shadow: 0 8px 20px rgba(255, 255, 255, 0.15);
           
           transform: translateZ(0);
-          will-change: transform;
           transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
@@ -377,7 +385,6 @@ export default function GameBoard() {
         <MemoizedGalaxy />
       </div>
       
-      {/* GLITCH FIX: Passed isNightPhase instead of the exact phase so it only redraws when absolutely necessary */}
       <div className="fixed inset-0 w-full h-full transition-opacity duration-700 ease-in-out will-change-opacity" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
         <FullScreenSpooky isNight={isNightPhase} />
       </div>
@@ -455,15 +462,14 @@ export default function GameBoard() {
             </div>
           )}
 
+          {/* NO WRAPPERS: The player list tiles use their own simple CSS animation loop */}
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mb-10" style={tapSafeStyle}>
             <div className="w-full space-y-2 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)' }}>
-              {state.players.map((p, index) => (
-                <AnimatedItem key={p.id} index={index} delay={0.05}>
-                  <div className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all">
-                    <span className="font-bold tracking-widest text-white">{p.name}</span>
-                    <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6" style={tapSafeStyle}>✕</button>
-                  </div>
-                </AnimatedItem>
+              {state.players.map((p) => (
+                <div key={p.id} className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm">
+                  <span className="font-bold tracking-widest text-white">{p.name}</span>
+                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6" style={tapSafeStyle}>✕</button>
+                </div>
               ))}
             </div>
           </div>
