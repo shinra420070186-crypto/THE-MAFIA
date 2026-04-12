@@ -6,18 +6,17 @@ import './spooky.css';
 const TRANSITION_MS = 5000;
 const tapSafeStyle = { WebkitTapHighlightColor: 'rgba(0,0,0,0)', WebkitTouchCallout: 'none', userSelect: 'none', outline: 'none' };
 
-// ─── THE CRASH FIX: A proper, top-level React Component for the animated glass buttons ───
-// This fuses the animation, blur, and button into ONE element with zero lag.
+// ─── THE INVISIBLE BUG FIX: Uses `data-visible` so React doesn't overwrite it on click! ───
 const AnimatedGlassButton = ({ children, onClick, isSelected, isSkip }) => {
   const ref = useRef(null);
 
   useEffect(() => {
-    // Direct DOM manipulation bypasses React render lag, keeping blur perfectly synced
     const observer = new IntersectionObserver(([entry]) => {
+      // Using datasets instead of classList prevents React from destroying the visibility state
       if (entry.isIntersecting) {
-        entry.target.classList.add('is-visible');
+        entry.target.dataset.visible = 'true';
       } else {
-        entry.target.classList.remove('is-visible'); // Animates AGAIN when you scroll back!
+        entry.target.dataset.visible = 'false'; 
       }
     }, { threshold: 0.1 });
 
@@ -223,7 +222,7 @@ export default function GameBoard() {
     );
   };
 
-  // ─── PLAYER LIST: NOW USES THE SAFE, CRASH-FREE COMPONENT ───
+  // ─── PLAYER LIST RENDERER ───
   const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
 
@@ -328,20 +327,20 @@ export default function GameBoard() {
                       background-color 0.15s ease;
         }
 
-        /* NATIVE SCROLL ANIMATION TRIGGER: Happens instantly via direct DOM observer */
-        .apple-glass-tile.is-visible {
+        /* NATIVE SCROLL ANIMATION TRIGGER: Using data-attributes so React never deletes it! */
+        .apple-glass-tile[data-visible="true"] {
           opacity: 1;
           transform: translate3d(0, 0, 0) scale(1);
         }
 
         /* Tap Interaction */
-        .apple-glass-tile.is-visible:active {
+        .apple-glass-tile[data-visible="true"]:active {
           transform: translate3d(0, 0, 0) scale(0.96) !important;
           background: rgba(255, 255, 255, 0.05);
         }
 
         /* Selection */
-        .apple-glass-tile.is-visible.selected {
+        .apple-glass-tile[data-visible="true"].selected {
           transform: translate3d(0, -2px, 0) scale(1.02) !important;
           background: rgba(255, 255, 255, 0.25);
           border-color: rgba(255, 255, 255, 0.4);
@@ -461,7 +460,6 @@ export default function GameBoard() {
             </div>
           )}
 
-          {/* PLAYER LIST LOBBY */}
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mb-10" style={tapSafeStyle}>
             <div className="w-full space-y-2 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)' }}>
               {state.players.map((p) => (
