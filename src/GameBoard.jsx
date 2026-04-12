@@ -15,7 +15,7 @@ const AnimatedItem = ({ children, delay = 0, index }) => {
     return () => { if (ref.current) observer.unobserve(ref.current); };
   }, []);
   return (
-    <div ref={ref} data-index={index} style={{ width: '100%', transition: `transform 0.25s ease-out ${delay}s, opacity 0.25s ease-out ${delay}s`, transform: inView ? 'scale(1)' : 'scale(0.8)', opacity: inView ? 1 : 0 }}>
+    <div ref={ref} data-index={index} style={{ width: '100%', transition: `transform 0.1s ease-out ${delay}s, opacity 0.1s ease-out ${delay}s`, transform: inView ? 'scale(1)' : 'scale(0.8)', opacity: inView ? 1 : 0 }}>
       {children}
     </div>
   );
@@ -205,7 +205,7 @@ export default function GameBoard() {
     );
   };
 
-  // ─── RETURN TO GLASSMORPHISM TILES (LAG FIX VERSION) ───
+  // ─── PLAYER LIST: ACRYLIC (NO-BLUR) 120FPS VERSION ───
   const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
 
@@ -218,6 +218,7 @@ export default function GameBoard() {
 
     return (
       <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={tapSafeStyle}>
+        {/* Scroll list with NO MASK to prevent GPU crashes */}
         <div className="w-full space-y-4 max-h-[320px] overflow-y-auto px-4 pb-4 pt-4 hide-scrollbar">
           {visiblePlayers.map((p, index) => {
             const isSelected = pendingSelection === p.id;
@@ -226,7 +227,7 @@ export default function GameBoard() {
                 <button 
                   onPointerDown={(e) => e.stopPropagation()} 
                   onClick={() => setPendingSelection(p.id)} 
-                  className={`glass-tile-android ${isSelected ? 'selected' : ''}`}
+                  className={`acrylic-tile ${isSelected ? 'selected' : ''}`}
                   style={tapSafeStyle}
                 >
                   {p.name}
@@ -239,7 +240,7 @@ export default function GameBoard() {
               <button 
                 onPointerDown={(e) => e.stopPropagation()} 
                 onClick={() => setPendingSelection('skip')} 
-                className={`glass-tile-android ${pendingSelection === 'skip' ? 'selected' : ''} !mt-2`}
+                className={`acrylic-tile ${pendingSelection === 'skip' ? 'selected' : ''} !mt-2`}
                 style={tapSafeStyle}
               >
                 Skip / Nobody
@@ -248,12 +249,12 @@ export default function GameBoard() {
           )}
         </div>
 
-        {/* PURE CONFIRM BUTTON: Removed blurry extra border */}
+        {/* PURE CONFIRM BUTTON: Absolutely NO extra styling or borders around it */}
         {pendingSelection && (
           <div className="mt-8 flex flex-col mx-4 animate-in fade-in slide-in-from-bottom-4 will-change-transform">
             <button 
               onClick={handleConfirm} 
-              className="w-full p-4 bg-white text-black rounded-xl font-black uppercase tracking-widest shadow-[0_4px_20px_rgba(255,255,255,0.3)] active:scale-95 transition-transform duration-100 will-change-transform"
+              className="w-full p-4 bg-white text-black rounded-xl font-black uppercase tracking-widest shadow-[0_8px_30px_rgba(255,255,255,0.3)] active:scale-95 transition-transform duration-100 will-change-transform"
             >
               CONFIRM & NEXT
             </button>
@@ -272,51 +273,57 @@ export default function GameBoard() {
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* ULTIMATE GLASS LAG FIX FOR ANDROID */
-        .glass-tile-android {
+        /* THE ACRYLIC HACK: Looks exactly like glass, but uses ZERO blur math */
+        .acrylic-tile {
           width: 100%;
           padding: 1rem;
           border-radius: 12px;
           text-transform: uppercase;
           font-weight: 900;
           color: #e2e8f0;
+          
+          /* Fake Glass Texture */
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 100%);
           border: 1px solid rgba(255, 255, 255, 0.15);
-          background: rgba(255, 255, 255, 0.06);
+          border-top-color: rgba(255, 255, 255, 0.3);
+          border-left-color: rgba(255, 255, 255, 0.2);
           
-          /* The Blur Hack: Pre-calculate on GPU */
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          transform: translateZ(0); 
-          backface-visibility: hidden;
+          /* Static Shadows - no misalignments */
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.15);
           
-          /* Smooth performance */
-          will-change: transform, box-shadow;
-          transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), 
-                      background-color 0.1s ease,
-                      border-color 0.1s ease;
-          
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+          /* Hardware Acceleration & 100ms Speed */
+          transform: translateZ(0);
+          will-change: transform;
+          transition: transform 0.1s ease-out, background 0.1s ease-out, border-color 0.1s ease-out, box-shadow 0.1s ease-out;
         }
 
-        .glass-tile-android.selected {
+        .acrylic-tile.selected {
           transform: scale(1.05) translateY(-2px) translateZ(0) !important;
-          background: rgba(255, 255, 255, 0.18);
-          border-color: rgba(255, 255, 255, 0.6);
-          color: white;
-          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5), inset 0 0 8px rgba(255, 255, 255, 0.2);
+          
+          /* Brighter, thicker fake glass when selected */
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.08) 100%);
+          border-color: rgba(255, 255, 255, 0.4);
+          border-top-color: rgba(255, 255, 255, 0.6);
+          border-left-color: rgba(255, 255, 255, 0.5);
+          
+          color: #ffffff;
+          box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.4);
         }
 
-        .glass-tile-android:active {
-          transform: scale(0.97) translateZ(0);
+        .acrylic-tile:active {
+          transform: scale(0.96) translateZ(0) !important;
+          background: rgba(255, 255, 255, 0.15);
         }
+        
+        .will-change-opacity { will-change: opacity; }
       `}</style>
       
-      <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out" style={{ backgroundColor: '#e5e5e5', opacity: state.phase === 'splash' ? 1 : 0, zIndex: state.phase === 'splash' ? 0 : -100, visibility: state.phase === 'splash' ? 'visible' : 'hidden' }} />
-      <div className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out" style={{ opacity: isGalaxyPhase ? 1 : 0, zIndex: isGalaxyPhase ? 0 : -50, visibility: isGalaxyPhase ? 'visible' : 'hidden' }}>
+      <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out will-change-opacity" style={{ backgroundColor: '#e5e5e5', opacity: state.phase === 'splash' ? 1 : 0, zIndex: state.phase === 'splash' ? 0 : -100, visibility: state.phase === 'splash' ? 'visible' : 'hidden' }} />
+      <div className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out will-change-opacity" style={{ opacity: isGalaxyPhase ? 1 : 0, zIndex: isGalaxyPhase ? 0 : -50, visibility: isGalaxyPhase ? 'visible' : 'hidden' }}>
         <MemoizedGalaxy />
       </div>
       
-      <div className="fixed inset-0 w-full h-full transition-opacity duration-700 ease-in-out" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
+      <div className="fixed inset-0 w-full h-full transition-opacity duration-700 ease-in-out will-change-opacity" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
         <FullScreenSpooky phase={state.phase} />
       </div>
 
