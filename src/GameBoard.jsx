@@ -25,9 +25,8 @@ const MemoizedGalaxy = React.memo(() => (
   <Galaxy mouseRepulsion={true} mouseInteraction={true} density={1} glowIntensity={0.3} saturation={0} hueShift={140} twinkleIntensity={0.3} rotationSpeed={0.1} repulsionStrength={2} autoCenterRepulsion={0} starSpeed={0.5} speed={1} />
 ));
 
-// ─── FULL SCREEN SPOOKY HOUSE BACKGROUND (MEMOIZED FOR ZERO LAG) ───
-const FullScreenSpooky = React.memo(({ phase }) => {
-  const isNight = phase.startsWith('night') || phase === 'night_transition';
+// ─── SCREEN GLITCH FIX: Now only re-renders when Day/Night actually swaps ───
+const FullScreenSpooky = React.memo(({ isNight }) => {
   const [angles, setAngles] = useState({ sun: isNight ? 180 : 0, moon: isNight ? 0 : -180 });
   const prevIsNight = useRef(isNight);
   const [activeZone, setActiveZone] = useState(null);
@@ -192,6 +191,9 @@ export default function GameBoard() {
 
   const isGalaxyPhase = state.phase === 'lobby' || state.phase === 'role_reveal';
   const isSpookyPhase = state.phase !== 'splash' && state.phase !== 'lobby' && state.phase !== 'role_reveal';
+  
+  // Calculate isNight once to pass to the background so it doesn't glitch on every click
+  const isNightPhase = state.phase.startsWith('night') || state.phase === 'night_transition';
 
   const renderBackButton = () => {
     if (state.phase === 'lobby' || state.phase === 'splash') return null;
@@ -205,7 +207,7 @@ export default function GameBoard() {
     );
   };
 
-  // ─── PLAYER LIST: TRUE APPLE UI GLASSMORPHISM ───
+  // ─── PLAYER LIST: NO SCROLL ANIMATIONS, ZERO BLUR DELAY ───
   const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
 
@@ -218,33 +220,33 @@ export default function GameBoard() {
 
     return (
       <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={tapSafeStyle}>
+        
+        {/* BLUR DELAY FIX: Removed AnimatedItem wrapper! Now native scrolling handles the elements, so the blur never recalculates or delays. */}
         <div className="w-full space-y-3 max-h-[320px] overflow-y-auto px-4 pb-4 pt-4 hide-scrollbar">
-          {visiblePlayers.map((p, index) => {
+          {visiblePlayers.map((p) => {
             const isSelected = pendingSelection === p.id;
             return (
-              <AnimatedItem key={p.id} index={index} delay={0.05}>
-                <button 
-                  onPointerDown={(e) => e.stopPropagation()} 
-                  onClick={() => setPendingSelection(p.id)} 
-                  className={`apple-glass-tile ${isSelected ? 'selected' : ''}`}
-                  style={tapSafeStyle}
-                >
-                  {p.name}
-                </button>
-              </AnimatedItem>
-            );
-          })}
-          {includeSkip && (
-            <AnimatedItem index={visiblePlayers.length} delay={0.05}>
               <button 
+                key={p.id}
                 onPointerDown={(e) => e.stopPropagation()} 
-                onClick={() => setPendingSelection('skip')} 
-                className={`apple-glass-tile ${pendingSelection === 'skip' ? 'selected' : ''} !mt-2`}
+                onClick={() => setPendingSelection(p.id)} 
+                className={`apple-glass-tile ${isSelected ? 'selected' : ''}`}
                 style={tapSafeStyle}
               >
-                Skip / Nobody
+                {p.name}
               </button>
-            </AnimatedItem>
+            );
+          })}
+          
+          {includeSkip && (
+            <button 
+              onPointerDown={(e) => e.stopPropagation()} 
+              onClick={() => setPendingSelection('skip')} 
+              className={`apple-glass-tile ${pendingSelection === 'skip' ? 'selected' : ''} !mt-2`}
+              style={tapSafeStyle}
+            >
+              Skip / Nobody
+            </button>
           )}
         </div>
 
@@ -273,35 +275,39 @@ export default function GameBoard() {
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* --- TRUE APPLE UI GLASSMORPHISM --- */
+        /* --- TRUE APPLE UI GLASSMORPHISM (SHADOW & BLUR BUG FIXED) --- */
         .apple-glass-tile {
+          -webkit-appearance: none;
+          appearance: none;
           width: 100%;
           padding: 1.1rem 1rem;
-          border-radius: 16px; /* Apple uses slightly squarer rounded corners */
+          border-radius: 16px; 
           text-transform: uppercase;
           font-weight: 800;
           letter-spacing: 0.1em;
           color: rgba(255, 255, 255, 0.9);
           
-          /* Apple Glass Background & Highlight Borders */
+          /* Apple Glass Background */
           background: rgba(255, 255, 255, 0.08);
           border: 1px solid rgba(255, 255, 255, 0.15);
           border-top: 1px solid rgba(255, 255, 255, 0.25);
           border-left: 1px solid rgba(255, 255, 255, 0.2);
           
-          /* Authentic Apple Blur + Color Saturation Pop */
-          -webkit-backdrop-filter: saturate(180%) blur(20px);
-          backdrop-filter: saturate(180%) blur(10px);
+          /* SHADOW SQUARE BUG FIX: Reduced spread and clipped background */
+          -webkit-background-clip: padding-box;
+          background-clip: padding-box;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
           
-          box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+          /* Authentic Apple Blur */
+          -webkit-backdrop-filter: saturate(180%) blur(12px);
+          backdrop-filter: saturate(180%) blur(12px);
           
-          /* CRITICAL FOR ANDROID 120FPS: Locks the blur to the GPU */
+          /* CRITICAL FOR ANDROID 120FPS */
           transform: translateZ(0);
           -webkit-transform: translateZ(0);
           backface-visibility: hidden;
           will-change: transform;
           
-          /* Only animate transform and background. Never animate box-shadow or blur. */
           transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.15s ease;
         }
 
@@ -315,12 +321,13 @@ export default function GameBoard() {
           background: rgba(255, 255, 255, 0.25);
           border-color: rgba(255, 255, 255, 0.4);
           color: #ffffff;
-          /* Uses an inner shadow to simulate light instead of breaking outer shadow */
-          box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
         }
 
         /* --- APPLE STYLE CONFIRM BUTTON --- */
         .apple-confirm-btn {
+          -webkit-appearance: none;
+          appearance: none;
           width: 100%;
           padding: 1.1rem;
           border-radius: 16px;
@@ -334,7 +341,7 @@ export default function GameBoard() {
           
           -webkit-backdrop-filter: blur(10px);
           backdrop-filter: blur(10px);
-          box-shadow: 0 8px 32px rgba(255, 255, 255, 0.15);
+          box-shadow: 0 8px 20px rgba(255, 255, 255, 0.15);
           
           transform: translateZ(0);
           will-change: transform;
@@ -353,8 +360,9 @@ export default function GameBoard() {
         <MemoizedGalaxy />
       </div>
       
+      {/* GLITCH FIX: Passed isNightPhase instead of the exact phase so it only redraws when absolutely necessary */}
       <div className="fixed inset-0 w-full h-full transition-opacity duration-700 ease-in-out will-change-opacity" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
-        <FullScreenSpooky phase={state.phase} />
+        <FullScreenSpooky isNight={isNightPhase} />
       </div>
 
       {state.phase === 'splash' && (
@@ -430,15 +438,14 @@ export default function GameBoard() {
             </div>
           )}
 
+          {/* NO ANIMATED ITEM HERE - Allows native Android smooth scrolling */}
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mb-10" style={tapSafeStyle}>
             <div className="w-full space-y-2 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)' }}>
-              {state.players.map((p, index) => (
-                <AnimatedItem key={p.id} index={index} delay={0.05}>
-                  <div className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all">
-                    <span className="font-bold tracking-widest text-white">{p.name}</span>
-                    <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6" style={tapSafeStyle}>✕</button>
-                  </div>
-                </AnimatedItem>
+              {state.players.map((p) => (
+                <div key={p.id} className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all">
+                  <span className="font-bold tracking-widest text-white">{p.name}</span>
+                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6" style={tapSafeStyle}>✕</button>
+                </div>
               ))}
             </div>
           </div>
