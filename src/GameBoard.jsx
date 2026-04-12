@@ -6,15 +6,17 @@ import './spooky.css';
 const TRANSITION_MS = 5000;
 const tapSafeStyle = { WebkitTapHighlightColor: 'rgba(0,0,0,0)', WebkitTouchCallout: 'none', userSelect: 'none', outline: 'none' };
 
+// ─── THE INVISIBLE BUG FIX: Uses `data-visible` so React doesn't overwrite it on click! ───
 const AnimatedGlassButton = ({ children, onClick, isSelected, isSkip }) => {
   const ref = useRef(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
+      // Using datasets instead of classList prevents React from destroying the visibility state
       if (entry.isIntersecting) {
         entry.target.dataset.visible = 'true';
       } else {
-        entry.target.dataset.visible = 'false';
+        entry.target.dataset.visible = 'false'; 
       }
     }, { threshold: 0.1 });
 
@@ -35,28 +37,12 @@ const AnimatedGlassButton = ({ children, onClick, isSelected, isSkip }) => {
   );
 };
 
-// KEY CHANGE 1: MemoizedGalaxy now accepts 'active' prop to pause GPU rendering when not visible
-const MemoizedGalaxy = React.memo(({ active }) => (
-  <Galaxy
-    mouseRepulsion={true}
-    mouseInteraction={true}
-    density={1}
-    glowIntensity={0.3}
-    saturation={0}
-    hueShift={140}
-    twinkleIntensity={0.3}
-    rotationSpeed={0.1}
-    repulsionStrength={2}
-    autoCenterRepulsion={0}
-    starSpeed={0.5}
-    speed={1}
-    active={active}
-  />
+const MemoizedGalaxy = React.memo(() => (
+  <Galaxy mouseRepulsion={true} mouseInteraction={true} density={1} glowIntensity={0.3} saturation={0} hueShift={140} twinkleIntensity={0.3} rotationSpeed={0.1} repulsionStrength={2} autoCenterRepulsion={0} starSpeed={0.5} speed={1} />
 ));
 
-// KEY CHANGE 2: FullScreenSpooky accepts 'paused' prop to freeze all CSS animations when not visible
-// This stops dozens of animations (smoke, bats, skeletons, etc.) from burning CPU while hidden
-const FullScreenSpooky = React.memo(({ isNight, paused }) => {
+// ─── SCREEN GLITCH FIX: Only re-renders when Day/Night actually swaps ───
+const FullScreenSpooky = React.memo(({ isNight }) => {
   const [angles, setAngles] = useState({ sun: isNight ? 180 : 0, moon: isNight ? 0 : -180 });
   const prevIsNight = useRef(isNight);
   const [activeZone, setActiveZone] = useState(null);
@@ -76,8 +62,7 @@ const FullScreenSpooky = React.memo(({ isNight, paused }) => {
   const themeClass = isNight ? 'theme-night' : 'theme-day';
 
   return (
-    // 'spooky-paused' class is added when not in spooky phase — CSS rule below freezes all animations
-    <div className={`spooky-container ${themeClass}${paused ? ' spooky-paused' : ''}`} onClick={() => setActiveZone(null)}>
+    <div className={`spooky-container ${themeClass}`} onClick={() => setActiveZone(null)}>
       <div className="sky">
         <div className="celestial-pivot moon-pivot" style={{ transform: `rotate(${angles.moon}deg)` }}><div className="moon"></div></div>
         <div className="celestial-pivot sun-pivot" style={{ transform: `rotate(${angles.sun}deg)` }}><div className="sun"></div></div>
@@ -105,7 +90,7 @@ const FullScreenSpooky = React.memo(({ isNight, paused }) => {
             <div className="witch"></div>
           </div>
           <div className="shining"></div>
-        </div>
+        </div>	
         <div className={`balcony ${activeZone === 'balcony' ? 'active' : ''}`} onClick={(e) => handleTrigger('balcony', e)}></div>
         <div className="bat-cat">
           <div className="body"></div><div className="leg"></div><div className="leg"></div><div className="head"></div><div className="ears"></div><div className="tail"></div>
@@ -122,9 +107,8 @@ const FullScreenSpooky = React.memo(({ isNight, paused }) => {
         </div>
         <div className="roof-1"></div>
         <div className="roof-2">
-          {/* KEY CHANGE 3: Reduced smoke spans from 12 to 6 — halves smoke animation CPU cost */}
           <div className={`chimney ${activeZone === 'chimney2' ? 'active' : ''}`} onClick={(e) => handleTrigger('chimney2', e)}></div>
-          <div className="smoke"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+          <div className="smoke"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
         </div>
         <div className={`flying-bat ${activeZone === 'bat' ? 'active' : ''}`} onClick={(e) => handleTrigger('bat', e)}></div>
         <div className="fence">
@@ -165,6 +149,7 @@ const FullScreenSpooky = React.memo(({ isNight, paused }) => {
   );
 });
 
+// ─── IMAGE PRELOADER & CARD COMPONENTS ───────────────
 const roleImages = { 'Mafia': '/mafia-card.jpg', 'Doctor': '/doctor-card.jpg', 'Detective': '/detective-card.jpg', 'Sheriff': '/sheriff-card.jpg', 'Civilian': '/civilian-card.jpg' };
 const glowColors = { 'Mafia': '#ff003c', 'Doctor': '#00ff75', 'Detective': '#00d2ff', 'Sheriff': '#f2994a', 'Civilian': '#8e44ad' };
 
@@ -178,7 +163,7 @@ const RoleCard = ({ isFlipped, role }) => {
       <div className="relative w-full h-full transition-transform duration-[600ms] [transform-style:preserve-3d]" style={{ transform: isFlipped ? 'rotateY(180deg) translateZ(0)' : 'rotateY(0deg) translateZ(0)' }}>
         <div className="absolute inset-0 [backface-visibility:hidden] rounded-[2rem] bg-[#0a0a0a] border border-slate-800 flex flex-col items-center justify-center p-4 shadow-xl">
            <p className="text-slate-500 font-black tracking-widest uppercase text-center text-xl">Secret Role</p>
-           <p className="text-[10px] text-slate-600 mt-4 tracking-widest uppercase font-bold animate-pulse">Tap &amp; Hold to Reveal</p>
+           <p className="text-[10px] text-slate-600 mt-4 tracking-widest uppercase font-bold animate-pulse">Tap & Hold to Reveal</p>
         </div>
         <div className="absolute inset-0 [backface-visibility:hidden] rounded-[2rem] bg-black" style={{ transform: 'rotateY(180deg)', backgroundImage: `url(${roleImages[role] || roleImages.Civilian})`, backgroundPosition: 'center', backgroundSize: '105%', backgroundRepeat: 'no-repeat', boxShadow: isFlipped ? `0px 0px 50px 10px ${glowColors[role] || glowColors.Civilian}40` : 'none' }}></div>
       </div>
@@ -186,17 +171,19 @@ const RoleCard = ({ isFlipped, role }) => {
   );
 };
 
+// ─── MAIN GAMEBOARD COMPONENT ────────────────────────
 export default function GameBoard() {
   const state = useGameStore();
   const [newPlayerName, setNewPlayerName] = useState('');
   const [isFlipped, setIsFlipped] = useState(false);
   const [cardViewed, setCardViewed] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  
   const [pendingSelection, setPendingSelection] = useState(null);
 
   const alivePlayers = state.players.filter(p => p.isAlive);
   const availableRecentNames = state.recentNames.filter(n => !state.players.some(p => p.name === n));
-
+  
   const selectedMafiaCount = state.settings?.mafiaCount || 'auto';
   const selectedSheriffMode = state.settings?.sheriffMode || 'auto';
   const requestedMafiaCount = selectedMafiaCount === 'auto' ? (state.players.length >= 8 ? 2 : 1) : Number(selectedMafiaCount) || 1;
@@ -208,24 +195,25 @@ export default function GameBoard() {
 
   useEffect(() => {
     let timer;
-    if (state.phase === 'night_transition') { timer = setTimeout(() => { state.startNightRoles(); }, TRANSITION_MS); }
+    if (state.phase === 'night_transition') { timer = setTimeout(() => { state.startNightRoles(); }, TRANSITION_MS); } 
     else if (state.phase === 'day_transition') { timer = setTimeout(() => { state.startDayRecap(); }, TRANSITION_MS); }
     return () => clearTimeout(timer);
   }, [state.phase]);
 
-  useEffect(() => {
-    setCardViewed(false);
+  useEffect(() => { 
+    setCardViewed(false); 
     setPendingSelection(null);
   }, [state.phase, state.votingState?.currentVoterIndex]);
 
   const isGalaxyPhase = state.phase === 'lobby' || state.phase === 'role_reveal';
   const isSpookyPhase = state.phase !== 'splash' && state.phase !== 'lobby' && state.phase !== 'role_reveal';
+  
   const isNightPhase = state.phase.startsWith('night') || state.phase === 'night_transition';
 
   const renderBackButton = () => {
     if (state.phase === 'lobby' || state.phase === 'splash') return null;
     return (
-      <button
+      <button 
         onPointerDown={(e) => e.stopPropagation()}
         onClick={() => { if (window.confirm("Abort current game and go back to Lobby?")) { state.resetToLobby(); } }}
         className="absolute top-4 left-4 text-slate-400 font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 active:scale-90 z-50 p-3 bg-[#0a0a0a]/80 backdrop-blur-md rounded-lg border border-slate-800 shadow-xl pointer-events-auto"
@@ -234,6 +222,7 @@ export default function GameBoard() {
     );
   };
 
+  // ─── PLAYER LIST RENDERER ───
   const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
 
@@ -246,11 +235,12 @@ export default function GameBoard() {
 
     return (
       <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={tapSafeStyle}>
+        
         <div className="w-full space-y-3 max-h-[320px] overflow-y-auto px-4 pb-4 pt-4 hide-scrollbar">
           {visiblePlayers.map((p) => {
             const isSelected = pendingSelection === p.id;
             return (
-              <AnimatedGlassButton
+              <AnimatedGlassButton 
                 key={p.id}
                 onClick={() => setPendingSelection(p.id)}
                 isSelected={isSelected}
@@ -259,8 +249,9 @@ export default function GameBoard() {
               </AnimatedGlassButton>
             );
           })}
+          
           {includeSkip && (
-            <AnimatedGlassButton
+            <AnimatedGlassButton 
               key="skip"
               onClick={() => setPendingSelection('skip')}
               isSelected={pendingSelection === 'skip'}
@@ -270,15 +261,17 @@ export default function GameBoard() {
             </AnimatedGlassButton>
           )}
         </div>
+
+        {/* LAYOUT SHIFT FIX: Fixed 80px container so the Confirm button doesn't stretch the DOM and glitch the screen */}
         <div className="h-[80px] mt-4 flex items-center justify-center mx-4">
           {pendingSelection && (
             <div className="w-full flex flex-col animate-in fade-in slide-in-from-bottom-4 will-change-transform">
-              <button
-                onClick={handleConfirm}
+              <button 
+                onClick={handleConfirm} 
                 className="apple-confirm-btn"
                 style={tapSafeStyle}
               >
-                CONFIRM &amp; NEXT
+                CONFIRM & NEXT
               </button>
             </div>
           )}
@@ -296,55 +289,57 @@ export default function GameBoard() {
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* KEY CHANGE 4: Pause ALL CSS animations on the spooky scene when it is hidden.
-           This stops smoke, bats, skeleton, characters, etc. from burning CPU during galaxy phases.
-           Using .spooky-container.spooky-paused for higher specificity than spooky.css rules. */
-        .spooky-container.spooky-paused * {
-          -webkit-animation-play-state: paused !important;
-          animation-play-state: paused !important;
-        }
-        /* Override the permanent character animation rules from spooky.css */
-        .spooky-container.spooky-paused .witch,
-        .spooky-container.spooky-paused .nosferatu,
-        .spooky-container.spooky-paused .frankenstein {
-          -webkit-animation-play-state: paused !important;
-          animation-play-state: paused !important;
-        }
-
+        /* --- THE ULTIMATE "ONE-PART" APPLE GLASS TILE --- */
         .apple-glass-tile {
           -webkit-appearance: none;
           appearance: none;
           width: 100%;
           padding: 1.1rem 1rem;
-          border-radius: 16px;
+          border-radius: 16px; 
           text-transform: uppercase;
           font-weight: 800;
           letter-spacing: 0.1em;
           color: rgba(255, 255, 255, 0.9);
+          
+          /* The Glass Look */
           background: rgba(255, 255, 255, 0.08);
           border: 1px solid rgba(255, 255, 255, 0.15);
           border-top: 1px solid rgba(255, 255, 255, 0.25);
           border-left: 1px solid rgba(255, 255, 255, 0.2);
+          
+          /* SQUARE SHADOW BUG FIX: Hugs the rounded border perfectly */
           -webkit-background-clip: padding-box;
           background-clip: padding-box;
           box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+          
+          /* The BLUR */
           -webkit-backdrop-filter: saturate(180%) blur(12px);
           backdrop-filter: saturate(180%) blur(12px);
+          
+          /* SCROLL ANIMATION: Base "Hidden" State */
           opacity: 0;
           transform: translate3d(0, 20px, 0) scale(0.95);
+          
+          /* Single unified transition for GPU acceleration */
           will-change: transform, opacity;
-          transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
-                      opacity 0.25s ease-out,
+          transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), 
+                      opacity 0.25s ease-out, 
                       background-color 0.15s ease;
         }
+
+        /* NATIVE SCROLL ANIMATION TRIGGER: Using data-attributes so React never deletes it! */
         .apple-glass-tile[data-visible="true"] {
           opacity: 1;
           transform: translate3d(0, 0, 0) scale(1);
         }
+
+        /* Tap Interaction */
         .apple-glass-tile[data-visible="true"]:active {
           transform: translate3d(0, 0, 0) scale(0.96) !important;
           background: rgba(255, 255, 255, 0.05);
         }
+
+        /* Selection */
         .apple-glass-tile[data-visible="true"].selected {
           transform: translate3d(0, -2px, 0) scale(1.02) !important;
           background: rgba(255, 255, 255, 0.25);
@@ -352,6 +347,8 @@ export default function GameBoard() {
           color: #ffffff;
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
         }
+
+        /* --- PURE APPLE STYLE CONFIRM BUTTON --- */
         .apple-confirm-btn {
           -webkit-appearance: none;
           appearance: none;
@@ -362,31 +359,32 @@ export default function GameBoard() {
           text-transform: uppercase;
           letter-spacing: 0.1em;
           color: #111;
+          
           background: rgba(255, 255, 255, 0.95);
           border: 1px solid rgba(255, 255, 255, 1);
+          
           -webkit-backdrop-filter: blur(10px);
           backdrop-filter: blur(10px);
           box-shadow: 0 8px 20px rgba(255, 255, 255, 0.15);
+          
           transform: translateZ(0);
           transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
+
         .apple-confirm-btn:active {
           transform: scale(0.95) translateZ(0);
         }
+        
         .will-change-opacity { will-change: opacity; }
       `}</style>
-
-      {/* Splash background */}
+      
       <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out will-change-opacity" style={{ backgroundColor: '#e5e5e5', opacity: state.phase === 'splash' ? 1 : 0, zIndex: state.phase === 'splash' ? 0 : -100, visibility: state.phase === 'splash' ? 'visible' : 'hidden' }} />
-
-      {/* Galaxy layer — active=isGalaxyPhase pauses WebGL rendering when not visible */}
       <div className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out will-change-opacity" style={{ opacity: isGalaxyPhase ? 1 : 0, zIndex: isGalaxyPhase ? 0 : -50, visibility: isGalaxyPhase ? 'visible' : 'hidden' }}>
-        <MemoizedGalaxy active={isGalaxyPhase} />
+        <MemoizedGalaxy />
       </div>
-
-      {/* Spooky layer — paused=!isSpookyPhase freezes CSS animations when not visible */}
+      
       <div className="fixed inset-0 w-full h-full transition-opacity duration-700 ease-in-out will-change-opacity" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
-        <FullScreenSpooky isNight={isNightPhase} paused={!isSpookyPhase} />
+        <FullScreenSpooky isNight={isNightPhase} />
       </div>
 
       {state.phase === 'splash' && (
@@ -401,7 +399,7 @@ export default function GameBoard() {
           <button onPointerDown={(e) => e.stopPropagation()} onClick={() => setShowSettings((prev) => !prev)} className="absolute top-4 left-4 z-50 w-12 h-12 rounded-xl border border-cyan-300/40 bg-[#02060a]/80 backdrop-blur-md flex items-center justify-center active:scale-95 transition-all hover:border-cyan-200/70 hover:bg-[#07111a]/85 pointer-events-auto" style={tapSafeStyle}>
             <svg className={`w-6 h-6 text-cyan-100 ${showSettings ? 'animate-spin' : ''}`} style={{ animationDuration: '0.8s' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3.2" /><path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.9 1.9 0 0 1-2.7 2.7l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 0 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.9 1.9 0 0 1-2.7-2.7l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 0 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0 1.1.2h0a1 1 0 0 0 .6-.9V4a2 2 0 0 1 4 0v.2a1 1 0 0 0 .6.9h0a1 1 0 0 0 1.1-.2l.1-.1a1.9 1.9 0 0 1 2.7 2.7l-.1.1a1 1 0 0 0-.2 1.1v0a1 1 0 0 0 .9.6h.2a2 2 0 0 1 0 4h-.2a1 1 0 0 0-.9.6Z" /></svg>
           </button>
-
+          
           <h1 className="text-5xl md:text-6xl font-black uppercase mb-10 tracking-[0.2em] mt-14 relative z-10 shine-text text-center pointer-events-none">THE MAFIA</h1>
 
           {showSettings && (
@@ -437,7 +435,7 @@ export default function GameBoard() {
               </div>
             </div>
           )}
-
+          
           <div className="w-full mb-10 flex justify-center relative z-10 pointer-events-auto">
             <div className="poda-wrapper">
               <div className="poda-glow"></div><div className="poda-darkBorderBg"></div><div className="poda-darkBorderBg"></div><div className="poda-darkBorderBg"></div><div className="poda-white"></div><div className="poda-border"></div>
@@ -488,7 +486,7 @@ export default function GameBoard() {
           {renderBackButton()}
           <p className="text-slate-300 font-bold uppercase tracking-widest text-[10px] mb-2 relative z-10 pointer-events-none">Pass phone to</p>
           <h2 className="text-4xl font-black text-white uppercase mb-8 drop-shadow-md relative z-10 pointer-events-none">{state.players[state.revealIndex]?.name}</h2>
-
+          
           <div onPointerDown={(e) => e.stopPropagation()} onMouseDown={() => setIsFlipped(true)} onMouseUp={() => { setIsFlipped(false); setCardViewed(true); }} onMouseLeave={() => setIsFlipped(false)} onTouchStart={() => setIsFlipped(true)} onTouchEnd={() => { setIsFlipped(false); setCardViewed(true); }} className="cursor-pointer relative z-10 pointer-events-auto" style={tapSafeStyle}>
             <RoleCard isFlipped={isFlipped} role={state.players[state.revealIndex]?.role} />
           </div>
@@ -569,6 +567,7 @@ export default function GameBoard() {
         </div>
       )}
 
+      {/* ─── DAY PHASES ─── */}
       {state.phase === 'day_transition' && (
         <div className="relative h-[100dvh] w-full text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
@@ -600,6 +599,7 @@ export default function GameBoard() {
           <h2 className="text-slate-300 font-bold uppercase tracking-widest text-[12px] mt-14 mb-3 relative z-10 drop-shadow-md pointer-events-none">⚖️ Town Voting Phase</h2>
           <h3 className="text-5xl md:text-6xl font-black text-amber-300 my-4 uppercase relative z-10 drop-shadow-[0_0_20px_rgba(255,193,7,0.5)] pointer-events-none">{alivePlayers[state.votingState.currentVoterIndex]?.name}</h3>
           <p className="text-lg font-bold text-red-400 tracking-widest uppercase relative z-10 drop-shadow-md pointer-events-none">Who do you exile?</p>
+          
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-6 mb-6" style={tapSafeStyle}>
             {renderPlayerList((id) => state.submitVote(id), true, (p) => p.id === alivePlayers[state.votingState.currentVoterIndex]?.id)}
           </div>
@@ -607,6 +607,7 @@ export default function GameBoard() {
         </div>
       )}
 
+      {/* ─── GAME OVER PHASE ─── */}
       {state.phase === 'gameover' && (
         <div className="relative h-[100dvh] w-full text-white flex flex-col items-center justify-center p-6 text-center overflow-hidden z-10 pointer-events-none" style={tapSafeStyle}>
           {renderBackButton()}
@@ -614,7 +615,7 @@ export default function GameBoard() {
             <h1 className={`text-6xl md:text-7xl font-black uppercase mb-2 mt-14 ${state.winner === 'Mafia' ? 'text-red-600 drop-shadow-[0_0_40px_rgba(220,38,38,0.8)]' : 'text-blue-400 drop-shadow-[0_0_40px_rgba(96,165,250,0.8)]'}`}>{state.winner} WIN!</h1>
             <p className={`text-sm tracking-[0.2em] font-bold ${state.winner === 'Mafia' ? 'text-red-400' : 'text-blue-300'}`}>{state.winner === 'Mafia' ? '🔴 THE MAFIA HAS TAKEN OVER THE TOWN' : '✓ THE TOWN HAS ELIMINATED THE THREAT'}</p>
           </div>
-
+          
           <div className="w-full max-w-2xl mt-12 text-left bg-gradient-to-b from-slate-900/60 to-slate-950/60 backdrop-blur-md p-8 rounded-2xl border border-slate-700/50 relative z-10 shadow-2xl pointer-events-auto">
             <p className="text-slate-300 uppercase text-[11px] tracking-[0.15em] font-bold mb-6 text-center">Final Standings</p>
             <div className="space-y-3">
