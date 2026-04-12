@@ -6,16 +6,25 @@ import './spooky.css';
 const TRANSITION_MS = 5000;
 const tapSafeStyle = { WebkitTapHighlightColor: 'rgba(0,0,0,0)', WebkitTouchCallout: 'none', userSelect: 'none', outline: 'none' };
 
+// ─── ANIMATION RESTORED & CONNECTED TO BLUR ───
 const AnimatedItem = ({ children, delay = 0, index }) => {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
   useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => { setInView(entry.isIntersecting); }, { threshold: 0.2 });
+    const observer = new IntersectionObserver(([entry]) => { setInView(entry.isIntersecting); }, { threshold: 0.1 });
     if (ref.current) observer.observe(ref.current);
     return () => { if (ref.current) observer.unobserve(ref.current); };
   }, []);
   return (
-    <div ref={ref} data-index={index} style={{ width: '100%', transition: `transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1) ${delay}s, opacity 0.15s ease-out ${delay}s`, transform: inView ? 'scale(1)' : 'scale(0.8)', opacity: inView ? 1 : 0 }}>
+    <div ref={ref} data-index={index} style={{ 
+      width: '100%', 
+      transition: `transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) ${delay}s, opacity 0.2s ease-out ${delay}s`, 
+      transform: inView ? 'translate3d(0, 0, 0) scale(1)' : 'translate3d(0, 10px, 0) scale(0.95)', 
+      opacity: inView ? 1 : 0,
+      // THIS IS THE FIX: Connects the animation, the opacity, and the child's blur into ONE hardware layer!
+      willChange: 'transform, opacity',
+      transformStyle: 'preserve-3d'
+    }}>
       {children}
     </div>
   );
@@ -207,7 +216,7 @@ export default function GameBoard() {
     );
   };
 
-  // ─── PLAYER LIST: NO SCROLL ANIMATIONS, ZERO BLUR DELAY ───
+  // ─── PLAYER LIST: RESTORED ANIMATED ITEM WITH TRUE APPLE UI GLASS ───
   const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
 
@@ -221,32 +230,36 @@ export default function GameBoard() {
     return (
       <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={tapSafeStyle}>
         
-        {/* BLUR DELAY FIX: Removed AnimatedItem wrapper! Now native scrolling handles the elements, so the blur never recalculates or delays. */}
+        {/* Scrollable Area */}
         <div className="w-full space-y-3 max-h-[320px] overflow-y-auto px-4 pb-4 pt-4 hide-scrollbar">
-          {visiblePlayers.map((p) => {
+          {visiblePlayers.map((p, index) => {
             const isSelected = pendingSelection === p.id;
             return (
-              <button 
-                key={p.id}
-                onPointerDown={(e) => e.stopPropagation()} 
-                onClick={() => setPendingSelection(p.id)} 
-                className={`apple-glass-tile ${isSelected ? 'selected' : ''}`}
-                style={tapSafeStyle}
-              >
-                {p.name}
-              </button>
+              /* AnimatedItem is back! Connecting animation to blur layer */
+              <AnimatedItem key={p.id} index={index} delay={0.05}>
+                <button 
+                  onPointerDown={(e) => e.stopPropagation()} 
+                  onClick={() => setPendingSelection(p.id)} 
+                  className={`apple-glass-tile ${isSelected ? 'selected' : ''}`}
+                  style={tapSafeStyle}
+                >
+                  {p.name}
+                </button>
+              </AnimatedItem>
             );
           })}
           
           {includeSkip && (
-            <button 
-              onPointerDown={(e) => e.stopPropagation()} 
-              onClick={() => setPendingSelection('skip')} 
-              className={`apple-glass-tile ${pendingSelection === 'skip' ? 'selected' : ''} !mt-2`}
-              style={tapSafeStyle}
-            >
-              Skip / Nobody
-            </button>
+            <AnimatedItem index={visiblePlayers.length} delay={0.05}>
+              <button 
+                onPointerDown={(e) => e.stopPropagation()} 
+                onClick={() => setPendingSelection('skip')} 
+                className={`apple-glass-tile ${pendingSelection === 'skip' ? 'selected' : ''} !mt-2`}
+                style={tapSafeStyle}
+              >
+                Skip / Nobody
+              </button>
+            </AnimatedItem>
           )}
         </div>
 
@@ -275,7 +288,7 @@ export default function GameBoard() {
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* --- TRUE APPLE UI GLASSMORPHISM (SHADOW & BLUR BUG FIXED) --- */
+        /* --- TRUE APPLE UI GLASSMORPHISM --- */
         .apple-glass-tile {
           -webkit-appearance: none;
           appearance: none;
@@ -293,7 +306,7 @@ export default function GameBoard() {
           border-top: 1px solid rgba(255, 255, 255, 0.25);
           border-left: 1px solid rgba(255, 255, 255, 0.2);
           
-          /* SHADOW SQUARE BUG FIX: Reduced spread and clipped background */
+          /* SHADOW SQUARE BUG FIX: Reduced spread and clipped background so shadow hugs the rounded corners */
           -webkit-background-clip: padding-box;
           background-clip: padding-box;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -308,7 +321,8 @@ export default function GameBoard() {
           backface-visibility: hidden;
           will-change: transform;
           
-          transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.15s ease;
+          /* 100ms Snappy speed */
+          transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.1s ease;
         }
 
         .apple-glass-tile:active {
@@ -324,7 +338,7 @@ export default function GameBoard() {
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
         }
 
-        /* --- APPLE STYLE CONFIRM BUTTON --- */
+        /* --- PURE APPLE STYLE CONFIRM BUTTON --- */
         .apple-confirm-btn {
           -webkit-appearance: none;
           appearance: none;
@@ -345,7 +359,7 @@ export default function GameBoard() {
           
           transform: translateZ(0);
           will-change: transform;
-          transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+          transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
         .apple-confirm-btn:active {
@@ -438,14 +452,15 @@ export default function GameBoard() {
             </div>
           )}
 
-          {/* NO ANIMATED ITEM HERE - Allows native Android smooth scrolling */}
           <div className="w-full max-w-sm relative z-10 pointer-events-auto mb-10" style={tapSafeStyle}>
             <div className="w-full space-y-2 max-h-[135px] overflow-y-auto px-2 pb-2 pt-2 hide-scrollbar" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)' }}>
-              {state.players.map((p) => (
-                <div key={p.id} className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all">
-                  <span className="font-bold tracking-widest text-white">{p.name}</span>
-                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6" style={tapSafeStyle}>✕</button>
-                </div>
+              {state.players.map((p, index) => (
+                <AnimatedItem key={p.id} index={index} delay={0.05}>
+                  <div className="flex justify-between items-center py-4 px-6 bg-[#010201]/80 backdrop-blur-md border border-[#40c9ff]/30 rounded-2xl shadow-sm transition-all">
+                    <span className="font-bold tracking-widest text-white">{p.name}</span>
+                    <button onPointerDown={(e) => e.stopPropagation()} onClick={() => state.removePlayer(p.id)} className="text-rose-500 font-bold active:scale-90 flex items-center justify-center w-6 h-6" style={tapSafeStyle}>✕</button>
+                  </div>
+                </AnimatedItem>
               ))}
             </div>
           </div>
