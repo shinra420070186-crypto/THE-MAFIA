@@ -12,10 +12,8 @@ void main() {
 }
 `;
 
-// KEY CHANGE 1: mediump instead of highp — 16-bit floats are ~20-30% faster on mobile
-// KEY CHANGE 2: NUM_LAYER 3.0 instead of 4.0 — saves 25% shader work, barely noticeable visually
 const fragmentShader = `
-precision mediump float;
+precision highp float;
 uniform float uTime;
 uniform vec3 uResolution;
 uniform vec2 uFocal;
@@ -35,7 +33,7 @@ uniform float uMouseActiveFactor;
 uniform float uAutoCenterRepulsion;
 uniform bool uTransparent;
 varying vec2 vUv;
-#define NUM_LAYER 3.0
+#define NUM_LAYER 4.0
 #define STAR_COLOR_CUTOFF 0.2
 #define MAT45 mat2(0.7071, -0.7071, 0.7071, 0.7071)
 #define PERIOD 3.0
@@ -74,7 +72,7 @@ float Star(vec2 uv, float flare) {
 }
 vec3 StarLayer(vec2 uv) {
   vec3 col = vec3(0.0);
-  vec2 gv = fract(uv) - 0.5;
+  vec2 gv = fract(uv) - 0.5; 
   vec2 id = floor(uv);
   for (int y = -1; y <= 1; y++) {
     for (int x = -1; x <= 1; x++) {
@@ -108,6 +106,7 @@ void main() {
   vec2 focalPx = uFocal * uResolution.xy;
   vec2 uv = (vUv * uResolution.xy - focalPx) / uResolution.y;
   vec2 mouseNorm = uMouse - vec2(0.5);
+  
   if (uAutoCenterRepulsion > 0.0) {
     vec2 centerUV = vec2(0.0, 0.0);
     float centerDist = length(uv - centerUV);
@@ -144,12 +143,6 @@ void main() {
 }
 `;
 
-// KEY CHANGE 3: Render at 65% resolution — 42% fewer pixels per frame, stretched to full size via CSS
-const RENDER_SCALE = 0.65;
-// KEY CHANGE 4: Cap at 60 FPS — prevents 120fps on high refresh phones from doubling GPU work
-const TARGET_FPS = 60;
-const FRAME_INTERVAL = 1000 / TARGET_FPS;
-
 export default function Galaxy({
   focal = [0.5, 0.5],
   rotation = [1.0, 0.0],
@@ -167,7 +160,6 @@ export default function Galaxy({
   rotationSpeed = 0.1,
   autoCenterRepulsion = 0,
   transparent = true,
-  active = true, // KEY CHANGE 5: Pause rendering when galaxy is not visible
   ...rest
 }) {
   const ctnDom = useRef(null);
@@ -175,26 +167,11 @@ export default function Galaxy({
   const smoothMousePos = useRef({ x: 0.5, y: 0.5 });
   const targetMouseActive = useRef(0.0);
   const smoothMouseActive = useRef(0.0);
-  // Use refs so we can update without re-creating the WebGL context
-  const isActiveRef = useRef(active);
-  const lastFrameTimeRef = useRef(0);
-
-  // Update the active ref when the prop changes — no WebGL context rebuild needed
-  useEffect(() => {
-    isActiveRef.current = active;
-  }, [active]);
 
   useEffect(() => {
     if (!ctnDom.current) return;
     const ctn = ctnDom.current;
-
-    // KEY CHANGE 6: powerPreference low-power + antialias off for mobile GPU relief
-    const renderer = new Renderer({
-      alpha: transparent,
-      premultipliedAlpha: false,
-      powerPreference: 'low-power',
-      antialias: false,
-    });
+    const renderer = new Renderer({ alpha: transparent, premultipliedAlpha: false });
     const gl = renderer.gl;
 
     if (transparent) {
@@ -208,15 +185,8 @@ export default function Galaxy({
     let program;
 
     function resize() {
-      // Render at RENDER_SCALE resolution (65%), display at 100% via CSS — blurry upscale is fine for stars
-      renderer.setSize(
-        Math.floor(ctn.offsetWidth * RENDER_SCALE),
-        Math.floor(ctn.offsetHeight * RENDER_SCALE)
-      );
-      // Override OGL's canvas CSS size so it stretches to fill the container
-      gl.canvas.style.width = '100%';
-      gl.canvas.style.height = '100%';
-      gl.canvas.style.display = 'block';
+      const scale = 1;
+      renderer.setSize(ctn.offsetWidth * scale, ctn.offsetHeight * scale);
       if (program) {
         program.uniforms.uResolution.value = new Color(
           gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height
@@ -257,34 +227,25 @@ export default function Galaxy({
 
     function update(t) {
       animateId = requestAnimationFrame(update);
-
-      // Skip all GPU work when galaxy is not visible (during spooky game phases)
-      if (!isActiveRef.current) return;
-
-      // FPS cap: only render when enough time has passed since last frame
-      const elapsed = t - lastFrameTimeRef.current;
-      if (elapsed < FRAME_INTERVAL) return;
-      lastFrameTimeRef.current = t - (elapsed % FRAME_INTERVAL);
-
       if (!disableAnimation) {
         program.uniforms.uTime.value = t * 0.001;
         program.uniforms.uStarSpeed.value = (t * 0.001 * starSpeed) / 10.0;
       }
-
       const lerpFactor = 0.05;
       smoothMousePos.current.x += (targetMousePos.current.x - smoothMousePos.current.x) * lerpFactor;
       smoothMousePos.current.y += (targetMousePos.current.y - smoothMousePos.current.y) * lerpFactor;
       smoothMouseActive.current += (targetMouseActive.current - smoothMouseActive.current) * lerpFactor;
-
+      
       program.uniforms.uMouse.value[0] = smoothMousePos.current.x;
       program.uniforms.uMouse.value[1] = smoothMousePos.current.y;
       program.uniforms.uMouseActiveFactor.value = smoothMouseActive.current;
-
+      
       renderer.render({ scene: mesh });
     }
     animateId = requestAnimationFrame(update);
     ctn.appendChild(gl.canvas);
 
+    // CRITICAL FIX: Handles taps, drags, and mouse clicks identically
     function handlePointer(e) {
       const rect = ctn.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width;
@@ -315,15 +276,13 @@ export default function Galaxy({
         ctn.removeEventListener('pointerleave', handlePointerLeave);
         ctn.removeEventListener('pointercancel', handlePointerLeave);
       }
-      if (ctn.contains(gl.canvas)) ctn.removeChild(gl.canvas);
+      ctn.removeChild(gl.canvas);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
   }, [
-    focal, rotation, starSpeed, density, hueShift, disableAnimation, speed,
-    mouseInteraction, glowIntensity, saturation, mouseRepulsion, twinkleIntensity,
+    focal, rotation, starSpeed, density, hueShift, disableAnimation, speed, 
+    mouseInteraction, glowIntensity, saturation, mouseRepulsion, twinkleIntensity, 
     rotationSpeed, repulsionStrength, autoCenterRepulsion, transparent
-    // NOTE: 'active' is intentionally NOT here — it's handled by its own useEffect above
-    // so changing active never triggers an expensive WebGL context rebuild
   ]);
 
   return <div ref={ctnDom} className="galaxy-container" {...rest} />;
