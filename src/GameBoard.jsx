@@ -15,7 +15,7 @@ const AnimatedItem = ({ children, delay = 0, index }) => {
     return () => { if (ref.current) observer.unobserve(ref.current); };
   }, []);
   return (
-    <div ref={ref} data-index={index} style={{ width: '100%', transition: `transform 0.15s ease-out ${delay}s, opacity 0.15s ease-out ${delay}s`, transform: inView ? 'scale(1)' : 'scale(0.8)', opacity: inView ? 1 : 0 }}>
+    <div ref={ref} data-index={index} style={{ width: '100%', transition: `transform 0.1s ease-out ${delay}s, opacity 0.1s ease-out ${delay}s`, transform: inView ? 'scale(1)' : 'scale(0.8)', opacity: inView ? 1 : 0 }}>
       {children}
     </div>
   );
@@ -205,7 +205,7 @@ export default function GameBoard() {
     );
   };
 
-  // ─── PLAYER LIST WITH PREMIUM CUSTOM GLASSMORPHISM ───
+  // ─── PLAYER LIST: THE ULTIMATE ACRYLIC (NO-BLUR) TEXTURE FIX ───
   const renderPlayerList = (onSelect, includeSkip = false, hideCondition = () => false) => {
     const visiblePlayers = alivePlayers.filter(p => !hideCondition(p));
 
@@ -218,7 +218,7 @@ export default function GameBoard() {
 
     return (
       <div className="w-full max-w-sm relative z-10 pointer-events-auto mt-2 mb-6" style={tapSafeStyle}>
-        {/* Scrollable area without any mask filters to protect GPU memory */}
+        {/* Scrollable area without masks */}
         <div className="w-full space-y-4 max-h-[320px] overflow-y-auto px-4 pb-4 pt-4 hide-scrollbar">
           {visiblePlayers.map((p, index) => {
             const isSelected = pendingSelection === p.id;
@@ -227,7 +227,7 @@ export default function GameBoard() {
                 <button 
                   onPointerDown={(e) => e.stopPropagation()} 
                   onClick={() => setPendingSelection(p.id)} 
-                  className={`premium-glass ${isSelected ? 'selected' : ''}`}
+                  className={`acrylic-tile ${isSelected ? 'selected' : ''}`}
                   style={tapSafeStyle}
                 >
                   {p.name}
@@ -240,7 +240,7 @@ export default function GameBoard() {
               <button 
                 onPointerDown={(e) => e.stopPropagation()} 
                 onClick={() => setPendingSelection('skip')} 
-                className={`premium-glass ${pendingSelection === 'skip' ? 'selected' : ''} !mt-2`}
+                className={`acrylic-tile ${pendingSelection === 'skip' ? 'selected' : ''} !mt-2`}
                 style={tapSafeStyle}
               >
                 Skip / Nobody
@@ -249,12 +249,12 @@ export default function GameBoard() {
           )}
         </div>
 
-        {/* PURE CONFIRM BUTTON: Clean white, nice shadow, no blurry boxes */}
+        {/* PURE CONFIRM BUTTON: Clean white, sharp, no blurry borders */}
         {pendingSelection && (
           <div className="mt-8 flex flex-col mx-4 animate-in fade-in slide-in-from-bottom-4 will-change-transform">
             <button 
               onClick={handleConfirm} 
-              className="w-full p-4 bg-slate-100 text-slate-900 rounded-xl font-black uppercase tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.25)] active:scale-95 transition-transform duration-100 will-change-transform"
+              className="w-full p-4 bg-slate-100 text-slate-900 rounded-xl font-black uppercase tracking-widest shadow-[0_8px_30px_rgba(255,255,255,0.25)] active:scale-95 transition-transform duration-100 will-change-transform"
             >
               CONFIRM & NEXT
             </button>
@@ -272,48 +272,61 @@ export default function GameBoard() {
         input { user-select: auto; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .will-change-opacity { will-change: opacity; }
 
-        /* --- THE ULTIMATE PREMIUM GLASS (ANDROID OPTIMIZED) --- */
-        .premium-glass {
+        /* --- THE ACRYLIC HACK: 100% Baked Texture, 0% CPU Blur Math --- */
+        .acrylic-tile {
           width: 100%;
           padding: 1rem;
           border-radius: 12px;
-          text-align: center;
-          font-weight: 900;
           text-transform: uppercase;
-          letter-spacing: 0.1em;
+          font-weight: 900;
           color: #e2e8f0;
           
-          /* The Glass Look */
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-top-color: rgba(255, 255, 255, 0.2);  /* Top highlight edge */
-          border-left-color: rgba(255, 255, 255, 0.15); /* Left highlight edge */
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+          /* Layer 1: Semi-transparent dark background */
+          background-color: rgba(20, 20, 20, 0.4);
           
-          /* The Blur - Hardware Accelerated */
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          transform: translate3d(0, 0, 0); /* Forces GPU layer immediately, fixing delay */
-          backface-visibility: hidden;
+          /* Layer 2: White highlight gradient + Base64 SVG Noise (for frosted texture) */
+          background-image: 
+            linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.0) 100%),
+            url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
           
-          /* CRITICAL: Do NOT transition box-shadow or filter */
+          /* Sharp inner rims to catch light */
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-top-color: rgba(255, 255, 255, 0.3);
+          border-left-color: rgba(255, 255, 255, 0.2);
+          
+          /* Static inset and drop shadows that will NEVER misalign */
+          box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 12px rgba(0, 0, 0, 0.5);
+          
+          /* GPU Lock */
+          transform: translateZ(0);
           will-change: transform;
-          transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.1s ease;
+          transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.1s ease, border-color 0.1s ease;
         }
 
-        .premium-glass:active {
-          transform: scale(0.95) translate3d(0,0,0) !important;
-          background: rgba(255, 255, 255, 0.08);
-        }
-
-        .premium-glass.selected {
-          transform: scale(1.03) translateY(-2px) translate3d(0,0,0) !important;
-          background: rgba(255, 255, 255, 0.15);
-          border-color: rgba(255, 255, 255, 0.4);
+        .acrylic-tile.selected {
+          transform: scale(1.05) translateY(-2px) translateZ(0) !important;
+          
+          /* Brighter, thicker frosted texture */
+          background-color: rgba(40, 40, 40, 0.6);
+          background-image: 
+            linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.05) 100%),
+            url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.12'/%3E%3C/svg%3E");
+          
+          border-color: rgba(255, 255, 255, 0.5);
+          border-top-color: rgba(255, 255, 255, 0.8);
+          border-left-color: rgba(255, 255, 255, 0.6);
+          
           color: #ffffff;
+          box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.3), 0 10px 24px rgba(0, 0, 0, 0.8);
         }
+
+        .acrylic-tile:active {
+          transform: scale(0.96) translateZ(0) !important;
+          background-color: rgba(10, 10, 10, 0.5);
+        }
+        
+        .will-change-opacity { will-change: opacity; }
       `}</style>
       
       <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out will-change-opacity" style={{ backgroundColor: '#e5e5e5', opacity: state.phase === 'splash' ? 1 : 0, zIndex: state.phase === 'splash' ? 0 : -100, visibility: state.phase === 'splash' ? 'visible' : 'hidden' }} />
