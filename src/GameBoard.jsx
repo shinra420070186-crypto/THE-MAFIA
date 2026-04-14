@@ -214,11 +214,14 @@ export default function GameBoard() {
     setPendingSelection(null);
   }, [state.phase, state.votingState?.currentVoterIndex]);
 
-  // Audio triggering effect
+  // Audio triggering effect using sfx
   useEffect(() => {
     const activeNightPhases = ['night_mafia', 'night_doctor', 'night_detective', 'night_sheriff'];
     
-    if (activeNightPhases.includes(state.phase)) {
+    if (state.phase === 'night_transition') {
+      sfx.playWolfHowl();
+      sfx.stopNightBgm(); // Ensure background music is stopped during the howl
+    } else if (activeNightPhases.includes(state.phase)) {
       sfx.playNightBgm();
     } else {
       sfx.stopNightBgm();
