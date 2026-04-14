@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from './store';
+import { sfx } from './sfx';
 import Galaxy from './Galaxy';
 import './spooky.css';
 
@@ -35,7 +36,6 @@ const AnimatedGlassButton = ({ children, onClick, isSelected, isSkip }) => {
   );
 };
 
-// KEY CHANGE 1: MemoizedGalaxy now accepts 'active' prop to pause GPU rendering when not visible
 const MemoizedGalaxy = React.memo(({ active }) => (
   <Galaxy
     mouseRepulsion={true}
@@ -54,8 +54,6 @@ const MemoizedGalaxy = React.memo(({ active }) => (
   />
 ));
 
-// KEY CHANGE 2: FullScreenSpooky accepts 'paused' prop to freeze all CSS animations when not visible
-// This stops dozens of animations (smoke, bats, skeletons, etc.) from burning CPU while hidden
 const FullScreenSpooky = React.memo(({ isNight, paused }) => {
   const [angles, setAngles] = useState({ sun: isNight ? 180 : 0, moon: isNight ? 0 : -180 });
   const prevIsNight = useRef(isNight);
@@ -76,7 +74,6 @@ const FullScreenSpooky = React.memo(({ isNight, paused }) => {
   const themeClass = isNight ? 'theme-night' : 'theme-day';
 
   return (
-    // 'spooky-paused' class is added when not in spooky phase — CSS rule below freezes all animations
     <div className={`spooky-container ${themeClass}${paused ? ' spooky-paused' : ''}`} onClick={() => setActiveZone(null)}>
       <div className="sky">
         <div className="celestial-pivot moon-pivot" style={{ transform: `rotate(${angles.moon}deg)` }}><div className="moon"></div></div>
@@ -122,7 +119,6 @@ const FullScreenSpooky = React.memo(({ isNight, paused }) => {
         </div>
         <div className="roof-1"></div>
         <div className="roof-2">
-          {/* KEY CHANGE 3: Reduced smoke spans from 12 to 6 — halves smoke animation CPU cost */}
           <div className={`chimney ${activeZone === 'chimney2' ? 'active' : ''}`} onClick={(e) => handleTrigger('chimney2', e)}></div>
           <div className="smoke"><span></span><span></span><span></span><span></span><span></span><span></span></div>
         </div>
@@ -218,6 +214,17 @@ export default function GameBoard() {
     setPendingSelection(null);
   }, [state.phase, state.votingState?.currentVoterIndex]);
 
+  // Audio triggering effect
+  useEffect(() => {
+    const activeNightPhases = ['night_mafia', 'night_doctor', 'night_detective', 'night_sheriff'];
+    
+    if (activeNightPhases.includes(state.phase)) {
+      sfx.playNightBgm();
+    } else {
+      sfx.stopNightBgm();
+    }
+  }, [state.phase]);
+
   const isGalaxyPhase = state.phase === 'lobby' || state.phase === 'role_reveal';
   const isSpookyPhase = state.phase !== 'splash' && state.phase !== 'lobby' && state.phase !== 'role_reveal';
   const isNightPhase = state.phase.startsWith('night') || state.phase === 'night_transition';
@@ -296,14 +303,10 @@ export default function GameBoard() {
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* KEY CHANGE 4: Pause ALL CSS animations on the spooky scene when it is hidden.
-           This stops smoke, bats, skeleton, characters, etc. from burning CPU during galaxy phases.
-           Using .spooky-container.spooky-paused for higher specificity than spooky.css rules. */
         .spooky-container.spooky-paused * {
           -webkit-animation-play-state: paused !important;
           animation-play-state: paused !important;
         }
-        /* Override the permanent character animation rules from spooky.css */
         .spooky-container.spooky-paused .witch,
         .spooky-container.spooky-paused .nosferatu,
         .spooky-container.spooky-paused .frankenstein {
@@ -379,12 +382,12 @@ export default function GameBoard() {
       {/* Splash background */}
       <div className="fixed inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ease-in-out will-change-opacity" style={{ backgroundColor: '#e5e5e5', opacity: state.phase === 'splash' ? 1 : 0, zIndex: state.phase === 'splash' ? 0 : -100, visibility: state.phase === 'splash' ? 'visible' : 'hidden' }} />
 
-      {/* Galaxy layer — active=isGalaxyPhase pauses WebGL rendering when not visible */}
+      {/* Galaxy layer */}
       <div className="fixed inset-0 w-full h-full pointer-events-auto transition-opacity duration-700 ease-in-out will-change-opacity" style={{ opacity: isGalaxyPhase ? 1 : 0, zIndex: isGalaxyPhase ? 0 : -50, visibility: isGalaxyPhase ? 'visible' : 'hidden' }}>
         <MemoizedGalaxy active={isGalaxyPhase} />
       </div>
 
-      {/* Spooky layer — paused=!isSpookyPhase freezes CSS animations when not visible */}
+      {/* Spooky layer */}
       <div className="fixed inset-0 w-full h-full transition-opacity duration-700 ease-in-out will-change-opacity" style={{ opacity: isSpookyPhase ? 1 : 0, zIndex: isSpookyPhase ? 0 : -50, visibility: isSpookyPhase ? 'visible' : 'hidden' }}>
         <FullScreenSpooky isNight={isNightPhase} paused={!isSpookyPhase} />
       </div>
