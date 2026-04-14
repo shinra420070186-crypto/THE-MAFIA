@@ -2,12 +2,13 @@ class AudioManager {
   constructor() {
     this.nightBgm = new Audio('/night-bgm.mp3');
     this.nightBgm.loop = true;
+    
+    this.wolfHowl = new Audio('/wolf-howl.mp3');
   }
 
   playNightBgm() {
-    // Only play if it's currently paused to avoid restarting it if already playing
     if (this.nightBgm.paused) {
-      this.nightBgm.play().catch(e => console.log("Auto-play prevented by browser:", e));
+      this.nightBgm.play().catch(e => console.log("Auto-play prevented:", e));
     }
   }
 
@@ -16,12 +17,17 @@ class AudioManager {
     this.nightBgm.currentTime = 0;
   }
 
+  playWolfHowl() {
+    this.wolfHowl.currentTime = 0;
+    this.wolfHowl.play().catch(e => console.log("Auto-play prevented:", e));
+  }
+
   init() {
-    // Placeholder for future global init
+    // Placeholder for global init
   }
 
   tap() {
-    // Placeholder for future UI tap sound
+    // Placeholder for tap sound
   }
 }
 
