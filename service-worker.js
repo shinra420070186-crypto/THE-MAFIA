@@ -3,7 +3,8 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon-512x512.jpg'
+  '/icon-192x192.png',
+  '/icon-512x512.png'
 ];
 
 // Install Service Worker and cache core files
