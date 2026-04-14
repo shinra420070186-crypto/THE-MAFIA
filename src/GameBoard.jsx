@@ -214,18 +214,27 @@ export default function GameBoard() {
     setPendingSelection(null);
   }, [state.phase, state.votingState?.currentVoterIndex]);
 
-  // Audio triggering effect using sfx
+  // Audio triggering effect using sfx with delay for howl
   useEffect(() => {
     const activeNightPhases = ['night_mafia', 'night_doctor', 'night_detective', 'night_sheriff'];
+    let timeoutId;
     
     if (state.phase === 'night_transition') {
-      sfx.playWolfHowl();
-      sfx.stopNightBgm(); // Ensure background music is stopped during the howl
+      sfx.stopNightBgm(); // Ensure background music stops instantly
+      // Delay the wolf howl by 0.8 seconds (800ms)
+      timeoutId = setTimeout(() => {
+        sfx.playWolfHowl();
+      }, 800);
     } else if (activeNightPhases.includes(state.phase)) {
       sfx.playNightBgm();
     } else {
       sfx.stopNightBgm();
     }
+
+    // Cleanup timeout if phase changes before the timer finishes
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [state.phase]);
 
   const isGalaxyPhase = state.phase === 'lobby' || state.phase === 'role_reveal';
